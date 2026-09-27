@@ -1,17 +1,12 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Inter } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 
-const playfair = Playfair_Display({
+const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-serif',
-  display: 'swap',
-});
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-manrope',
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
@@ -26,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="min-h-screen flex flex-col font-sans antialiased bg-[#F8FAFC] text-slate-900 selection:bg-orange-100 selection:text-orange-900">
+    <html lang="en" className={`${manrope.variable}`}>
+      <body className="min-h-screen flex flex-col font-sans antialiased bg-white text-[#33475B] selection:bg-[#2CBC63]/20 selection:text-[#023A51]">
         <AppProvider>
           {children}
         </AppProvider>

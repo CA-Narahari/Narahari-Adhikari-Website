@@ -1,48 +1,66 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-primary: #023A51;
+  --color-accent: #2CBC63;
+  --color-accent-hover: #25A456;
+  --color-surface-hero: #E0ECF0;
+  --color-border-subtle: #E8EBEF;
+}
+
 @layer base {
   :root {
-    --primary: #0F172A; /* Deep Navy */
+    /* Avada Accountant Design Tokens from DESIGN.md & SKILL.md */
+    --color-primary: #023A51;       /* color-1: Deep Petrol Blue / Text Primary */
+    --color-slate-blue: #33475B;     /* color-2: Slate Blue Body */
+    --color-charcoal: #4A5259;       /* color-3: Text */
+    --color-muted: #59667D;          /* color-5: Text Primary Muted */
+    --color-secondary: #93999F;      /* color-8: Text Secondary */
+    --color-accent: #2CBC63;         /* color-9: Brand Green (Buttons, Accents) */
+    --color-accent-hover: #25A456;
+    --color-accent-light: #65BC7B;   /* color-10: Soft Green */
+    --color-surface-hero: #E0ECF0;   /* color-13: Pale Blue Hero Surface */
+    --color-surface-muted: #E3E3E3;  /* color-12: Surface */
+    --color-border-subtle: #E8EBEF;  /* color-14: Card Border */
+    --color-border-light: #DDDDDD;   /* color-11: Border */
+    --color-white: #FFFFFF;
+
+    /* Semantic Mappings */
+    --primary: #023A51;
     --primary-foreground: #FFFFFF;
-    --accent: #F26430; /* Signature Coral/Orange CTA matching inspiration screenshots */
-    --accent-hover: #DC5322;
+    --accent: #2CBC63;
+    --accent-hover: #25A456;
     --accent-foreground: #FFFFFF;
-    --background: #F8FAFC;
-    --foreground: #0F172A;
+    --background: #FFFFFF;
+    --foreground: #023A51;
     --card: #FFFFFF;
-    --card-foreground: #0F172A;
-    --muted: #F1F5F9;
-    --muted-foreground: #64748B;
-    --border: #E2E8F0;
+    --card-foreground: #023A51;
+    --border: #E8EBEF;
   }
 
-  h1, h2, h3, .font-heading {
-    font-family: var(--font-serif), Georgia, Cambria, 'Times New Roman', Times, serif;
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: var(--font-manrope), var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #023A51;
+    letter-spacing: -0.02em;
+    font-weight: 700;
   }
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #FFFFFF;
+  color: #33475B;
+  font-family: var(--font-manrope), var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Subtle line accents used in reference mockups */
-.heading-accent-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.heading-accent-line::after {
-  content: "";
-  height: 1.5px;
-  width: 2.5rem;
-  background-color: #F26430;
-  display: inline-block;
+/* Green punctuation accent matching Avada Accountant design */
+.accent-dot {
+  color: #2CBC63;
 }
 
 /* Micro-transitions */
 a, button {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.21, 0.6, 0.35, 1);
 }

@@ -1,38 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
   X,
-  Search,
-  ArrowRight,
-  Shield,
+  Phone,
+  Mail,
   ChevronDown,
-  Lock,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { settings } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesDropdown, setServicesDropdown] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isPastHero, setIsPastHero] = useState(false);
 
-  // Exact 8 items requested by user
+  // Detect scroll to handle color change and stickiness strictly until hero section ends
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 15);
+
+      // Sticky till the hero / img component section, but below that not sticky
+      const heroSection = document.getElementById('hero-section');
+      if (heroSection) {
+        const rect = heroSection.getBoundingClientRect();
+        setIsPastHero(rect.bottom <= 60);
+      } else {
+        setIsPastHero(scrollY > 680);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Approved navbar navigation items
   const navItems = [
     { name: 'Home', href: '/' },
-    { name: 'About', href: '/about' },
     { name: 'Services', href: '/services', hasDropdown: true },
     { name: 'Tax Updates', href: '/tax-updates' },
-    { name: 'Blog', href: '/blog' },
     { name: 'Resources', href: '/resources' },
+    { name: 'About Us', href: '/about' },
+    { name: 'Blog', href: '/blog' },
     ...(settings.careers_enabled
       ? [{ name: 'Careers', href: '/careers', isHiringBadge: true }]
       : []),
-    { name: 'Contact', href: '/contact' },
   ];
 
   const isActive = (href: string) => {
@@ -41,215 +63,292 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Brand Logo & Name (matching screenshots: "CA" in rounded square + Firm Name + "Chartered Accountant Firm") */}
-          <Link href="/" className="flex items-center gap-3.5 group shrink-0">
-            <div className="w-10 h-10 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-serif text-lg font-bold shadow-sm transition-transform group-hover:scale-105">
-              CA
-            </div>
-            <div>
-              <div className="text-base sm:text-lg font-serif font-bold tracking-tight text-slate-900 leading-tight">
-                {settings.company_name}
-              </div>
-              <div className="text-[11px] text-slate-500 font-medium tracking-wide">
-                Chartered Accountant Firm
-              </div>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <div
-                  key={item.name}
-                  className="relative"
-                  onMouseEnter={() => item.hasDropdown && setServicesDropdown(true)}
-                  onMouseLeave={() => item.hasDropdown && setServicesDropdown(false)}
-                >
-                  <Link
-                    href={item.href}
-                    className={`relative px-3 py-2 text-[13px] font-medium transition-colors rounded-md flex items-center gap-1 ${
-                      active
-                        ? 'text-[#F26430] font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span>{item.name}</span>
-                    {item.hasDropdown && (
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 mt-0.5" />
-                    )}
-                    {item.isHiringBadge && (
-                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        Hiring
-                      </span>
-                    )}
-                    {active && (
-                      <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#F26430] rounded-full" />
-                    )}
-                  </Link>
-
-                  {/* Services Mini Dropdown */}
-                  {item.hasDropdown && servicesDropdown && (
-                    <div className="absolute top-full left-0 w-64 bg-white border border-slate-200 rounded-xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
-                      <Link
-                        href="/services#tax-advisory-compliance"
-                        className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#F26430]"
-                      >
-                        <div className="font-semibold">Tax & Compliance</div>
-                        <div className="text-[11px] text-slate-400">Direct & indirect advisory</div>
-                      </Link>
-                      <Link
-                        href="/services#audit-assurance"
-                        className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#F26430]"
-                      >
-                        <div className="font-semibold">Audit & Assurance</div>
-                        <div className="text-[11px] text-slate-400">Statutory & internal reviews</div>
-                      </Link>
-                      <Link
-                        href="/services#accounting-business-advisory"
-                        className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#F26430]"
-                      >
-                        <div className="font-semibold">Accounting & Bookkeeping</div>
-                        <div className="text-[11px] text-slate-400">Financial controller services</div>
-                      </Link>
-                      <Link
-                        href="/services#corporate-secretarial-legal"
-                        className="block px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#F26430]"
-                      >
-                        <div className="font-semibold">Corporate & Secretarial</div>
-                        <div className="text-[11px] text-slate-400">Company registration & OCR</div>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-
-          {/* Right Area: Search Trigger + Book Appointment Button (matching screenshots) */}
-          <div className="hidden sm:flex items-center gap-3">
-            {/* Search Icon Trigger */}
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors"
-              title="Search website"
-              aria-label="Search website"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-
-            {/* Discreet Admin CMS Link */}
-            <Link
-              href="/admin"
-              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors text-xs flex items-center gap-1 font-medium"
-              title="Admin CMS Portal"
-            >
-              <Lock className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden xl:inline text-[11px]">CMS</span>
-            </Link>
-
-            {/* Primary CTA: Book Appointment (Matching screenshots: Coral Orange #F26430) */}
-            <Link
-              href="/book-appointment"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#F26430] hover:bg-[#DC5322] text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:shadow active:translate-y-px"
-            >
-              <span>Book Appointment</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+    <header
+      className={`w-full transition-all duration-300 ${
+        isPastHero
+          ? 'relative z-40 bg-white border-b border-[#E8EBEF]'
+          : 'sticky top-0 z-50'
+      } ${
+        !isPastHero && scrolled
+          ? 'bg-white shadow-[0_4px_20px_-4px_rgba(2,58,81,0.08)] border-b border-[#E8EBEF]'
+          : !isPastHero
+          ? 'bg-[#E0ECF0] border-b border-transparent'
+          : ''
+      }`}
+    >
+      <div className="max-w-[1280px] mx-auto px-6">
+        {/* Desktop Header Layout */}
+        <div className="hidden lg:flex items-stretch justify-between">
+          {/* LEFT: Cleanly Proportioned Logo */}
+          <div className="shrink-0 flex items-center pr-8 py-3.5">
+            <Link href="/" className="flex items-center group">
+              <Image
+                src="/Logo.png"
+                alt="Narahari Adhikari Chartered Accountants"
+                width={280}
+                height={70}
+                priority
+                className="h-[56px] xl:h-[62px] w-auto object-contain transition-transform duration-200 group-hover:opacity-95"
+              />
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="flex lg:hidden items-center gap-2">
-            <Link
-              href="/book-appointment"
-              className="px-3 py-1.5 bg-[#F26430] text-white text-xs font-semibold rounded-md flex items-center gap-1"
+          {/* RIGHT: Two-tier layout with dividing line */}
+          <div className="flex-1 flex flex-col justify-between pl-4">
+            {/* Top Tier: Generous padding, crisp uppercase links on left, contacts on right */}
+            <div className="flex items-center justify-between pt-5 pb-3 text-[12px] text-[#4A5259]">
+              {/* Left: Quick links */}
+              <div className="flex items-center gap-7 font-semibold tracking-[0.12em] uppercase text-[11px]">
+                <Link
+                  href="/contact#office"
+                  className="hover:text-[#2CBC63] transition-colors duration-150"
+                >
+                  Offices
+                </Link>
+                {settings.careers_enabled && (
+                  <Link
+                    href="/careers"
+                    className="hover:text-[#2CBC63] transition-colors duration-150 flex items-center gap-1.5"
+                  >
+                    <span>Careers</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2CBC63] animate-pulse" />
+                  </Link>
+                )}
+                <Link
+                  href="/about#faqs"
+                  className="hover:text-[#2CBC63] transition-colors duration-150"
+                >
+                  FAQs
+                </Link>
+              </div>
+
+              {/* Right: Phone + Email + Socials */}
+              <div className="flex items-center gap-6">
+                <a
+                  href={`tel:${settings.phone}`}
+                  className="flex items-center gap-1.5 hover:text-[#2CBC63] transition-colors duration-150"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#2CBC63]" />
+                  <span className="font-semibold text-[#023A51] text-[12.5px]">{settings.phone}</span>
+                </a>
+
+                <a
+                  href={`mailto:${settings.email}`}
+                  className="flex items-center gap-1.5 hover:text-[#2CBC63] transition-colors duration-150"
+                >
+                  <Mail className="w-3.5 h-3.5 text-[#2CBC63]" />
+                  <span className="font-medium text-[#4A5259] text-[12.5px]">Email Us</span>
+                </a>
+
+                {/* Social Icons */}
+                <div className="flex items-center gap-3.5 ml-1 pl-4 border-l border-[#CCD7DC]">
+                  <a href="#" className="text-[#59667D] hover:text-[#3B5998] transition-colors" aria-label="Facebook">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01Z"/></svg>
+                  </a>
+                  <a href="#" className="text-[#59667D] hover:text-[#023A51] transition-colors" aria-label="X / Twitter">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  </a>
+                  <a href="#" className="text-[#59667D] hover:text-[#3F729B] transition-colors" aria-label="Instagram">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                  </a>
+                  <a href="#" className="text-[#59667D] hover:text-[#0A66C2] transition-colors" aria-label="LinkedIn">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider Line under the top row */}
+            <div className="border-b border-[#CCD7DC]" />
+
+            {/* Bottom Tier: Nav items with top and bottom indicator lines + CTA Button */}
+            <div className="flex items-center justify-between py-3">
+              {/* Nav links */}
+              <nav className="flex items-center gap-7 xl:gap-8">
+                {navItems.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <div
+                      key={item.name}
+                      className="relative group py-2"
+                      onMouseEnter={() => item.hasDropdown && setServicesDropdown(true)}
+                      onMouseLeave={() => item.hasDropdown && setServicesDropdown(false)}
+                    >
+                      {/* Top Green Indicator Line */}
+                      <span
+                        className={`absolute top-0 left-0 right-0 h-[2px] bg-[#2CBC63] transition-all duration-200 ${
+                          active
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-75 group-hover:opacity-100 group-hover:scale-x-100'
+                        }`}
+                      />
+
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-1.5 text-[15px] font-medium tracking-normal transition-colors duration-150 ${
+                          active
+                            ? 'text-[#023A51]'
+                            : 'text-[#33475B] group-hover:text-[#023A51]'
+                        }`}
+                      >
+                        <span>{item.name}</span>
+                        {item.hasDropdown && (
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                              servicesDropdown ? 'rotate-180 text-[#2CBC63]' : 'text-[#7A889B] group-hover:text-[#023A51]'
+                            }`}
+                          />
+                        )}
+                        {item.isHiringBadge && (
+                          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-[#2CBC63]/15 text-[#2CBC63] rounded-full">
+                            Hiring
+                          </span>
+                        )}
+                      </Link>
+
+                      {/* Bottom Green Indicator Line */}
+                      <span
+                        className={`absolute bottom-0 left-0 right-0 h-[2px] bg-[#2CBC63] transition-all duration-200 ${
+                          active
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-75 group-hover:opacity-100 group-hover:scale-x-100'
+                        }`}
+                      />
+
+                      {/* Services Dropdown */}
+                      <AnimatePresence>
+                        {item.hasDropdown && servicesDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            transition={{ duration: 0.15, ease: 'easeOut' }}
+                            className="absolute top-full left-0 w-[290px] bg-white border border-[#E8EBEF] rounded-[10px] shadow-[0_12px_30px_rgba(2,58,81,0.12)] p-2.5 z-50 mt-1"
+                          >
+                            {[
+                              { label: 'Tax Advisory & Compliance', sub: 'Corporate Tax, VAT & IRD Representation', href: '/services#tax-advisory-compliance' },
+                              { label: 'Audit & Assurance', sub: 'Statutory, Internal & Forensic Audits', href: '/services#audit-assurance' },
+                              { label: 'Accounting & Advisory', sub: 'NFRS Bookkeeping & Financial Reporting', href: '/services#accounting-business-advisory' },
+                              { label: 'Corporate & Secretarial', sub: 'Company Registration & OCR Filings', href: '/services#corporate-secretarial-legal' },
+                            ].map((s) => (
+                              <Link
+                                key={s.label}
+                                href={s.href}
+                                className="block px-3.5 py-2.5 rounded-[8px] text-[13px] text-[#33475B] hover:bg-[#E0ECF0]/60 hover:text-[#023A51] transition-colors duration-150"
+                              >
+                                <div className="font-semibold">{s.label}</div>
+                                <div className="text-[11px] text-[#93999F] mt-0.5 leading-snug">{s.sub}</div>
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </nav>
+
+              {/* Right: Green CTA button with pill border radius */}
+              <div className="shrink-0 pl-6">
+                <Button
+                  asChild
+                  size="pill"
+                  className="bg-[#2CBC63] hover:bg-[#25A456] text-white shadow-none hover:shadow-md hover:shadow-[#2CBC63]/25 cursor-pointer font-bold text-[14.5px] h-11 px-7"
+                >
+                  <Link href="/book-appointment">
+                    Free Consultation
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Header Bar */}
+        <div className="flex lg:hidden items-center justify-between h-[74px]">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/Logo.png"
+              alt="Narahari Adhikari Chartered Accountants"
+              width={200}
+              height={50}
+              priority
+              className="h-[44px] w-auto object-contain"
+            />
+          </Link>
+
+          <div className="flex items-center gap-2.5">
+            <Button
+              asChild
+              size="sm"
+              className="bg-[#2CBC63] hover:bg-[#25A456] text-white rounded-[32px] text-[12px] font-bold px-3.5 h-8"
             >
-              <span>Book</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
+              <Link href="/book-appointment">
+                Consult
+              </Link>
+            </Button>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               type="button"
-              className="p-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              className="p-2 rounded-[8px] text-[#023A51] hover:bg-black/5 transition-colors duration-200"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
-
-        {/* Search Bar Overlay */}
-        {searchOpen && (
-          <div className="py-3 px-4 bg-slate-50 border-t border-slate-200 flex items-center gap-3 animate-in slide-in-from-top-1">
-            <Search className="w-4 h-4 text-slate-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Search services, tax circulars, articles, calculators..."
-              className="w-full bg-transparent text-xs text-slate-900 focus:outline-none"
-              autoFocus
-            />
-            <button
-              onClick={() => setSearchOpen(false)}
-              className="text-xs text-slate-400 hover:text-slate-600"
-            >
-              Close
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-slate-200 bg-white px-4 pt-2 pb-6 space-y-1 shadow-xl animate-in slide-in-from-top-2">
-          {navItems.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium ${
-                  active
-                    ? 'bg-orange-50 text-[#F26430] font-bold'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                <span>{item.name}</span>
-                {item.isHiringBadge && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                    We Are Hiring
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="lg:hidden border-t border-[#CCD7DC] bg-white overflow-hidden shadow-lg"
+          >
+            <div className="px-6 pt-3 pb-6 space-y-1">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-[8px] text-[15px] font-medium transition-colors duration-200 ${
+                      active
+                        ? 'bg-[#E0ECF0] text-[#023A51] border-l-4 border-[#2CBC63]'
+                        : 'text-[#33475B] hover:bg-[#F8FAFC] hover:text-[#023A51]'
+                    }`}
+                  >
+                    <span>{item.name}</span>
+                    {item.isHiringBadge && (
+                      <span className="px-2 py-0.5 text-[10px] font-bold bg-[#2CBC63]/15 text-[#2CBC63] rounded-full">
+                        We Are Hiring
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
 
-          <div className="pt-4 border-t border-slate-100 flex flex-col gap-2">
-            <Link
-              href="/book-appointment"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-[#F26430] text-white font-semibold rounded-lg text-sm"
-            >
-              <span>Book Appointment</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 py-2 text-slate-600 hover:text-slate-900 text-xs font-medium border border-slate-200 rounded-lg"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Admin CMS Portal</span>
-            </Link>
-          </div>
-        </div>
-      )}
+              <div className="pt-4 border-t border-[#E8EBEF]">
+                <Button
+                  asChild
+                  size="pill"
+                  className="w-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[15px] h-12"
+                >
+                  <Link href="/book-appointment" onClick={() => setMobileMenuOpen(false)}>
+                    Free Consultation
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
