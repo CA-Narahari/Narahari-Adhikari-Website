@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #0F172A; /* Deep Navy */
+    --primary-foreground: #FFFFFF;
+    --accent: #F26430; /* Signature Coral/Orange CTA matching inspiration screenshots */
+    --accent-hover: #DC5322;
+    --accent-foreground: #FFFFFF;
+    --background: #F8FAFC;
+    --foreground: #0F172A;
+    --card: #FFFFFF;
+    --card-foreground: #0F172A;
+    --muted: #F1F5F9;
+    --muted-foreground: #64748B;
+    --border: #E2E8F0;
+  }
+
+  h1, h2, h3, .font-heading {
+    font-family: var(--font-serif), Georgia, Cambria, 'Times New Roman', Times, serif;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Subtle line accents used in reference mockups */
+.heading-accent-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.heading-accent-line::after {
+  content: "";
+  height: 1.5px;
+  width: 2.5rem;
+  background-color: #F26430;
+  display: inline-block;
+}
+
+/* Micro-transitions */
+a, button {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}

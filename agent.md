@@ -1,288 +1,504 @@
-# AGENT.md — CA Firm Website (Multi-Tenant, White-Label)
+# CA Firm Website + Admin Portal — Complete Build Spec
 
-This file is the single source of truth for this project. Work through the **Phases in section 3 strictly in order** — do not start a later phase until the previous one is verified working. This prevents rework and half-finished features piling up.
+Single source of truth for the build. Everything the coding agent needs — architecture, features, stack, MCP/plugin setup, design rules, compliance checklist, and QA checklist — lives in this one file.
+
+> **Themes:** Not decided yet. A visual theme/design system (colors, typography, tone) will be supplied later. Until then, build with a neutral, professional placeholder theme (see "Placeholder Theme" section) using tokens/variables so the real theme can be swapped in without touching component logic.
+
+---
 
 ## 1. Project Summary
 
-A professional website for a Chartered Accountancy (CA) firm with two portals:
-1. **Public Portal** — no login. Prospective/current clients.
-2. **Admin Portal** — authenticated staff area to manage all dynamic content (blogs, news, services, team, contact info, inquiries) without touching code.
+A modern, professional, easy-to-manage website for a Chartered Accountant (CA) firm, made of two separate interfaces:
 
-The codebase must be **reusable across multiple CA firm clients** — one repo, each firm gets its own deployment with its own branding/theme and its own content, without forking the code (see Section 6).
+- **Public Website** (`www.firm.com`) — premium, minimal, professional. What clients, job seekers, and the general public see.
+- **Admin Portal / CMS** (`admin.firm.com` or `/admin`) — functional, simple, dashboard-like. Where the firm's staff manage everything without touching code.
 
-## 2. Tech Stack (decided)
+Core principle: **the CMS is the product.** The public site isn't the hard part — a non-technical admin managing the entire site without a developer is.
 
-| Layer | Choice | Why |
+Built to be **multi-client reusable**: don't hardcode this one firm's details into the app. Company info, branding, services, contact, office hours, nav, and footer should all be admin-configurable so this same codebase can be reused for future clients (Client A: CA Firm, Client B: Accounting Firm, Client C: Tax Consultancy).
+
+---
+
+## 2. Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Frontend | Next.js + React + TypeScript |
+| Styling / UI | Tailwind CSS + shadcn/ui |
+| Backend | Next.js Server Actions / API routes |
+| Database | Supabase (PostgreSQL) |
+| Authentication | Supabase Auth |
+| File Storage | Supabase Storage |
+| Email | Resend (or SMTP) |
+| Calendar (optional) | Google Calendar / Google Meet integration |
+| Deployment | Vercel |
+| DNS / Security | Cloudflare (DNS + SSL) |
+
+**Why this stack:** no separate backend server needed initially, everything deploys free/low-cost (Vercel free tier, Supabase free tier, Cloudflare free DNS+SSL), and it stays fully AI-editable (no fighting a WordPress theme or page builder).
+
+**What NOT to do:** don't hand-roll a custom backend server, custom database engine, custom auth, custom file storage, or custom email server from scratch. Use managed services for infrastructure; spend build time on the actual product experience.
+
+---
+
+## 3. Architecture
+
+```
+                                  CA FIRM PLATFORM
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    ▼                                         ▼
+         PUBLIC WEBSITE (Frontend)                    ADMIN PORTAL (CMS)
+   ┌───────────────────────────────────┐    ┌───────────────────────────────────┐
+   │ 1. Home                           │    │ • Secure Auth (Supabase Admin)   │
+   │ 2. About                          │    │ • Dashboard (Metrics & Feeds)    │
+   │ 3. Services                       │    │ • Tax Updates (Draft & Publish)  │
+   │ 4. TaxUpdates                     │    │ • Blog & Knowledge Center        │
+   │ 5. Blog                           │    │ • Services Manager               │
+   │ 6. Resources (Tools & Downloads)  │    │ • Vacancies & Hiring Toggle      │
+   │ 7. Careers (Admin ON/OFF Toggle)  │    │ • Job Applications & CVs Vault   │
+   │ 8. Contact (WhatsApp & Forms)     │    │ • Appointments & Slot Control    │
+   │ + Book Appointment Button (Header)│    │ • Announcements & Alert Banners  │
+   └─────────────────┬─────────────────┘    │ • Government Links Directory     │
+                     │                      │ • Team & Office Hours Manager    │
+                     │                      │ • Site Settings (Multi-Client)   │
+                     │                      └─────────────────┬─────────────────┘
+                     └───────────────────┬────────────────────┘
+                                         ▼
+                               DATABASE (Supabase)
+```
+
+Visitor flow: **Visitor browses website → takes action (books appointment, reads tax updates, applies for job, uses calculators, contacts via WhatsApp) → Admin logs in securely to `/admin` → Admin manages content, toggles hiring status, updates availability, and manages applications → Changes immediately reflect live on the public site without writing code.**
+
+### 3.1 Complete Database Schema
+
+| Table | Key fields | Purpose |
 |---|---|---|
-| Build tool | **Vite** | Fast dev/build, no framework lock-in, matches your preference |
-| UI framework | React + TypeScript | Standard, huge shadcn/component ecosystem |
-| Routing | React Router v6 | Standard client-side routing for a Vite SPA |
-| Styling / Components | **Tailwind CSS + shadcn/ui**, blocks sourced from **21st.dev** | Copy-in components (not a runtime package), full control, consistent minimal/professional look |
-| Database | Supabase (Postgres) | Relational fit for services/blogs/team; free tier covers this easily |
-| Auth | Supabase Auth | Admin login only, not for public users |
-| File/Image storage | Supabase Storage (bucket: `media`) | Free tier; images upload live, no rebuild needed |
-| Hosting | Vercel or Netlify (free tier) — static SPA build | Zero cost for this traffic level |
-| Rich text editor | Tiptap | Blog/news post body |
-| Form validation | Zod + React Hook Form | Contact form, admin forms |
+| `users` | id, name, email, role (admin/staff), created_at | Admin authentication & staff access |
+| `tax_updates` | id, title, slug, content, category (Income Tax, VAT, Customs, Corporate, Circular), source_url, source_name, is_urgent, status (draft/published), published_at | Official tax notifications and circulars |
+| `posts` | id, title, slug, content, category, featured_image, read_time, status (draft/published), published_at | Knowledge base & firm blog articles |
+| `services` | id, title, slug, summary, description, icon_name, target_audience, display_order, is_featured | Firm service offerings & detail pages |
+| `vacancies` | id, title, department, employment_type, location, description, requirements, deadline, is_active | Job openings posted by the firm |
+| `applications` | id, vacancy_id, applicant_name, applicant_email, applicant_phone, cover_note, cv_file_url, status (new/review/shortlist/rejected), created_at | Candidate applications and uploaded CVs |
+| `appointments` | id, client_name, client_email, client_phone, service_id, consultation_type (office/phone/online), requested_date, requested_time, notes, status (pending/confirmed/rescheduled/cancelled), created_at | Client appointment bookings |
+| `availability_slots` | id, day_of_week, start_time, end_time, slot_interval_minutes, is_available | Configurable meeting slots for appointment engine |
+| `announcements` | id, title, message, link_url, is_active, display_location (top_banner/popup/none), expires_at | Urgent notice banner & alerts |
+| `government_links` | id, name, description, url, category, display_order | Official regulatory authority directory |
+| `download_resources` | id, title, file_url, file_size, category (form/guide/template), download_count | PDF forms, tax guides, and templates |
+| `faqs` | id, question, answer, category (tax/accounting/audit/general), display_order | Dynamic client FAQs |
+| `team_members` | id, name, title, qualification (e.g. FCA, ACA), bio, photo_url, linkedin_url, display_order | Firm partners and staff profiles |
+| `office_hours` | id, day_of_week, open_time, close_time, is_closed | Dynamic office hours per day |
+| `site_settings` | id, key, value | Multi-client config (company_name, brand_logo, contact_email, phone, whatsapp_number, address, map_embed, careers_enabled, meta_title, meta_description) |
 
-**Important honest note on Vite:** Vite builds a client-rendered SPA by default, which is weaker for SEO than server-rendered pages — and a CA firm's blog/publications content benefits from being indexable by Google. Mitigate this with:
-- `react-helmet-async` for per-page `<title>`/meta tags (works even without SSR).
-- Prerendering the public routes at build time with `vite-react-ssg` (renders static HTML for each public route while keeping the Vite+React+shadcn stack you asked for) — add this in Phase 3 once public pages have real content, not before.
-Flag this to the client-decision-maker if organic search traffic turns out to matter a lot; full SSR (Next.js) remains the fallback option if so.
+### 3.2 Multi-Client Reusability Architecture
 
-## 3. Build Phases — work through these in order
+Keep all branding and operational data dynamically stored in `site_settings`. No company-specific details are hardcoded in React components:
+- `company_name`: "Narahari Adhikari & Associates"
+- `whatsapp_number`: Direct international WhatsApp format
+- `careers_enabled`: `true` or `false` (controls navbar link + `/careers` route availability)
+- `office_hours`: Rendered live from database
+- This enables the exact same codebase to be deployed for Client A (CA Firm), Client B (Accounting Firm), or Client C (Tax Consultancy) by simply updating settings in the Admin Panel.
 
-### Phase 0 — Tooling Setup
-- `npm create vite@latest` (React + TypeScript template).
-- Install Tailwind CSS, configure `tailwind.config.ts`.
-- Initialize shadcn/ui (`npx shadcn@latest init`) — set up the base theme, CSS variables, `components.json`.
-- Install React Router, ESLint/Prettier config.
-- Set up folder structure (Section 5) as empty folders.
-- **Verify:** `npm run dev` shows a blank Vite+Tailwind+shadcn page with no errors.
+---
 
-### Phase 1 — Directory & Page Skeleton (routing only, zero content)
-- Create every route listed in Section 4 as a placeholder page component that renders only the page name and path (e.g. `<h1>Services Page — /services</h1>`).
-- Wire up React Router with all public and admin routes.
-- Add a temporary plain-text nav (just links, unstyled) so every route is reachable and clickable.
-- **Verify before moving on:** every URL in Section 4 loads the correct placeholder, no 404s on any listed route, browser back/forward works, direct URL entry (refresh on a nested route) works correctly (check Vite SPA fallback / `_redirects` config).
+## 4. Feature List & Specifications
 
-### Phase 2 — Shared Shell: Navbar, Footer, Landing Page
-- Build the real Navbar and Footer components using shadcn/21st.dev blocks, wired into a shared public layout.
-- Build the real landing page (hero, services teaser, latest posts teaser, CTA) — placeholder/lorem content is fine here, but real component structure and styling.
-- Apply the minimal/professional design direction (Section 7).
-- **Verify:** navbar links match Phase 1 routes exactly, footer renders on every public page, layout is responsive (mobile/tablet/desktop).
+### 4.1 Public Website (Navbar & Visitor Experience)
 
-### Phase 3 — Individual Public Pages (real features, one at a time)
-Build each of these fully, in this order, verifying each before moving to the next:
-1. About + Team
-2. Services (list + dynamic detail page)
-3. Industries (list + dynamic detail page)
-4. Blog (list + single post page)
-5. News (list + single post page)
-6. Career (listings + application form)
-7. Contact (form + office info + map)
+The public website consists strictly of the approved navbar navigation, header CTA, and associated utility pages:
 
-Each page's data starts as static/mock JSON so layout can be verified, then gets wired to Supabase once the schema (Section 8) exists. Add `vite-react-ssg` prerendering here once content is real (see Vite note above).
+1. **Header Navigation (Fixed & Responsive)**
+   - **1. Home (`/`)**: Value proposition hero, core service cards, latest tax updates alert bar, about teaser, why choose us, dynamic stats, quick consultation booking widget.
+   - **2. About (`/about`)**: Firm profile, Founder & Senior Partner CA profiles, core principles, legal & regulatory registration details.
+   - **3. Services (`/services`)**: Tax Advisory, Audit & Assurance, Accounting & Business Services, Company Secretarial, Financial Consulting. Each links to its dedicated detail view.
+   - **4. TaxUpdates (`/tax-updates`)**: Dedicated tax portal with category filters (Income Tax, VAT, Customs, Corporate Tax, Regulatory Circulars), search bar, publication date, and official regulatory source link.
+   - **5. Blog (`/blog`)**: Knowledge center with categorized articles (e.g., Company Registration in Nepal, VAT filing compliance), reading time, and related article links.
+   - **6. Resources (`/resources`)**:
+     - **Financial Calculators Hub**: EMI Calculator, Income Tax Estimator, VAT Calculator, Salary Calculator, Compound Interest Calculator.
+     - **Download Center**: Official government tax forms, checklists, and firm templates in PDF format.
+     - **Government Links Directory**: Curated direct links to official authorities (IRD, Nepal Rastra Bank, SEBON, OCR, SSF, Department of Customs).
+   - **7. Careers (`/careers`) — *Dynamic / Conditional***:
+     - **Hiring Window Active (`careers_enabled = true`)**: "Careers" link appears in the main navbar. Visitors can view open positions, job descriptions, requirements, and apply directly via an application form with **CV file upload (PDF/DOCX)**.
+     - **Hiring Window Closed (`careers_enabled = false`)**: "Careers" link is **completely removed from the navbar**. If a visitor types `/careers` directly, they are greeted with an on-brand message: *"We are not currently hiring. Check back during our next recruitment drive."* or automatically redirected to Home.
+   - **8. Contact (`/contact`)**: Firm physical address, interactive map, live office hours badge, inquiry form with topic selector (General, Tax, Audit, Career), **One-click WhatsApp chat redirect button**, and direct click-to-email.
+   - **Header CTA: "Book Appointment" Button**: High-visibility button on the right of the navbar. Opens the booking journey: select service → consultation mode (Office Meeting / Phone / Online Meet) → select date & available time slot → submit contact details → instant confirmation.
 
-### Phase 4 — Admin Dashboard
-- Supabase Auth login page (`/admin/login`).
-- Auth guard: protected route wrapper checking a valid session + `profiles.role`.
-- Dashboard home (counts, recent inquiries).
-- CRUD screens for: Posts (blog/news), Services, Industries, Team, Careers, Inquiries (read-only inbox), Settings (site info/branding).
-- Use shadcn/21st.dev admin blocks (data tables, stat cards, sidebar nav, forms) rather than building these from scratch.
-- **Verify:** every admin action (create/edit/delete post, upload image, update settings) reflects immediately on the public pages without a rebuild.
+2. **Compliance & Legal Pages (Footer Navigation)**
+   - Privacy Policy (`/privacy`)
+   - Terms & Conditions (`/terms`)
+   - Cookies Policy & Consent Banner (`/cookies`)
+   - Branded 404 Page (`/not-found`)
 
-### Phase 5 — Multi-Tenant / White-Label Layer
-See Section 6 for the design. Implement:
-- `tenant.config.ts` driven by env vars (logo, colors, fonts, firm name, contact defaults).
-- Confirm a second theme (different colors/logo/fonts) can be applied by only changing env vars + assets — no code changes.
+---
 
-### Phase 6 — Security Pass
-Go through the full checklist in Section 9 before launch. Do not skip this phase.
+### 4.2 Admin Portal (CMS) — Complete Module Breakdown
 
-### Phase 7 — Deployment
-Section 10.
-
-## 4. Route Map
-
-### Public (no auth)
-```
-/                       Home
-/about                  Firm overview
-/about/team             Partners/leadership
-/services               Services grid
-/services/:slug         Service detail (dynamic)
-/industries             Industries grid
-/industries/:slug       Industry detail (dynamic)
-/blog                   Blog listing (paginated)
-/blog/:slug             Single blog post
-/news                   News/press releases listing
-/news/:slug             Single news item
-/career                 Open positions + application form
-/contact                Contact form + office details
-```
-
-### Admin (Supabase-authenticated)
-```
-/admin/login
-/admin                       Dashboard
-/admin/posts                 Blog/news list
-/admin/posts/new
-/admin/posts/:id/edit
-/admin/services
-/admin/services/:id/edit
-/admin/industries
-/admin/industries/:id/edit
-/admin/team
-/admin/careers
-/admin/inquiries
-/admin/settings               Site info + branding/theme values
-```
-
-## 5. Folder Structure
+The Admin Portal lives at `/admin` and is protected by Supabase Auth (Admin Role required). Non-technical firm staff can manage every single aspect of the site without touching code:
 
 ```
-/src
-  /pages
-    /public
-      Home.tsx  About.tsx  Team.tsx
-      Services.tsx  ServiceDetail.tsx
-      Industries.tsx  IndustryDetail.tsx
-      Blog.tsx  BlogPost.tsx
-      News.tsx  NewsPost.tsx
-      Career.tsx  Contact.tsx
-    /admin
-      Login.tsx  Dashboard.tsx
-      Posts.tsx  PostForm.tsx
-      Services.tsx  ServiceForm.tsx
-      Industries.tsx  IndustryForm.tsx
-      Team.tsx  Careers.tsx  Inquiries.tsx  Settings.tsx
-  /components
-    /public          -- Navbar, Footer, ServiceCard, PostCard, ContactForm
-    /admin           -- AdminSidebar, DataTable, ImageUploader, RichTextEditor
-    /ui              -- shadcn primitives (button, input, dialog, table, ...)
-  /layouts
-    PublicLayout.tsx  -- Navbar + Footer wrapper
-    AdminLayout.tsx   -- Sidebar + auth guard wrapper
-  /lib
-    supabaseClient.ts
-    validators.ts      -- zod schemas
-  /routes
-    router.tsx          -- all route definitions
-    ProtectedRoute.tsx   -- admin auth guard
-  /config
-    tenant.config.ts     -- reads VITE_ env vars, exports active theme/branding
-  /types
-    database.ts          -- generated Supabase types
-  /styles
-    globals.css           -- Tailwind base + CSS variables (theme tokens)
-/public                    -- static assets: default favicon, fallback logo
+┌────────────────────────────────────────────────────────────────────────┐
+│ CA FIRM ADMIN                                           [Admin User ▼] │
+├──────────────────────┬─────────────────────────────────────────────────┤
+│ 📊 Dashboard         │ Good Morning, Admin 👋                          │
+│                      │ Here's what's happening with your website.      │
+│ 📰 Tax Articles      │                                                 │
+│ ✍️ Blogs             │ ┌──────────────┐ ┌──────────────┐ ┌───────────┐ │
+│ 💼 Vacancies         │ │ 12           │ │ 4            │ │ 3         │ │
+│ 📥 Applications      │ │ Tax Articles │ │ Applications │ │ Meetings  │ │
+│ 🛠️ Services          │ └──────────────┘ └──────────────┘ └───────────┘ │
+│ 📢 Announcements     │                                                 │
+│ 📑 Downloads         │ Quick Actions:                                  │
+│ 🏛️ Govt Links        │ [+ New Tax Post] [+ Post Vacancy] [+ New Blog]  │
+│ 📅 Appointments      │ [📢 Alert Bar]   [⏰ Office Hours] [⚙️ Settings] │
+│ 👥 Team              │                                                 │
+│ ⏰ Office Hours      │ Recent Activity:                                │
+│ ❓ FAQs              │ • New application received: Senior Accountant   │
+│ ⚙️ Site Settings     │ • Tax update published: New VAT Rules 2025      │
+└──────────────────────┴─────────────────────────────────────────────────┘
 ```
 
-## 6. Multi-Tenant / White-Label Design
+#### Detailed Admin CMS Modules:
 
-Goal: **one codebase**, deployed separately for each CA firm client, each with its own look and its own content — without maintaining forks.
+1. **Dashboard & Metrics**
+   - High-level metric cards: Total Tax Articles, Unread Applications, Upcoming Consultations, Total Active Vacancies.
+   - Quick Action buttons for instant content creation.
+   - Live activity timeline showing recent bookings, candidate submissions, and published content.
 
-**Approach:**
-- Each firm gets its own deployment (its own Vercel/Netlify project) built from the same repo, and its own Supabase project (content stays fully separate between firms — no shared database, no risk of one firm's data touching another's).
-- All visual identity lives in `tenant.config.ts`, populated entirely from `VITE_`-prefixed environment variables set per deployment:
-  ```
-  VITE_FIRM_NAME=
-  VITE_LOGO_URL=
-  VITE_COLOR_PRIMARY=      -- written into CSS variables at runtime
-  VITE_COLOR_ACCENT=
-  VITE_FONT_HEADING=
-  VITE_FONT_BODY=
-  VITE_CONTACT_PHONE=
-  VITE_CONTACT_EMAIL=
-  VITE_CONTACT_ADDRESS=
-  VITE_SOCIAL_LINKS=        -- JSON string
-  VITE_SUPABASE_URL=
-  VITE_SUPABASE_ANON_KEY=
-  ```
-- Tailwind theme tokens (`--color-primary`, `--color-accent`, `--font-heading`, `--font-body`) are set as CSS variables from `tenant.config.ts` at app boot — component code never hardcodes a color or font, it only ever references the tokens. This is what makes "same code, different design" actually work.
-- Content (services offered, team members, blog posts, contact info beyond branding) is owned entirely by each firm's own Supabase project via the admin panel — never hardcoded, never shared.
-- To onboard a new firm: new Supabase project + run schema migration, new Vercel/Netlify project pointed at the same repo with new env vars, upload their logo/assets. No code branching required.
+2. **Careers & Vacancy Management (Hiring Toggle Control)**
+   - **Master Switch: `Hiring Status: [ON / OFF]`**:
+     - Single click toggles `careers_enabled` in the database.
+     - Immediately adds or removes "Careers" from the public navbar in real time.
+     - Enables or disables the public job application form.
+   - **Vacancy Manager**: Add/edit/archive job listings with Job Title, Department, Employment Type (Full-time/Part-time/Internship), Requirements, and Application Deadline.
 
-## 7. Design Direction (minimal & professional)
+3. **Job Applications & CV Vault**
+   - List view of all candidate submissions with filter tags: *New, Under Review, Shortlisted, Rejected*.
+   - View candidate name, email, phone number, applied position, and cover note.
+   - **One-click CV Download**: Direct access to candidate resumes stored in private Supabase Storage buckets.
+   - Candidate status updater & internal notes for the hiring team.
 
-- One neutral (navy or charcoal) + one accent color, white/off-white background — no more than 2 colors as a rule, per-tenant via CSS variables above.
-- Generous whitespace, no gradients, no stock "corporate handshake" photography.
-- Max 2 typefaces: one distinctive serif/sans for headings, one clean system sans for body — also tenant-configurable.
-- No carousels/sliders. Sparse, purposeful motion only (subtle fade/slide on scroll, nothing more).
-- Source components/blocks from shadcn/ui + 21st.dev (navbar, footer, service-card grids, team grids, admin data tables/stat cards/sidebars) — copy code in, don't add as a dependency, then re-theme via the CSS variables above.
+4. **Tax Updates Management**
+   - Comprehensive CRUD table for official tax notifications.
+   - Fields: Title, Slug, Category (Income Tax, VAT, Customs, Corporate, Finance Acts), Full Content (Rich Text Editor), Official Source URL & Source Label, Effective Date.
+   - **Workflow Status**: Toggle between `Draft` and `Published`.
+   - **"Mark as Urgent Alert" Toggle**: When checked, displays in the public homepage alert ticker.
 
-## 8. Database Schema (per-tenant Supabase project)
+5. **Blog & Knowledge Center**
+   - Full WYSIWYG rich text editor for publishing accounting insights and articles.
+   - Featured image upload (via Supabase Storage).
+   - Category assignment, tags, estimated reading time, and author selection.
+   - Status: Draft / Published with scheduled publish dates.
 
-```sql
-profiles (
-  id uuid primary key references auth.users(id),
-  full_name text,
-  role text default 'editor', -- 'admin' | 'editor'
-  created_at timestamptz default now()
-)
+6. **Services Manager**
+   - Manage firm offerings without developer assistance.
+   - Reorder service display order, edit icons, descriptions, deliverables, and target client types.
+   - Feature/Unfeature services on the home page.
 
-posts ( -- shared table for blog + news
-  id uuid primary key default gen_random_uuid(),
-  type text not null check (type in ('blog','news')),
-  title text not null,
-  slug text unique not null,
-  excerpt text,
-  body text,               -- sanitized HTML from rich text editor
-  cover_image_url text,
-  category text,
-  published boolean default false,
-  published_at timestamptz,
-  author_id uuid references profiles(id),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-)
+7. **Appointments & Availability Engine**
+   - **Booking Management**: View all incoming consultation requests with client contact info, requested service, preferred date/time, and meeting mode (Office / Phone / Online).
+   - **Action Controls**: Confirm, Reschedule, or Cancel bookings with automated email notifications.
+   - **Slot & Availability Settings**: Configure daily consultation slots (e.g. 10:00 AM – 5:00 PM, 30/45/60 min duration, maximum bookings per day).
 
-services (
-  id uuid primary key default gen_random_uuid(),
-  title text not null, slug text unique not null,
-  summary text, body text, icon text, sort_order int default 0
-)
+8. **Announcements & Emergency Alert Bar**
+   - Top-of-page alert banner editor (e.g., *"Urgent: Corporate Tax Return filing deadline extended by IRD"*).
+   - Toggle banner `Active / Inactive`, set target link, and set automatic expiration dates.
 
-industries (
-  id uuid primary key default gen_random_uuid(),
-  title text not null, slug text unique not null,
-  summary text, body text, image_url text, sort_order int default 0
-)
+9. **Resources & Download Center Manager**
+   - Upload official PDF forms, VAT checklists, tax templates, and guides.
+   - Set titles, descriptions, and file categories.
+   - Track public download counts.
 
-team_members (
-  id uuid primary key default gen_random_uuid(),
-  name text not null, designation text, photo_url text, bio text, sort_order int default 0
-)
+10. **Government Links Manager**
+    - Add, edit, or delete external official links (IRD, NRB, SEBON, Company Registrar, Customs).
+    - Categorize and order them for the public Resources directory.
 
-job_openings (
-  id uuid primary key default gen_random_uuid(),
-  title text not null, description text, is_open boolean default true,
-  created_at timestamptz default now()
-)
+11. **Team Profiles Manager**
+    - Add partners, CAs, and audit staff profiles.
+    - Fields: Full Name, Professional Title, Qualifications (e.g., FCA, CA, ACCA), Bio, Profile Photo, and LinkedIn URL.
 
-inquiries (
-  id uuid primary key default gen_random_uuid(),
-  name text, email text, phone text, message text,
-  type text default 'contact', -- 'contact' | 'career'
-  created_at timestamptz default now()
-)
+12. **Office Hours & Contact Settings**
+    - Day-by-day business hours editor (Sunday through Saturday).
+    - Set custom status (e.g. "Closed", "10:00 AM - 5:00 PM", "By Appointment Only").
+    - Updates the public contact page, footer, and live availability badge instantly.
 
-site_settings (
-  key text primary key,
-  value text
-)
+13. **FAQ Manager**
+    - Add and organize frequently asked questions by category (Tax, Audit, Accounting, General).
+
+14. **Site Settings & Multi-Client Brand Configuration**
+    - General brand settings: Firm Name, Tagline, Logo upload, Favicon upload.
+    - Communication channels: Primary Email, Phone Numbers, **WhatsApp Direct Chat Number** (used for floating button and contact page redirects), Office Physical Address, Google Maps iframe URL.
+    - SEO Meta: Global Page Title template, Meta Description, OpenGraph share preview image.
+
+### 4.3 User Flow & Journey
+
+1. **Visitor Journey**: Browses website → explores Tax Updates, Services, Blog, Calculators, or Download Center → Books consultation or applies for an open vacancy → Submits form / CV → Receives immediate confirmation.
+2. **Admin Operations Journey**: Firm staff logs into `/admin` securely → reviews pending appointments / CVs → updates office hours or toggles the Careers switch → edits tax drafts or posts announcements → live website updates instantly.
+
+---
+
+## 5. Development Phases & Roadmap
+
+### Phase 0: Project Inception, Environment & System Scaffolding (COMPLETED ✓)
+- **Status:** Done. Next.js App Router + TypeScript + Tailwind CSS initialized directly in project root.
+- **Design Tokens:** Swiss Corporate Minimalism with Deep Navy (`#0F172A`), Slate, and Warm Gold/Amber accents (`#D97706`). Strict compliance with hard design rules: no purple gradients, no pill buttons, no emoji icons (using Lucide React SVG).
+- **Core Architecture:** Dual-interface setup with Public Website under `app/(public)` and Admin Portal under `app/admin`.
+
+### Phase 1: Core Layout, Navigation & Dynamic Hiring Toggle (COMPLETED ✓)
+- **Status:** Done & Verified.
+- **Exact Navbar Implemented:**
+  1. Home (`/`)
+  2. About (`/about`)
+  3. Services (`/services`)
+  4. TaxUpdates (`/tax-updates`)
+  5. Blog (`/blog`)
+  6. Resources (`/resources`)
+  7. Careers (`/careers`) — **Dynamic Hiring Switch**: Automatically shows/hides based on `careers_enabled` controlled via `/admin/careers`.
+  8. Contact (`/contact`) — With One-Click WhatsApp redirect and inquiry routing.
+  + **CTA Button:** "Book Appointment" (`/book-appointment`) prominent header action.
+- **Admin Portal Shell & Modules:** Full sidebar matching `architecture.png` (Dashboard, Tax Articles, Blogs, Vacancies, Applications & CV Vault, Services, Announcements, Resources, Appointments, Office Hours, Settings).
+- **Dev Server Status:** Running and tested on `http://localhost:3000` with 0 build errors. All 13 routes verified with HTTP 200 OK.
+- **Deliverables:**
+  1. Public Navbar with items: 1. Home, 2. About, 3. Services, 4. TaxUpdates, 5. Blog, 6. Resources, 7. Careers (conditional), 8. Contact + "Book Appointment" CTA button.
+  2. Real-time hiring switch behavior: Navbar hides/shows Careers automatically based on `careers_enabled`.
+  3. Complete institutional Footer with legal links, contact info, and dynamic office hours.
+  4. Admin dashboard shell (`/admin`) with sidebar matching `architecture.png`.
+
+### Phase 2: Public Website Pages & Interactive Hubs (COMPLETED ✓)
+- **Status:** Done & Verified.
+- **Visual Design Realization (Aligned with `Ideas/` references & `ui-ux-pro-max`):**
+  - **Color & Aesthetic:** Prestigious Chartered Accountant palette featuring Deep Corporate Navy (`#0F172A`/`#14213D`), Warm Coral/Orange CTA buttons (`#F26430`), crisp white cards with fine borders (`border-slate-200/90`), and subheadings with trailing line accents (`heading-accent-line`).
+  - **Typography:** `Playfair Display` serif for authoritative editorial headlines paired with `Inter` for clean tabular and narrative reading.
+  - **Header & Navbar:** Exactly 8 items + "Book Appointment" CTA in signature coral-orange (`#F26430`) + search trigger + live Careers toggle badge.
+  - **Home (`/`):** Hero section with CA license badge, 4 trust chips (Professional Expertise, Client Focused, Integrity, Long-Term Partnerships), 3 pillar cards (Structured Audits, Confidential & Secure dark card, Clear Communication), 5-stat counter bar, 6-service grid, and bottom appointment strip.
+  - **About (`/about`):** Firm profile, "Who We Are", 3 mission/vision/values cards, 15+ years experience counter, and "Meet Our Experts" team cards.
+  - **Services (`/services`):** Full practice spectrum, 6 service cards with direct inquiry links, and featured Tax & Compliance breakdown.
+  - **TaxUpdates (`/tax-updates`):** Categorized tax circulars portal with live search, category tabs, and official IRD source citations.
+  - **Blog (`/blog`):** Hero with featured publication, category pills, 2-column layout with 6 articles and right sidebar (Categories count, recent posts, newsletter subscription).
+  - **Resources (`/resources`):** Interactive Loan EMI Calculator, 13% VAT Invoice Calculator, Download Center for statutory PDF forms, and Government Directory (IRD, NRB, OCR, SSF, SEBON).
+  - **Careers (`/careers`):** Conditional hiring page with active vacancy cards and direct application form with CV file upload (PDF/DOCX).
+  - **Contact (`/contact`):** Direct office details, WhatsApp instant chat redirect, inquiry form with topic selector, and Kathmandu office location details.
+  - **Book Appointment (`/book-appointment`):** Complete multi-step consultation booking engine.
+- **Build Status:** Next.js Turbopack production build verified with 23 static pages generated and 0 errors. Dev server running on `http://localhost:3000`.
+
+### Phase 3: Admin Portal (CMS) — Content & Operations
+- **Goal:** Build the functional admin dashboard for firm staff to manage content without code.
+- **Deliverables:**
+  1. **Admin Dashboard**: Overview metrics (tax articles, new applications, upcoming appointments, vacancies) and recent activity stream.
+  2. **Tax Updates CMS**: Add/edit/delete tax circulars, draft/publish workflow, "urgent alert" ticker flag.
+  3. **Blog CMS**: WYSIWYG article editor, image uploads, category tagging.
+  4. **Services CMS**: Reorder, add, or modify firm offerings and deliverables.
+  5. **Announcements Manager**: Urgent top notification banner toggle.
+  6. **Government Links & Downloads Manager**: Upload forms and manage regulatory links.
+
+### Phase 4: Business Engines, Careers Hiring Switch & Appointments
+- **Goal:** Wire up the operational workflows that drive the firm's business.
+- **Deliverables:**
+  1. **Careers & Vacancy Manager**:
+     - One-click master toggle `Hiring Status: [ON / OFF]` to instantly control public visibility and applications.
+     - Add/edit job openings with requirements and deadlines.
+  2. **Job Applications & CV Vault**: Review applicant submissions, status tags (New/Shortlisted/Rejected), and 1-click CV download.
+  3. **Appointment & Availability Engine**: Manage bookings, approve/reschedule consultations, and configure time slots per day.
+  4. **Office Hours & Settings**: Day-by-day hours editor and WhatsApp/Email contact configuration.
+
+### Phase 5: Polish, Compliance, SEO & Security
+- **Goal:** Ensure legal compliance, accessibility, security, and top performance.
+- **Deliverables:**
+  1. Legal pages: Privacy Policy, Terms & Conditions, Cookies Policy & Consent Banner.
+  2. Accessibility (WCAG AA compliant contrast, aria attributes, keyboard navigation).
+  3. SEO metadata (custom OpenGraph, unique titles & meta descriptions per page).
+  4. Rate limiting and input sanitization on all forms.
+
+### Phase 6: Testing, QA & Production Deployment
+- **Goal:** End-to-end verification and launch on Vercel + Supabase + Cloudflare.
+- **Deliverables:**
+  1. Cross-browser and mobile responsiveness verification.
+  2. Form testing (CV upload, appointment booking, contact inquiries).
+  3. Admin authentication & permission audits.
+  4. Production deployment checklist.
+
+---
+
+## 6. MCP / Plugin Setup (Antigravity)
+
+Before starting the build, add these MCP servers/plugins to **Google Antigravity**. Antigravity reads MCP config from `.agents/mcp_config.json` (project-level) or `~/.gemini/antigravity/mcp_config.json` (global). To edit the global config from inside the IDE: open the `…` menu at the top of the agent panel → **MCP Servers** → **Manage MCP Servers** → **View raw config**, then merge in the blocks below.
+
+### 6.1 Supabase MCP
+
+Gives the agent direct, live access to your Supabase project — schema, tables, queries — instead of manually checking the dashboard.
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=<your-project-ref>"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "<your-personal-access-token>"
+      }
+    }
+  }
+}
 ```
 
-RLS: public `SELECT` on published content only; `INSERT/UPDATE/DELETE` restricted to authenticated admin/editor roles; `inquiries` allows public `INSERT` only, read restricted to staff.
+- Get a personal access token from Supabase → Account Settings → Access Tokens.
+- Get `<your-project-ref>` from Supabase → Project Settings → General.
+- Drop `--read-only` once you want the agent to be able to write migrations/data directly (use with care).
 
-## 9. Security Checklist (Phase 6 — complete before launch)
+### 6.2 Playwright MCP (browser automation / testing)
 
-- **RLS enabled and tested on every table**, not just written — actually attempt an anonymous write to a protected table and confirm it's rejected.
-- Supabase **service role key is never used in client-side code** — it has zero place in a Vite SPA bundle; only the public `anon` key goes into `VITE_` env vars. Any privileged operation (if ever needed) goes through a serverless function, not the browser.
-- All form inputs (contact form, admin forms) validated with Zod on submit — never trust client input server-side either (RLS policies are the real enforcement layer).
-- Rich text blog/news body is **sanitized with DOMPurify before rendering** (`dangerouslySetInnerHTML` is an XSS risk otherwise) — sanitize on save AND on render.
-- File uploads to Supabase Storage: restrict allowed MIME types (images only for post covers) and max file size, both in the Storage bucket policy and in the upload form.
-- Admin routes protected by both a client-side route guard (UX) and RLS (actual security) — never rely on the client guard alone.
-- Contact form protected against spam/bots: honeypot field at minimum; add reCAPTCHA/hCaptcha if spam becomes an issue.
-- Enforce HTTPS everywhere (default on Vercel/Netlify — confirm no mixed content).
-- Admin password policy: require strong passwords; consider enabling Supabase MFA for admin accounts.
-- Keep dependencies patched — run `npm audit` before each deployment.
-- Environment variables per tenant kept out of the repo (`.env` files gitignored; set directly in hosting provider's dashboard).
-- CORS on Supabase project restricted to the deployed domain(s) in production.
+Lets the agent open a real browser, navigate the site, click through forms, and verify things actually work (not just that the code compiles).
 
-## 10. Deployment Checklist (zero-cost, per tenant)
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
+```
 
-1. Create a new Supabase project for the firm → run schema migrations → enable + test RLS policies.
-2. Create Storage bucket `media`, set public read, restrict upload MIME types/size.
-3. Create first admin user in Supabase Auth → insert matching `profiles` row with `role = 'admin'`.
-4. New Vercel/Netlify project from the same repo → set all `VITE_` env vars (branding + Supabase keys) for this tenant.
-5. Configure SPA fallback routing (`vercel.json` rewrites or Netlify `_redirects`) so deep links work on refresh.
-6. Point the firm's custom domain at the deployment (the one recurring cost).
-7. Run through the Section 9 checklist once more against the live deployment before sharing the link.
+CLI equivalent (if using Claude Code alongside Antigravity):
+```bash
+claude mcp add playwright npx @playwright/mcp@latest
+```
 
-## 11. Out of Scope for v1
+### 6.3 shadcn/ui MCP ("Skill UI" plugin)
 
-- Client login/document portal (schema leaves room for a future `clients` table).
-- Payment processing.
-- Multi-language support (add later via `react-i18next` if needed).
+Since the stack uses shadcn/ui, this MCP gives the agent live access to the real component registry — correct install commands, current props, and code examples — instead of guessing or hallucinating component APIs.
+
+Quick install (run inside the project):
+```bash
+pnpm dlx shadcn@latest mcp init --client claude
+```
+
+Or add manually:
+```json
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    }
+  }
+}
+```
+
+### 6.4 Context7 MCP (up-to-date docs)
+
+Pulls current, version-accurate documentation and code examples for whatever library you're using directly into context — prevents outdated/hallucinated API usage (Next.js, Supabase, Tailwind, etc.).
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}
+```
+
+Usage: add "use context7" to a prompt when you want the agent to pull fresh docs before writing code, e.g. *"Set up Supabase Auth with Next.js server actions. use context7."*
+
+> After adding all four, restart Antigravity (or reload the MCP servers panel) and confirm each shows as connected before starting the build.
+
+---
+
+## 7. Placeholder Theme (Until Real Theme Is Supplied)
+
+No final theme yet. Build now with:
+- Neutral, professional palette (e.g. deep navy / charcoal + one accent, plenty of white space) — **not** the "AI-generated SaaS" purple-blue gradient look
+- System font stack or one clean serif/sans pairing for headings vs. body
+- All colors, spacing, and type as design tokens/CSS variables (Tailwind theme config), never hardcoded hex values in components — so swapping the real theme later is a config change, not a rewrite
+
+---
+
+## 8. Hard Design Rules — Never Use
+
+1. **Purple gradients** — no purple-to-blue/pink gradient hero sections, buttons, or backgrounds (the generic "AI startup" look)
+2. **Pill-shaped buttons** — use rectangular or slightly rounded (subtle radius) buttons, not fully rounded/capsule buttons
+3. **Fake reviews** — no invented testimonials or review content
+4. **Fake metrics** — no made-up stats ("500+ happy clients", "10,000+ filings") unless the firm gives real, verifiable numbers
+5. **Vague hero text** — no generic filler like "Your Trusted Partner for Success" with nothing specific; hero copy must say concretely what the firm does and for whom
+6. **Emoji icons** — use a proper icon set (e.g. Lucide, via shadcn/ui), never emoji as UI icons
+7. **Em dashes** — don't use em dashes anywhere in site copy or UI text
+8. **Crazy scroll animations** — no parallax overload, scroll-jacking, or heavy scroll-triggered animation; motion should be subtle and functional only
+
+### 8.1 Additional content/UI bans
+
+- No "Made with AI" / builder watermark badge anywhere — remove it
+- No stock "slop" photography (generic handshake/laptop stock photos) — use real firm photos, or clean illustration/iconography if real photos aren't available yet
+- No AI-slop copywriting (generic, hedge-y, buzzword-stuffed marketing text)
+- No fake cursor animations
+- No fake "customer counter" widgets (live visitor counts, fake activity notifications like "John just booked an appointment")
+- No false or unverifiable claims anywhere on the site (services, credentials, guarantees)
+
+---
+
+## 9. Required Pages
+
+- Home, About, Services, Tax Updates/News, Blog/Resources, Careers (time-gated), Resources/Calculators, Appointments, Contact
+- **Privacy Policy** page
+- **Terms & Conditions** page
+- **Cookies Policy** page (can be combined with Privacy Policy or standalone — confirm with firm)
+- **Custom 404** page (branded, with navigation back to key pages, not a blank error)
+- No placeholder/empty-state pages left in the live build — every route that exists must have real content or be removed
+
+---
+
+## 10. Legal, Privacy & Compliance Checklist
+
+- [ ] Cookies policy published, and a cookie consent banner shown before non-essential cookies load
+- [ ] Explicit consent checkbox on every form that collects personal data (contact form, appointment booking, job application), linking to the Privacy Policy
+- [ ] Only collect data that's actually necessary for the stated purpose (name/email/phone for contact; CV/cover letter for applications; no extra fields "just in case")
+- [ ] Audit and document every tracking script in use (analytics, pixels) — disclose them in the Privacy/Cookies policy
+- [ ] Audit every third-party embed (maps, calendar widgets, chat widgets, fonts loaded from external CDNs) for what data they send out
+- [ ] Real business details published: legal firm name, registration/license number if applicable, physical address, phone, email
+- [ ] Every image used has proper licensing/copyright clearance (owned by the firm, or a properly licensed stock/library image) — no unlicensed scraped images
+- [ ] No false or unverifiable claims in copy (credentials, results, years in business, guarantees)
+
+---
+
+## 11. Accessibility Checklist
+
+- [ ] All `<img>` and meaningful icons have descriptive `alt` text (decorative images use empty `alt=""`)
+- [ ] Text and UI color contrast meets WCAG AA (4.5:1 for normal text, 3:1 for large text/UI components)
+- [ ] All forms are fully keyboard-navigable (tab order, visible focus states, no keyboard traps)
+- [ ] Every button and link has a clear, descriptive label (no bare "Click here" / icon-only buttons without `aria-label`)
+- [ ] Semantic HTML and proper heading hierarchy (one `<h1>` per page, logical `<h2>`/`<h3>` nesting)
+- [ ] Form fields have associated `<label>` elements, not placeholder-only labeling
+
+---
+
+## 12. Technical / SEO / QA Checklist
+
+- [ ] No horizontal scroll on any page or breakpoint
+- [ ] Unique, descriptive meta description on every page
+- [ ] Unique, descriptive `<title>` on every page
+- [ ] Favicon added (all standard sizes — browser tab, iOS home screen, Android)
+- [ ] All images compressed and served in a modern format (WebP/AVIF) with proper `width`/`height` to avoid layout shift
+- [ ] No broken links (internal or external) — link-check before launch
+- [ ] Fully responsive / mobile-optimized on all breakpoints, tested on real device sizes
+- [ ] Clear inline error messages on every form (validation errors, submission failures)
+- [ ] Clear success confirmation on every form (submitted contact form, booked appointment, submitted application)
+- [ ] Custom, on-brand 404 page (see Required Pages)
+- [ ] No leftover empty-state / placeholder pages in production
+- [ ] Basic security pass: HTTPS enforced, input sanitization/validation on all forms, rate-limiting on public forms and login
+
+---
+
+## 13. Open Items / To Confirm With Firm
+
+- Final visual theme (colors, typography, tone) — pending
+- Real service list and exact service names/descriptions
+- Real team bios and photos
+- Legal business details (registration number, licensing body, physical address)
+- Career page visibility window (when exactly it should open/close)
+- Whether Google Calendar/Meet integration is wanted for appointments
+- Cookies policy: standalone page or merged into Privacy Policy
