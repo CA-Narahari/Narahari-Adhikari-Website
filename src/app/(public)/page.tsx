@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import MagicRings from '@/components/ui/MagicRings';
 
 export default function HomePage() {
   const { settings } = useApp();
@@ -41,61 +42,82 @@ export default function HomePage() {
   return (
     <div className="space-y-20 lg:space-y-28 pb-20 overflow-x-hidden">
       {/* 1. Hero Section matching Ideas/LandingPage.png */}
-      <section id="hero-section" className="relative bg-[#E0ECF0] pt-8 pb-16 lg:pt-14 lg:pb-0 overflow-hidden">
-        {/* Subtle background ambient glow */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/40 rounded-full blur-3xl pointer-events-none -mr-40 -mt-20" />
-
+      <section id="hero-section" className="relative bg-hero-gradient pt-8 pb-16 lg:pt-14 lg:pb-12 overflow-hidden">
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             {/* Left Content */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="lg:col-span-7 space-y-6 lg:pb-20 text-left"
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:col-span-7 space-y-6 lg:pb-6 text-left"
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold text-[#023A51] leading-[1.12] tracking-tight">
-                Secure your financial future with Narahari Adhikari & Associates<span className="text-[#2CBC63]">.</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-[#022A3A] leading-[1.12] tracking-tight">
+                Secure your financial future with Narahari Adhikari<span className="text-[#2CBC63]">.</span>
               </h1>
 
-              <p className="text-base sm:text-[18px] text-[#4A5259] leading-relaxed max-w-xl">
+              <p className="text-base sm:text-[17.5px] text-[#16384C] font-normal leading-relaxed max-w-xl">
                 Premier Chartered Accountants licensed by ICAN Nepal, providing high-integrity statutory audits, corporate tax strategy, and institutional business advisory across Nepal.
               </p>
 
-              {/* Action Buttons: Free Consultation (Green Pill) + Our Services (Restored!) */}
+              {/* Action Buttons: Clean Pill Style Matching Avada Reference */}
               <div className="pt-2 flex flex-wrap items-center gap-4">
-                <Button
-                  asChild
-                  size="pill"
-                  className="bg-[#2CBC63] hover:bg-[#25A456] text-white text-[15px] font-bold h-12 px-8 shadow-sm hover:shadow-lg hover:shadow-[#2CBC63]/25 active:scale-[0.98] transition-all"
+                <Link
+                  href="/book-appointment"
+                  className="px-7 py-3 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[15px] shadow-sm hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center cursor-pointer"
                 >
-                  <Link href="/book-appointment">
-                    Free Consultation
-                  </Link>
-                </Button>
+                  Free Consultation
+                </Link>
 
-                <Button
-                  asChild
-                  size="pill"
-                  variant="outline"
-                  className="border border-[#CCD7DC] bg-white/90 hover:bg-white text-[#023A51] text-[15px] font-bold h-12 px-7 shadow-xs hover:border-[#2CBC63]/50 transition-all"
+                <Link
+                  href="/services"
+                  className="px-7 py-3 rounded-full bg-white hover:bg-slate-50 text-[#023A51] font-bold text-[15px] shadow-sm hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center cursor-pointer border border-white/80"
                 >
-                  <Link href="/services">
-                    Our Services
-                  </Link>
-                </Button>
+                  Our Services
+                </Link>
               </div>
             </motion.div>
 
-            {/* Right Profile Picture matching LandingPage.png person mockup */}
+            {/* Right Component: Centered Profile Picture with MagicRings */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
-              className="lg:col-span-5 flex justify-center lg:justify-end items-end"
+              className="lg:col-span-5 flex items-center justify-center relative py-4 lg:py-6"
             >
-              <div className="relative w-full max-w-[400px] lg:max-w-[430px] flex justify-center">
-                <div className="relative">
+              <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] h-[440px] sm:h-[480px] lg:h-[510px] flex items-center justify-center">
+                {/* MagicRings Component as interactive background aura */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-auto overflow-visible">
+                  <div className="w-[520px] h-[520px] sm:w-[580px] sm:h-[580px] lg:w-[620px] lg:h-[620px] shrink-0">
+                    <MagicRings
+                      color="#ffffff"
+                      colorTwo="#2CBC63"
+                      ringCount={5}
+                      speed={0.7}
+                      attenuation={14}
+                      lineThickness={2.2}
+                      baseRadius={0.34}
+                      radiusStep={0.09}
+                      scaleRate={0.07}
+                      opacity={0.9}
+                      blur={0}
+                      noiseAmount={0}
+                      rotation={-15}
+                      ringGap={1.4}
+                      fadeIn={0.6}
+                      fadeOut={0.4}
+                      followMouse={true}
+                      mouseInfluence={0.25}
+                      hoverScale={1.12}
+                      parallax={0.04}
+                      clickBurst={true}
+                      alphaMode="coverage"
+                    />
+                  </div>
+                </div>
+
+                {/* Profile Picture centered */}
+                <div className="relative z-10 flex items-center justify-center pointer-events-none">
                   <Image
                     src="/profile-picture.png?v=fresh2"
                     alt="CA Narahari Adhikari - Chartered Accountant Nepal"
@@ -103,7 +125,7 @@ export default function HomePage() {
                     height={520}
                     unoptimized={true}
                     priority
-                    className="w-auto h-[380px] sm:h-[450px] lg:h-[490px] object-contain drop-shadow-xl"
+                    className="w-auto h-[380px] sm:h-[430px] lg:h-[470px] object-contain drop-shadow-2xl select-none"
                   />
                 </div>
               </div>
@@ -235,15 +257,12 @@ export default function HomePage() {
             Every business entity in Nepal has distinct statutory obligations. Consult with our senior Chartered Accountants for an individualized compliance roadmap.
           </p>
           <div className="pt-2">
-            <Button
-              asChild
-              size="pill"
-              className="bg-[#2CBC63] hover:bg-[#25A456] text-white text-[14px] font-bold px-7 h-11 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+            <Link
+              href="/contact"
+              className="px-7 py-3 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-sm shadow-sm hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center cursor-pointer"
             >
-              <Link href="/contact">
-                How we can help?
-              </Link>
-            </Button>
+              How we can help?
+            </Link>
           </div>
         </div>
       </section>
@@ -256,7 +275,7 @@ export default function HomePage() {
             <div className="relative rounded-[16px] overflow-hidden shadow-md border border-[#E8EBEF]">
               <Image
                 src="/team-consultation.jpg"
-                alt="Narahari Adhikari & Associates Consultation Team"
+                alt="Narahari Adhikari Consultation Team"
                 width={720}
                 height={520}
                 className="w-full h-[360px] sm:h-[440px] object-cover"
@@ -587,15 +606,13 @@ export default function HomePage() {
                       />
                     </div>
 
-                    {/* Submit Button — Pill shape matching LandingPage.png */}
                     <div className="pt-2">
-                      <Button
+                      <button
                         type="submit"
-                        size="pill"
-                        className="w-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[15px] h-12 shadow-sm hover:shadow-md cursor-pointer"
+                        className="w-full py-3.5 px-6 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
                       >
                         Request a Quote
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}

@@ -11,8 +11,8 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: 'Narahari Adhikari & Associates | Chartered Accountants',
-  description: 'Premier Chartered Accountancy, Tax Advisory, Statutory Audit & Corporate Consulting in Nepal.',
+  title: 'Narahari Adhikari | Chartered Accountant, Tax Advisory & Offshore Accounting Services',
+  description: 'We are preparing a new home for our Tax Business Advisory & Offshore Accounting Services. In the meantime, our team remains fully reachable — please get in touch through any of the options below.',
 };
 
 export default function RootLayout({

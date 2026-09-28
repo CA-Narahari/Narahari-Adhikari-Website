@@ -6,7 +6,7 @@
   --color-primary: #023A51;
   --color-accent: #2CBC63;
   --color-accent-hover: #25A456;
-  --color-surface-hero: #E0ECF0;
+  --color-surface-hero: #9ec2c0;
   --color-border-subtle: #E8EBEF;
 }
 
@@ -21,7 +21,8 @@
     --color-accent: #2CBC63;         /* color-9: Brand Green (Buttons, Accents) */
     --color-accent-hover: #25A456;
     --color-accent-light: #65BC7B;   /* color-10: Soft Green */
-    --color-surface-hero: #E0ECF0;   /* color-13: Pale Blue Hero Surface */
+    --color-surface-hero: #9ec2c0;   /* Light Aqua Hero Surface */
+    --hero-gradient: linear-gradient(90deg, #9ec2c0 0%, rgb(191, 214, 212) 35%, rgb(179, 214, 198) 65%, rgb(143, 203, 169) 100%);
     --color-surface-muted: #E3E3E3;  /* color-12: Surface */
     --color-border-subtle: #E8EBEF;  /* color-14: Card Border */
     --color-border-light: #DDDDDD;   /* color-11: Border */
@@ -58,6 +59,11 @@ body {
 /* Green punctuation accent matching Avada Accountant design */
 .accent-dot {
   color: #2CBC63;
+}
+
+/* Light aqua-mint gradient with luminous whitish center */
+.bg-hero-gradient {
+  background: linear-gradient(90deg, #9ec2c0 0%, rgb(191, 214, 212) 25%, rgb(236, 246, 244) 48%, rgb(200, 226, 214) 75%, rgb(143, 203, 169) 100%);
 }
 
 /* Micro-transitions */

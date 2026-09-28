@@ -12,7 +12,7 @@ import {
 } from '@/types';
 
 export const initialSiteSettings: SiteSettings = {
-  company_name: 'Narahari Adhikari & Associates',
+  company_name: 'Narahari Adhikari',
   tagline: 'Chartered Accountants & Strategic Financial Advisors',
   ca_reg_number: 'ICAN Reg. No. 1024/2078',
   email: 'info@narahariadhikari.com',

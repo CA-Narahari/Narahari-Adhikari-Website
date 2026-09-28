@@ -72,7 +72,7 @@ export default function Navbar() {
         !isPastHero && scrolled
           ? 'bg-white shadow-[0_4px_20px_-4px_rgba(2,58,81,0.08)] border-b border-[#E8EBEF]'
           : !isPastHero
-          ? 'bg-[#E0ECF0] border-b border-transparent'
+          ? 'bg-hero-gradient border-none'
           : ''
       }`}
     >
@@ -159,7 +159,7 @@ export default function Navbar() {
             </div>
 
             {/* Divider Line under the top row */}
-            <div className="border-b border-[#CCD7DC]" />
+            <div className="border-b border-[#023A51]/15" />
 
             {/* Bottom Tier: Nav items with top and bottom indicator lines + CTA Button */}
             <div className="flex items-center justify-between py-3">
@@ -234,7 +234,7 @@ export default function Navbar() {
                               <Link
                                 key={s.label}
                                 href={s.href}
-                                className="block px-3.5 py-2.5 rounded-[8px] text-[13px] text-[#33475B] hover:bg-[#E0ECF0]/60 hover:text-[#023A51] transition-colors duration-150"
+                                className="block px-3.5 py-2.5 rounded-[8px] text-[13px] text-[#33475B] hover:bg-[#9ec2c0]/25 hover:text-[#023A51] transition-colors duration-150"
                               >
                                 <div className="font-semibold">{s.label}</div>
                                 <div className="text-[11px] text-[#93999F] mt-0.5 leading-snug">{s.sub}</div>
@@ -248,17 +248,14 @@ export default function Navbar() {
                 })}
               </nav>
 
-              {/* Right: Green CTA button with pill border radius */}
+              {/* Right: Green CTA button */}
               <div className="shrink-0 pl-6">
-                <Button
-                  asChild
-                  size="pill"
-                  className="bg-[#2CBC63] hover:bg-[#25A456] text-white shadow-none hover:shadow-md hover:shadow-[#2CBC63]/25 cursor-pointer font-bold text-[14.5px] h-11 px-7"
+                <Link
+                  href="/book-appointment"
+                  className="px-6 py-2.5 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[14px] shadow-sm hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center cursor-pointer"
                 >
-                  <Link href="/book-appointment">
-                    Free Consultation
-                  </Link>
-                </Button>
+                  Free Consultation
+                </Link>
               </div>
             </div>
           </div>
@@ -320,7 +317,7 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between px-4 py-3 rounded-[8px] text-[15px] font-medium transition-colors duration-200 ${
                       active
-                        ? 'bg-[#E0ECF0] text-[#023A51] border-l-4 border-[#2CBC63]'
+                        ? 'bg-[#9ec2c0]/30 text-[#023A51] border-l-4 border-[#2CBC63]'
                         : 'text-[#33475B] hover:bg-[#F8FAFC] hover:text-[#023A51]'
                     }`}
                   >
@@ -335,15 +332,13 @@ export default function Navbar() {
               })}
 
               <div className="pt-4 border-t border-[#E8EBEF]">
-                <Button
-                  asChild
-                  size="pill"
-                  className="w-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[15px] h-12"
+                <Link
+                  href="/book-appointment"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full py-3 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-center block text-sm shadow-sm"
                 >
-                  <Link href="/book-appointment" onClick={() => setMobileMenuOpen(false)}>
-                    Free Consultation
-                  </Link>
-                </Button>
+                  Free Consultation
+                </Link>
               </div>
             </div>
           </motion.div>
