@@ -20,6 +20,7 @@ export default function Navbar() {
   const { settings } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesDropdown, setServicesDropdown] = useState(false);
+  const [resourcesDropdown, setResourcesDropdown] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isPastHero, setIsPastHero] = useState(false);
 
@@ -49,7 +50,7 @@ export default function Navbar() {
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services', hasDropdown: true },
     { name: 'Tax Updates', href: '/tax-updates' },
-    { name: 'Resources', href: '/resources' },
+    { name: 'Resources', href: '/resources', hasDropdown: true },
     { name: 'About Us', href: '/about' },
     { name: 'Blog', href: '/blog' },
     ...(settings.careers_enabled
@@ -100,10 +101,10 @@ export default function Navbar() {
               {/* Left: Quick links */}
               <div className="flex items-center gap-7 font-semibold tracking-[0.12em] uppercase text-[11px]">
                 <Link
-                  href="/contact#office"
+                  href="/tax-updates"
                   className="hover:text-[#2CBC63] transition-colors duration-150"
                 >
-                  Offices
+                  Tax Updates
                 </Link>
                 {settings.careers_enabled && (
                   <Link
@@ -171,8 +172,14 @@ export default function Navbar() {
                     <div
                       key={item.name}
                       className="relative group py-2"
-                      onMouseEnter={() => item.hasDropdown && setServicesDropdown(true)}
-                      onMouseLeave={() => item.hasDropdown && setServicesDropdown(false)}
+                      onMouseEnter={() => {
+                        if (item.name === 'Services') setServicesDropdown(true);
+                        if (item.name === 'Resources') setResourcesDropdown(true);
+                      }}
+                      onMouseLeave={() => {
+                        if (item.name === 'Services') setServicesDropdown(false);
+                        if (item.name === 'Resources') setResourcesDropdown(false);
+                      }}
                     >
                       {/* Top Green Indicator Line */}
                       <span
@@ -183,28 +190,54 @@ export default function Navbar() {
                         }`}
                       />
 
-                      <Link
-                        href={item.href}
-                        className={`flex items-center gap-1.5 text-[15px] font-medium tracking-normal transition-colors duration-150 ${
-                          active
-                            ? 'text-[#023A51]'
-                            : 'text-[#33475B] group-hover:text-[#023A51]'
-                        }`}
-                      >
-                        <span>{item.name}</span>
-                        {item.hasDropdown && (
+                      {item.name === 'Resources' ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setResourcesDropdown((prev) => !prev);
+                          }}
+                          className={`flex items-center gap-1.5 text-[15px] font-medium tracking-normal transition-colors duration-150 cursor-pointer ${
+                            pathname.startsWith('/resources')
+                              ? 'text-[#023A51]'
+                              : 'text-[#33475B] group-hover:text-[#023A51]'
+                          }`}
+                        >
+                          <span>{item.name}</span>
                           <ChevronDown
                             className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                              servicesDropdown ? 'rotate-180 text-[#2CBC63]' : 'text-[#7A889B] group-hover:text-[#023A51]'
+                              resourcesDropdown
+                                ? 'rotate-180 text-[#2CBC63]'
+                                : 'text-[#7A889B] group-hover:text-[#023A51]'
                             }`}
                           />
-                        )}
-                        {item.isHiringBadge && (
-                          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-[#2CBC63]/15 text-[#2CBC63] rounded-full">
-                            Hiring
-                          </span>
-                        )}
-                      </Link>
+                        </button>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          className={`flex items-center gap-1.5 text-[15px] font-medium tracking-normal transition-colors duration-150 ${
+                            active
+                              ? 'text-[#023A51]'
+                              : 'text-[#33475B] group-hover:text-[#023A51]'
+                          }`}
+                        >
+                          <span>{item.name}</span>
+                          {item.hasDropdown && (
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                item.name === 'Services' && servicesDropdown
+                                  ? 'rotate-180 text-[#2CBC63]'
+                                  : 'text-[#7A889B] group-hover:text-[#023A51]'
+                              }`}
+                            />
+                          )}
+                          {item.isHiringBadge && (
+                            <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-[#2CBC63]/15 text-[#2CBC63] rounded-full">
+                              Hiring
+                            </span>
+                          )}
+                        </Link>
+                      )}
 
                       {/* Bottom Green Indicator Line */}
                       <span
@@ -215,31 +248,108 @@ export default function Navbar() {
                         }`}
                       />
 
-                      {/* Services Dropdown */}
+                      {/* Services Dropdown (2 Columns) */}
                       <AnimatePresence>
-                        {item.hasDropdown && servicesDropdown && (
+                        {item.name === 'Services' && servicesDropdown && (
                           <motion.div
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 8 }}
-                            transition={{ duration: 0.15, ease: 'easeOut' }}
-                            className="absolute top-full left-0 w-[290px] bg-white border border-[#E8EBEF] rounded-[10px] shadow-[0_12px_30px_rgba(2,58,81,0.12)] p-2.5 z-50 mt-1"
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                            transition={{ duration: 0.18, ease: 'easeOut' }}
+                            className="absolute top-full left-0 -translate-x-12 w-[600px] bg-white border border-[#E8EBEF] rounded-[16px] shadow-[0_18px_40px_rgba(2,58,81,0.12)] p-4 z-50 mt-1.5"
                           >
-                            {[
-                              { label: 'Tax Advisory & Compliance', sub: 'Corporate Tax, VAT & IRD Representation', href: '/services#tax-advisory-compliance' },
-                              { label: 'Audit & Assurance', sub: 'Statutory, Internal & Forensic Audits', href: '/services#audit-assurance' },
-                              { label: 'Accounting & Advisory', sub: 'NFRS Bookkeeping & Financial Reporting', href: '/services#accounting-business-advisory' },
-                              { label: 'Corporate & Secretarial', sub: 'Company Registration & OCR Filings', href: '/services#corporate-secretarial-legal' },
-                            ].map((s) => (
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { label: 'Audit & Assurance', sub: 'Trust, compliance & statutory audits', href: '/services/audit-and-assurance' },
+                                { label: 'Taxation Consultancy', sub: '31 years tax & IRD advisory', href: '/services/taxation-consultancy' },
+                                { label: 'Mergers & Acquisitions', sub: 'M&A pioneers & deal execution', href: '/services/mergers-and-acquisitions' },
+                                { label: 'Advisory Services', sub: 'Strategic business & growth advice', href: '/services/advisory-services' },
+                                { label: 'Business Support & BPO', sub: 'Bookkeeping, payroll & OCR', href: '/services/business-support-outsourcing' },
+                                { label: 'NFRS/IFRS Implementation', sub: 'Financial reporting transformation', href: '/services/nfrs-ifrs-implementation' },
+                                { label: 'Training & Seminars', sub: 'Expert-led corporate workshops', href: '/services/training-and-seminar' },
+                              ].map((s) => (
+                                <Link
+                                  key={s.label}
+                                  href={s.href}
+                                  onClick={() => setServicesDropdown(false)}
+                                  className="group/item block p-3 rounded-[10px] text-[13px] text-[#33475B] hover:bg-[#E8F4F8] hover:text-[#023A51] transition-all duration-150"
+                                >
+                                  <div className="font-bold text-[#023A51] group-hover/item:text-[#2CBC63] transition-colors flex items-center justify-between">
+                                    <span>{s.label}</span>
+                                    <span className="text-[11px] opacity-0 group-hover/item:opacity-100 transition-opacity text-[#2CBC63]">→</span>
+                                  </div>
+                                  <div className="text-[11.5px] text-[#7A889B] mt-0.5 leading-snug line-clamp-1">{s.sub}</div>
+                                </Link>
+                              ))}
+                            </div>
+                            <div className="border-t border-[#E8EBEF] mt-3 pt-3 flex items-center justify-between px-2">
+                              <span className="text-[12px] text-[#7A889B]">
+                                Explore all 7 specialized practice areas
+                              </span>
                               <Link
-                                key={s.label}
-                                href={s.href}
-                                className="block px-3.5 py-2.5 rounded-[8px] text-[13px] text-[#33475B] hover:bg-[#9ec2c0]/25 hover:text-[#023A51] transition-colors duration-150"
+                                href="/services"
+                                onClick={() => setServicesDropdown(false)}
+                                className="text-[12.5px] font-bold text-[#2CBC63] hover:text-[#25A456] transition-colors inline-flex items-center gap-1"
                               >
-                                <div className="font-semibold">{s.label}</div>
-                                <div className="text-[11px] text-[#93999F] mt-0.5 leading-snug">{s.sub}</div>
+                                View All Services &rarr;
                               </Link>
-                            ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Resources Dropdown (2 Distinct Pages) */}
+                      <AnimatePresence>
+                        {item.name === 'Resources' && resourcesDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                            transition={{ duration: 0.18, ease: 'easeOut' }}
+                            className="absolute top-full left-0 -translate-x-16 w-[440px] bg-white border border-[#E8EBEF] rounded-[16px] shadow-[0_18px_40px_rgba(2,58,81,0.12)] p-4 z-50 mt-1.5"
+                          >
+                            <div className="space-y-2">
+                              <Link
+                                href="/resources/tools"
+                                onClick={() => setResourcesDropdown(false)}
+                                className="group/res block p-3.5 rounded-xl hover:bg-[#E8F4F8] transition-all"
+                              >
+                                <div className="font-bold text-[#023A51] group-hover/res:text-[#2CBC63] transition-colors flex items-center justify-between text-[13.5px]">
+                                  <span>Interactive Calculators & Tools</span>
+                                  <span className="text-[11px] opacity-0 group-hover/res:opacity-100 transition-opacity text-[#2CBC63]">→</span>
+                                </div>
+                                <p className="text-[11.5px] text-[#7A889B] mt-1 leading-snug">
+                                  12 Real-time financial models: VAT 13%, individual income tax slabs, loan EMI, SSF & TDS lookup.
+                                </p>
+                              </Link>
+
+                              <Link
+                                href="/resources/downloads"
+                                onClick={() => setResourcesDropdown(false)}
+                                className="group/res block p-3.5 rounded-xl hover:bg-[#E8F4F8] transition-all"
+                              >
+                                <div className="font-bold text-[#023A51] group-hover/res:text-[#2CBC63] transition-colors flex items-center justify-between text-[13.5px]">
+                                  <span>Regulatory Portals & Downloads</span>
+                                  <span className="text-[11px] opacity-0 group-hover/res:opacity-100 transition-opacity text-[#2CBC63]">→</span>
+                                </div>
+                                <p className="text-[11.5px] text-[#7A889B] mt-1 leading-snug">
+                                  Direct access to 11 official authorities (ICAN, IRD, NRB, OCR, Customs) & downloadable statutory schedules.
+                                </p>
+                              </Link>
+                            </div>
+
+                            <div className="border-t border-[#E8EBEF] mt-3 pt-3 flex items-center justify-between px-2">
+                              <span className="text-[11.5px] text-[#7A889B]">
+                                Statutory directories & tools
+                              </span>
+                              <Link
+                                href="/resources"
+                                onClick={() => setResourcesDropdown(false)}
+                                className="text-[12px] font-bold text-[#2CBC63] hover:text-[#25A456] transition-colors"
+                              >
+                                All Resources &rarr;
+                              </Link>
+                            </div>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -311,23 +421,62 @@ export default function Navbar() {
               {navItems.map((item) => {
                 const active = isActive(item.href);
                 return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-[8px] text-[15px] font-medium transition-colors duration-200 ${
-                      active
-                        ? 'bg-[#9ec2c0]/30 text-[#023A51] border-l-4 border-[#2CBC63]'
-                        : 'text-[#33475B] hover:bg-[#F8FAFC] hover:text-[#023A51]'
-                    }`}
-                  >
-                    <span>{item.name}</span>
-                    {item.isHiringBadge && (
-                      <span className="px-2 py-0.5 text-[10px] font-bold bg-[#2CBC63]/15 text-[#2CBC63] rounded-full">
-                        We Are Hiring
-                      </span>
+                  <div key={item.name} className="space-y-1">
+                    {item.name === 'Resources' ? (
+                      <button
+                        type="button"
+                        onClick={() => setResourcesDropdown((prev) => !prev)}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-[8px] text-[15px] font-medium transition-colors duration-200 cursor-pointer ${
+                          pathname.startsWith('/resources')
+                            ? 'bg-[#9ec2c0]/30 text-[#023A51] border-l-4 border-[#2CBC63]'
+                            : 'text-[#33475B] hover:bg-[#F8FAFC] hover:text-[#023A51]'
+                        }`}
+                      >
+                        <span>{item.name}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            resourcesDropdown ? 'rotate-180 text-[#2CBC63]' : 'text-slate-400'
+                          }`}
+                        />
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center justify-between px-4 py-3 rounded-[8px] text-[15px] font-medium transition-colors duration-200 ${
+                          active
+                            ? 'bg-[#9ec2c0]/30 text-[#023A51] border-l-4 border-[#2CBC63]'
+                            : 'text-[#33475B] hover:bg-[#F8FAFC] hover:text-[#023A51]'
+                        }`}
+                      >
+                        <span>{item.name}</span>
+                        {item.isHiringBadge && (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-[#2CBC63]/15 text-[#2CBC63] rounded-full">
+                            We Are Hiring
+                          </span>
+                        )}
+                      </Link>
                     )}
-                  </Link>
+
+                    {item.name === 'Resources' && (
+                      <div className="pl-6 space-y-1 pb-1">
+                        <Link
+                          href="/resources/tools"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block px-3 py-1.5 text-xs text-[#59667D] hover:text-[#023A51] hover:bg-slate-50 rounded-md"
+                        >
+                          &bull; Calculators & Tools (12)
+                        </Link>
+                        <Link
+                          href="/resources/downloads"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block px-3 py-1.5 text-xs text-[#59667D] hover:text-[#023A51] hover:bg-slate-50 rounded-md"
+                        >
+                          &bull; Regulatory Portals & Downloads
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
 

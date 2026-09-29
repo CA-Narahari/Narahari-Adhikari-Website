@@ -13,7 +13,7 @@ export default function PublicLayout({
     <div className="min-h-screen flex flex-col bg-white text-[#33475B]">
       <AnnouncementBanner />
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="public-main flex-1">{children}</main>
       <Footer />
       <WhatsAppButton />
       <EntryPopup />

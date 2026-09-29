@@ -29,18 +29,21 @@ export const initialSiteSettings: SiteSettings = {
 export const initialTaxUpdates: TaxUpdate[] = [
   {
     id: 'tax-1',
-    title: 'New VAT Rule Directives & E-Billing Implementation Guidance 2081/82',
+    title: 'New VAT Rule Directives & E-Billing (CBMS) Mandatory Integration 2081/82',
     slug: 'new-vat-rule-directives-e-billing-2081-82',
     category: 'VAT',
-    summary: 'Detailed explanation of new Inland Revenue Department mandatory digital invoicing requirements for entities with turnover exceeding NRs 25 Crore.',
+    update_type: 'Update',
+    topic: 'VAT & Invoicing',
+    effective_date: '01 Shrawan 2081',
+    summary: 'Inland Revenue Department circular mandating real-time Central Billing Monitoring System (CBMS) integration for taxpayers exceeding turnover threshold.',
     content: `The Inland Revenue Department (IRD) has released updated procedural directives regarding electronic billing (CBMS integration) and mandatory VAT reporting.
 
-Key Takeaways:
+What this means for you:
 1. All commercial taxpayers with aggregate annual turnover above NRs 250 Million must synchronize directly with the Central Billing Monitoring System (CBMS).
 2. Credit note reconciliation timeline reduced to 7 working days from date of issuance.
 3. Penalties for delayed monthly VAT statement uploads have been revised in accordance with Section 19 of the Value Added Tax Act.
 
-Compliance Checklist:
+Action Checklist:
 • Confirm software certification with IRD approved vendors.
 • Ensure daily fiscal closure reports are stored on encrypted local backup.
 • Reconcile monthly sales register against CBMS transmission logs prior to the 25th of each Nepali month.`,
@@ -52,29 +55,114 @@ Compliance Checklist:
   },
   {
     id: 'tax-2',
-    title: 'Corporate Income Tax Assessment Guidelines for Financial Institutions & SMEs',
-    slug: 'corporate-income-tax-assessment-guidelines-smes',
-    category: 'Corporate Tax',
-    summary: 'Standard operating procedures for advance tax installment calculation and allowable business expenditure deductions.',
-    content: `A comprehensive overview of allowable expense heads, depreciation schedules under Pool A through Pool D, and withholding tax adjustments for fiscal year filings.`,
-    source_name: 'Ministry of Finance / IRD',
-    source_url: 'https://mof.gov.np',
-    is_urgent: false,
+    title: 'Filing Reminder: Monthly VAT & Withholding Tax (TDS) Deposit Deadline',
+    slug: 'filing-reminder-monthly-vat-tds-deposit-deadline',
+    category: 'VAT',
+    update_type: 'Deadline',
+    topic: 'Compliance Deadline',
+    effective_date: '25th of Every Nepali Month',
+    summary: 'Mandatory statutory deadline for filing monthly VAT returns, input tax claim adjustments, and electronic withholding tax (E-TDS) payments.',
+    content: `All VAT registered entities in Nepal are reminded to complete and file their monthly VAT return along with applicable withholding tax (TDS) by the 25th of the current Nepali calendar month.
+
+What this means for you:
+• Delays incur statutory fine of 0.1% per day or NPR 1,000 per month (whichever is higher) under Sec 19 of VAT Act.
+• Input VAT credits not submitted within the prescribed period will trigger manual scrutiny during statutory audit.
+• Withholding tax vouchers must be issued directly via IRD portal to ensure vendor reconciliation.`,
+    source_name: 'IRD Compliance Directorate',
+    source_url: 'https://ird.gov.np',
+    is_urgent: true,
     status: 'published',
-    published_at: '2026-09-08',
+    published_at: '2026-09-18',
   },
   {
     id: 'tax-3',
-    title: 'Customs Valuation and Harmonized System Code Updates',
-    slug: 'customs-valuation-hs-code-updates',
-    category: 'Customs',
-    summary: 'Summary of import tariff modifications on industrial machinery and capital goods under the latest gazette notice.',
-    content: `Updated tariff structures and documentation mandates for raw material imports and bonded warehouse facilities.`,
-    source_name: 'Department of Customs',
-    source_url: 'https://customs.gov.np',
+    title: 'How NFRS/IFRS Transition Directly Affects Your Corporate Financial Reporting',
+    slug: 'how-nfrs-ifrs-transition-affects-corporate-financial-reporting',
+    category: 'Finance Acts',
+    update_type: 'Guide',
+    topic: 'Financial Reporting',
+    effective_date: 'Effective FY 2081/82 onwards',
+    summary: 'Comprehensive breakdown of opening balance sheet reconciliations, fair value asset measurement, and technical disclosures mandated by ICAN.',
+    content: `As the Institute of Chartered Accountants of Nepal (ICAN) expands the mandatory enforcement of Nepal Financial Reporting Standards (NFRS), organizations must upgrade beyond traditional accounting methods.
+
+What this means for you:
+1. Balance Sheet Transition: Reclassification of operating leases into Right-of-Use (ROU) assets and corresponding lease liabilities under NFRS 16.
+2. Financial Instruments: Adoption of Expected Credit Loss (ECL) provisioning rather than incurred loss models under NFRS 9.
+3. Revenue Recognition: Multi-step contract evaluations under NFRS 15 for businesses with bundle contracts or milestone-based delivery.
+
+Strategic Advisory Note:
+Our technical advisory team conducts gap-analysis audits to ensure audit committees and executive directors maintain zero qualification risk.`,
+    source_name: 'Technical Standards Desk / ICAN',
+    source_url: 'https://en.ican.org.np/en/',
     is_urgent: false,
     status: 'published',
-    published_at: '2026-08-28',
+    published_at: '2026-09-12',
+  },
+  {
+    id: 'tax-4',
+    title: 'Hydropower Sector Regulatory Note: Royalty Payments, Carbon Revenue & Tax Holidays',
+    slug: 'hydropower-sector-regulatory-note-royalty-tax-holidays',
+    category: 'Corporate Tax',
+    update_type: 'Sector Note',
+    topic: 'Hydropower & Energy',
+    sector: 'Hydropower',
+    effective_date: 'Gazette Notice 2081',
+    summary: 'Specialized regulatory insights on 100% income tax exemption timelines, subsequent 50% concession periods, and transmission wheeling tax guidelines.',
+    content: `Energy producers operating commercial hydropower generation projects in Nepal operate under specific statutory tax incentive structures enacted in the Income Tax Act Section 11.
+
+What this means for you:
+• 10-Year Full Tax Holiday: 100% tax exemption for first 10 years of commercial generation, followed by 50% exemption for subsequent 5 years.
+• Local Government Royalty: Exact calculation of royalty split between Department of Electricity Development and provincial/local authorities.
+• Capital Goods Customs Concessions: Verified documentation required for 1% customs duty import of electromechanical components.`,
+    source_name: 'Department of Electricity Development / IRD',
+    source_url: 'https://mof.gov.np',
+    is_urgent: false,
+    status: 'published',
+    published_at: '2026-09-05',
+  },
+  {
+    id: 'tax-5',
+    title: 'What the New National Fiscal Budget Means for SMEs & Manufacturing Units',
+    slug: 'what-new-budget-means-for-smes-manufacturing',
+    category: 'Income Tax',
+    update_type: 'Guide',
+    topic: 'Budget & SMEs',
+    sector: 'Manufacturing',
+    effective_date: 'Fiscal Year 2081/82',
+    summary: 'Executive summary detailing changes in corporate income tax concessions, special export subsidies, and revised turnover tax brackets.',
+    content: `The current fiscal budget contains several critical measures aimed at incentivizing domestic production and formalizing micro and small businesses.
+
+What this means for you:
+• Concessional 20% Corporate Rate for manufacturing units utilizing domestic raw materials.
+• Simplified Turnover Tax thresholds for small taxpayers with annual revenue below NPR 30 Lakhs and NPR 1 Crore.
+• Digital Payment Rebate: 10% VAT refund for consumers paying via electronic QR/card systems directly reflected on cash registers.`,
+    source_name: 'Ministry of Finance',
+    source_url: 'https://mof.gov.np',
+    is_urgent: false,
+    status: 'published',
+    published_at: '2026-08-25',
+  },
+  {
+    id: 'tax-6',
+    title: 'Banking & Financial Institutions Note: NRB Unified Directives & Capital Adequacy',
+    slug: 'banking-financial-institutions-nrb-unified-directives',
+    category: 'Circulars',
+    update_type: 'Sector Note',
+    topic: 'Banking & Finance',
+    sector: 'Banking',
+    effective_date: 'NRB Directive Circular 04/2081',
+    summary: 'Actionable guidance on loan loss provisioning, working capital guidelines compliance, and single borrower limits for commercial banks.',
+    content: `Nepal Rastra Bank (NRB) has issued unified directives updating asset classification criteria and regulatory capital buffers.
+
+What this means for you:
+• Rigorous classification of overdue loans and stricter provisioning for restructured credit facilities.
+• Verification of borrower audited financial statements against IRD tax portal records before credit sanction.
+• Enhanced internal governance expectations for bank statutory auditors during annual closing reviews.`,
+    source_name: 'Nepal Rastra Bank (NRB)',
+    source_url: 'https://www.nrb.org.np/',
+    is_urgent: false,
+    status: 'published',
+    published_at: '2026-08-20',
   },
 ];
 
@@ -192,7 +280,7 @@ export const initialVacancies: Vacancy[] = [
   {
     id: 'vac-2',
     title: 'Article Trainee (Chartered Accountancy)',
-    department: 'Tax & Assurance',
+    department: 'Assurance & Direct Tax',
     location: 'Kathmandu Office (On-site)',
     employment_type: 'Article Trainee',
     description: 'ICAN registered students who have cleared CAP-II / Intermediate level seeking 3-year rigorous practical training in taxation, statutory audit, and corporate compliance.',
@@ -202,6 +290,21 @@ export const initialVacancies: Vacancy[] = [
       'Sound analytical skills and commitment to professional ethics.',
     ],
     deadline: '2026-10-20',
+    is_active: true,
+  },
+  {
+    id: 'vac-3',
+    title: 'Tax Associate & Corporate Secretarial Officer',
+    department: 'Taxation & Legal',
+    location: 'Kathmandu Office (On-site)',
+    employment_type: 'Full-time',
+    description: 'Responsible for managing monthly VAT returns, withholding tax (TDS) filings, company incorporation, and OCR annual compliances for corporate clients.',
+    requirements: [
+      'Semi-Qualified CA / ACCA or BBA/MBS with 1+ year direct tax filing experience.',
+      'Proficiency in IRD portal, OCR electronic filings, and CBMS billing synchronization.',
+      'Detail-oriented with strong statutory deadline adherence.',
+    ],
+    deadline: '2026-10-25',
     is_active: true,
   },
 ];
@@ -265,51 +368,91 @@ export const initialAppointments: Appointment[] = [
 export const initialGovernmentLinks: GovernmentLink[] = [
   {
     id: 'gov-1',
-    name: 'Inland Revenue Department (IRD)',
-    short_name: 'IRD Nepal',
-    description: 'Official portal for taxpayer registration (PAN/VAT), tax returns filing, CBMS invoicing, and tax clearance certificates.',
-    url: 'https://ird.gov.np',
-    category: 'Taxation & Revenue',
+    name: 'Institute of Chartered Accountants of Nepal (ICAN)',
+    short_name: 'ICAN Nepal',
+    description: 'Statutory accounting regulatory body established under the Nepal Chartered Accountants Act 1997.',
+    url: 'https://en.ican.org.np/en/',
+    category: 'Accounting & Auditing Regulator',
   },
   {
     id: 'gov-2',
-    name: 'Office of the Company Registrar (OCR)',
-    short_name: 'OCR Nepal',
-    description: 'Portal for online company incorporation, name reservation, share transfer, and annual statutory return submissions.',
-    url: 'https://ocr.gov.np',
-    category: 'Corporate Registry',
+    name: 'Inland Revenue Department (IRD)',
+    short_name: 'IRD Nepal',
+    description: 'Official revenue administration portal for PAN/VAT, tax filing, circulars, and tax clearance.',
+    url: 'https://ird.gov.np/',
+    category: 'Taxation & Revenue Administration',
   },
   {
     id: 'gov-3',
-    name: 'Nepal Rastra Bank (NRB)',
-    short_name: 'Central Bank',
-    description: 'Regulatory monetary policies, foreign exchange approvals, commercial banking directives, and interest rate benchmarks.',
-    url: 'https://nrb.org.np',
-    category: 'Monetary & Banking',
+    name: 'Department of Customs',
+    short_name: 'Customs Department',
+    description: 'Customs valuation, tariff classifications, ASYCUDA clearance, and foreign trade guidelines.',
+    url: 'https://www.customs.gov.np/',
+    category: 'Customs & Trade Valuation',
   },
   {
     id: 'gov-4',
-    name: 'Department of Customs',
-    short_name: 'Customs Department',
-    description: 'ASYCUDA World portal, customs tariff valuation, EXIM code registration, and bonded warehouse guidelines.',
-    url: 'https://customs.gov.np',
-    category: 'Trade & Tariff',
+    name: 'Office of Company Registrar (OCR)',
+    short_name: 'OCR Nepal',
+    description: 'Company incorporation, online name approval, statutory filings, and shareholder registry.',
+    url: 'https://www.ocr.gov.np/',
+    category: 'Corporate Registration & Governance',
   },
   {
     id: 'gov-5',
-    name: 'Social Security Fund (SSF)',
-    short_name: 'SSF Nepal',
-    description: 'Employer and employee contribution management, pension schemes, and statutory social security compliance.',
-    url: 'https://ssf.gov.np',
-    category: 'Labor & Social Welfare',
+    name: 'Nepal Rastra Bank (NRB)',
+    short_name: 'NRB Central Bank',
+    description: 'Monetary policy directives, foreign currency approvals, FDI tracking, and banking regulations.',
+    url: 'https://www.nrb.org.np/',
+    category: 'Central Banking & Foreign Exchange',
   },
   {
     id: 'gov-6',
+    name: 'Ministry of Finance',
+    short_name: 'MoF Nepal',
+    description: 'Annual national budget announcements, fiscal acts, economic surveys, and revenue policies.',
+    url: 'https://mof.gov.np/',
+    category: 'Fiscal & Economic Policy',
+  },
+  {
+    id: 'gov-7',
+    name: 'Nepal Investment Board',
+    short_name: 'IBN Nepal',
+    description: 'Facilitating large-scale infrastructure investments, PPP projects, and single-window clearances.',
+    url: 'https://ibn.gov.np/',
+    category: 'Foreign & Strategic Investment',
+  },
+  {
+    id: 'gov-8',
     name: 'Securities Board of Nepal (SEBON)',
     short_name: 'SEBON',
-    description: 'Capital market regulations, public listing approvals, and securities guidelines.',
-    url: 'https://sebon.gov.np',
-    category: 'Capital Markets',
+    description: 'Apex securities regulator governing capital markets, stock exchanges, IPOs, and mutual funds.',
+    url: 'https://sebon.gov.np/',
+    category: 'Capital Markets & Securities',
+  },
+  {
+    id: 'gov-9',
+    name: 'National Insurance Authority',
+    short_name: 'NIA Nepal',
+    description: 'Statutory supervisory authority regulating life, non-life, and reinsurance enterprises.',
+    url: 'https://nia.gov.np/',
+    category: 'Insurance Regulation & Risk',
+  },
+  {
+    id: 'gov-10',
+    name: 'Social Security Fund (SSF)',
+    short_name: 'SSF Nepal',
+    description: 'Mandatory statutory contribution portal for employee and employer social security schemes.',
+    url: 'https://ssf.gov.np/',
+    category: 'Social Security & Labor Welfare',
+  },
+  {
+    id: 'gov-11',
+    name: 'Office of the Auditor General',
+    short_name: 'OAG Nepal',
+    description: 'Supreme audit institution responsible for public finance accountability and constitutional audits.',
+    url: 'https://oag.gov.np/en',
+    category: 'Supreme Constitutional Audit',
   },
 ];
 

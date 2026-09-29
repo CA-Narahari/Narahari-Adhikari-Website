@@ -88,8 +88,8 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-4 lg:pt-[29px]">
             <ul className="space-y-2.5 text-[14px] text-[#33475B]">
               <li>
-                <Link href="/contact#office" className="hover:text-[#2CBC63] transition-colors duration-200">
-                  Offices
+                <Link href="/book-appointment" className="hover:text-[#2CBC63] transition-colors duration-200">
+                  Book Consultation
                 </Link>
               </li>
               {settings.careers_enabled && (

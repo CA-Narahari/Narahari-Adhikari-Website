@@ -25,6 +25,10 @@ export interface TaxUpdate {
   is_urgent: boolean;
   status: 'draft' | 'published';
   published_at: string;
+  update_type?: 'Update' | 'Deadline' | 'Guide' | 'Sector Note';
+  effective_date?: string;
+  topic?: string;
+  sector?: string;
 }
 
 export interface BlogPost {

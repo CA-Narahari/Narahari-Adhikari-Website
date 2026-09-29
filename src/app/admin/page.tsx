@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Good Morning, Admin 👋
+            Good Morning, Admin
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Here is what is happening across your firm's public web portal and client operations.

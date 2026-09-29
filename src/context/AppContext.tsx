@@ -59,7 +59,15 @@ interface AppContextType {
   updateAppointmentStatus: (id: string, status: Appointment['status']) => void;
 
   governmentLinks: GovernmentLink[];
+  addGovernmentLink: (link: Omit<GovernmentLink, 'id'>) => void;
+  updateGovernmentLink: (id: string, link: Partial<GovernmentLink>) => void;
+  deleteGovernmentLink: (id: string) => void;
+
   downloads: DownloadResource[];
+  addDownload: (item: Omit<DownloadResource, 'id' | 'downloads_count'>) => void;
+  updateDownload: (id: string, item: Partial<DownloadResource>) => void;
+  deleteDownload: (id: string) => void;
+
   officeHours: OfficeHourDay[];
   updateOfficeHours: (day: string, hours: string, is_open: boolean) => void;
 }
@@ -74,8 +82,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [vacancies, setVacancies] = useState<Vacancy[]>(initialVacancies);
   const [applications, setApplications] = useState<JobApplication[]>(initialJobApplications);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
-  const [governmentLinks] = useState<GovernmentLink[]>(initialGovernmentLinks);
-  const [downloads] = useState<DownloadResource[]>(initialDownloads);
+  const [governmentLinks, setGovernmentLinks] = useState<GovernmentLink[]>(initialGovernmentLinks);
+  const [downloads, setDownloads] = useState<DownloadResource[]>(initialDownloads);
   const [officeHours, setOfficeHours] = useState<OfficeHourDay[]>(initialOfficeHours);
 
   // Load from local storage for persistence across admin and public views
@@ -95,6 +103,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const storedApts = localStorage.getItem('ca_appointments');
       if (storedApts) setAppointments(JSON.parse(storedApts));
+
+      const storedGov = localStorage.getItem('ca_gov_links');
+      if (storedGov) {
+        const parsed = JSON.parse(storedGov);
+        if (Array.isArray(parsed) && parsed.length >= 11) {
+          setGovernmentLinks(parsed);
+        } else {
+          setGovernmentLinks(initialGovernmentLinks);
+        }
+      }
+
+      const storedDl = localStorage.getItem('ca_downloads');
+      if (storedDl) setDownloads(JSON.parse(storedDl));
 
       const storedHours = localStorage.getItem('ca_office_hours');
       if (storedHours) setOfficeHours(JSON.parse(storedHours));
@@ -259,6 +280,63 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const addGovernmentLink = (link: Omit<GovernmentLink, 'id'>) => {
+    const newItem: GovernmentLink = {
+      ...link,
+      id: `gov-${Date.now()}`,
+    };
+    setGovernmentLinks((prev) => {
+      const updated = [...prev, newItem];
+      localStorage.setItem('ca_gov_links', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateGovernmentLink = (id: string, link: Partial<GovernmentLink>) => {
+    setGovernmentLinks((prev) => {
+      const updated = prev.map((g) => (g.id === id ? { ...g, ...link } : g));
+      localStorage.setItem('ca_gov_links', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const deleteGovernmentLink = (id: string) => {
+    setGovernmentLinks((prev) => {
+      const updated = prev.filter((g) => g.id !== id);
+      localStorage.setItem('ca_gov_links', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const addDownload = (item: Omit<DownloadResource, 'id' | 'downloads_count'>) => {
+    const newItem: DownloadResource = {
+      ...item,
+      id: `dl-${Date.now()}`,
+      downloads_count: 0,
+    };
+    setDownloads((prev) => {
+      const updated = [newItem, ...prev];
+      localStorage.setItem('ca_downloads', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateDownload = (id: string, item: Partial<DownloadResource>) => {
+    setDownloads((prev) => {
+      const updated = prev.map((d) => (d.id === id ? { ...d, ...item } : d));
+      localStorage.setItem('ca_downloads', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const deleteDownload = (id: string) => {
+    setDownloads((prev) => {
+      const updated = prev.filter((d) => d.id !== id);
+      localStorage.setItem('ca_downloads', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -287,7 +365,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addAppointment,
         updateAppointmentStatus,
         governmentLinks,
+        addGovernmentLink,
+        updateGovernmentLink,
+        deleteGovernmentLink,
         downloads,
+        addDownload,
+        updateDownload,
+        deleteDownload,
         officeHours,
         updateOfficeHours,
       }}
