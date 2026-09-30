@@ -20,6 +20,7 @@ export default function ResourcesDownloadsPage() {
       g.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.short_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const availableDownloads = downloads.filter((item) => item.download_url && item.download_url !== '#');
 
   return (
     <div className="pb-24 overflow-x-hidden">
@@ -105,8 +106,7 @@ export default function ResourcesDownloadsPage() {
           </div>
         </section>
 
-        {/* ======================================================== */}
-        {/* SECTION 2: STATUTORY DOWNLOADABLE RESOURCES & FORMS */}
+              {/* Downloadable resources */}
         {/* ======================================================== */}
         <section className="space-y-6 pt-4 border-t border-[#E8EBEF]">
           <div>
@@ -114,15 +114,16 @@ export default function ResourcesDownloadsPage() {
               Statutory Resources
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight mt-1">
-              Downloadable Schedules & Checklists<span className="text-[#2CBC63]">.</span>
+              Downloads and templates<span className="text-[#2CBC63]">.</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-              Prescribed income tax schedules, board resolution templates, and audit readiness checklists.
+              Files appear here when they are ready to download.
             </p>
           </div>
 
+          {availableDownloads.length ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {downloads.map((dl) => (
+            {availableDownloads.map((dl) => (
               <div
                 key={dl.id}
                 className="bg-white border border-[#E8EBEF] rounded-2xl p-5 shadow-xs hover:border-[#2CBC63]/60 transition-all flex flex-col justify-between space-y-3"
@@ -145,12 +146,6 @@ export default function ResourcesDownloadsPage() {
                   <a
                   href={dl.download_url}
                   download
-                  onClick={(e) => {
-                    if (dl.download_url === '#') {
-                      e.preventDefault();
-                      alert(`Downloading official "${dl.title}" file.`);
-                    }
-                  }}
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download file</span>
@@ -159,6 +154,11 @@ export default function ResourcesDownloadsPage() {
               </div>
             ))}
           </div>
+          ) : (
+            <p className="border-y border-[#E8EBEF] bg-white px-5 py-8 text-sm text-[#59667D]">
+              There are no files published yet. Use the official portals above for current forms and schedules.
+            </p>
+          )}
         </section>
       </div>
     </div>

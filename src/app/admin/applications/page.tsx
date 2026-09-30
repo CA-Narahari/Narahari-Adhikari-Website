@@ -91,15 +91,16 @@ export default function AdminApplicationsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        alert(`Downloading resume: ${app.cv_filename}`);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold"
+                    <a
+                      href={`/api/admin/applications/${encodeURIComponent(app.id)}/cv`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-disabled={!app.cv_file_url}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold ${app.cv_file_url ? 'bg-slate-900 text-white hover:bg-slate-800' : 'pointer-events-none bg-slate-200 text-slate-500'}`}
                     >
                       <Download className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Download CV ({app.cv_filename})</span>
-                    </button>
+                      <span>{app.cv_file_url ? `Download CV (${app.cv_filename})` : 'CV not available'}</span>
+                    </a>
                   </div>
                 </div>
 

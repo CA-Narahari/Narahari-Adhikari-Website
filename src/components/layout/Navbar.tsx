@@ -364,7 +364,7 @@ export default function Navbar() {
                   href="/book-appointment"
                   className="px-6 py-2.5 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[14px] shadow-sm hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center cursor-pointer"
                 >
-                  Free Consultation
+                  Book a consultation
                 </Link>
               </div>
             </div>
@@ -465,7 +465,7 @@ export default function Navbar() {
                           onClick={() => setMobileMenuOpen(false)}
                           className="block px-3 py-1.5 text-xs text-[#59667D] hover:text-[#023A51] hover:bg-slate-50 rounded-md"
                         >
-                          &bull; Calculators & Tools (12)
+                          &bull; Calculators &amp; tax tools
                         </Link>
                         <Link
                           href="/resources/downloads"

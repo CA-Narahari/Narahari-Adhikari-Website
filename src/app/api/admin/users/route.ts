@@ -1,0 +1,150 @@
+import { NextResponse } from 'next/server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase/server';
+
+async function getAdminClient() {
+  const authClient = await createSupabaseServerClient();
+  const adminClient = createSupabaseAdminClient();
+  if (!authClient || !adminClient) {
+    return { client: null, response: NextResponse.json({ error: 'User management is not configured.' }, { status: 503 }) };
+  }
+
+  const { data: { user }, error: authError } = await authClient.auth.getUser();
+  if (authError || !user) {
+    return { client: null, response: NextResponse.json({ error: 'Sign in to manage practice access.' }, { status: 401 }) };
+  }
+
+  const { data: profile, error: profileError } = await adminClient
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    return { client: null, response: NextResponse.json({ error: 'We could not verify your practice access.' }, { status: 500 }) };
+  }
+
+  if (profile?.role !== 'admin') {
+    return { client: null, response: NextResponse.json({ error: 'Only administrators can manage practice access.' }, { status: 403 }) };
+  }
+
+  return { client: adminClient, response: null };
+}
+
+export async function GET() {
+  const access = await getAdminClient();
+  if (access.response) return access.response;
+  const supabase = access.client;
+
+  const users = [];
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) {
+      return NextResponse.json({ error: 'We could not load practice accounts.' }, { status: 500 });
+    }
+    users.push(...data.users);
+    if (data.users.length < 1000) break;
+  }
+
+  if (users.length === 0) return NextResponse.json({ users: [] });
+
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, display_name, username, role, created_at')
+    .in('id', users.map((user) => user.id))
+    .in('role', ['admin', 'staff']);
+
+  if (profileError) {
+    return NextResponse.json({ error: 'We could not load practice access roles.' }, { status: 500 });
+  }
+
+  const userById = new Map(users.map((user) => [user.id, user]));
+  const practiceUsers = (profiles ?? []).flatMap((profile) => {
+    const authUser = userById.get(profile.id);
+    if (!authUser) return [];
+    return [{
+      id: authUser.id,
+      displayName: profile.display_name,
+      email: authUser.email ?? '',
+      role: profile.role,
+      createdAt: profile.created_at || authUser.created_at,
+      emailConfirmed: Boolean(authUser.email_confirmed_at),
+    }];
+  });
+
+  return NextResponse.json({ users: practiceUsers });
+}
+
+export async function POST(request: Request) {
+  const access = await getAdminClient();
+  if (access.response) return access.response;
+  const supabase = access.client;
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed: unknown = await request.json();
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return NextResponse.json({ error: 'Enter the staff member details.' }, { status: 400 });
+    }
+    body = parsed as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: 'Enter the staff member details.' }, { status: 400 });
+  }
+
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const displayName = typeof body.displayName === 'string' ? body.displayName.trim() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+  const role = body.role;
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+  }
+  if (displayName.length < 2 || displayName.length > 100) {
+    return NextResponse.json({ error: 'Enter a name between 2 and 100 characters.' }, { status: 400 });
+  }
+  if (password.length < 10 || password.length > 128) {
+    return NextResponse.json({ error: 'Use a password between 10 and 128 characters.' }, { status: 400 });
+  }
+  if (role !== 'admin' && role !== 'staff') {
+    return NextResponse.json({ error: 'Choose administrator or staff access.' }, { status: 400 });
+  }
+
+  const { data: created, error: createError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: displayName },
+  });
+
+  if (createError || !created.user) {
+    const alreadyExists = createError?.message.toLowerCase().includes('already') ?? false;
+    return NextResponse.json(
+      { error: alreadyExists ? 'An account with this email already exists.' : 'We could not create this account. Check the Supabase Auth settings and try again.' },
+      { status: alreadyExists ? 409 : 400 },
+    );
+  }
+
+  const localPart = email.slice(0, email.lastIndexOf('@'));
+  const usernameBase = localPart.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'practice-user';
+  const { error: profileInsertError } = await supabase.from('profiles').insert({
+    id: created.user.id,
+    username: `${usernameBase}-${created.user.id.slice(0, 8)}`,
+    display_name: displayName,
+    role,
+  });
+
+  if (profileInsertError) {
+    await supabase.auth.admin.deleteUser(created.user.id);
+    return NextResponse.json({ error: 'The account was not granted access because its practice profile could not be saved.' }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    user: {
+      id: created.user.id,
+      displayName,
+      email,
+      role,
+      createdAt: created.user.created_at,
+      emailConfirmed: true,
+    },
+  }, { status: 201 });
+}

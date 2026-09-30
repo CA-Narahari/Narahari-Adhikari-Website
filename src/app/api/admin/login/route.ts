@@ -1,31 +1,52 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { username?: string; password?: string };
-  const adminUsername = process.env.SUPABASE_ADMIN_USERNAME;
-  const adminEmail = process.env.SUPABASE_ADMIN_EMAIL;
-
-  if (!adminUsername || !adminEmail) {
-    return NextResponse.json({ error: 'Admin authentication is not configured.' }, { status: 503 });
+  let body: Record<string, unknown>;
+  try {
+    const parsed: unknown = await request.json();
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return NextResponse.json({ error: 'Enter your email address and password.' }, { status: 400 });
+    }
+    body = parsed as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: 'Enter your email address and password.' }, { status: 400 });
   }
 
-  if (body.username !== adminUsername || !body.password) {
-    return NextResponse.json({ error: 'The admin ID or password is incorrect.' }, { status: 401 });
+  const email = typeof body.email === 'string' ? body.email.trim() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  if (!email || !email.includes('@') || !password) {
+    return NextResponse.json({ error: 'Enter your email address and password.' }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient(true);
-  if (!supabase) {
+  const authClient = await createSupabaseServerClient();
+  const adminClient = createSupabaseAdminClient();
+  if (!authClient || !adminClient) {
     return NextResponse.json({ error: 'Supabase authentication is not configured.' }, { status: 503 });
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: adminEmail,
-    password: body.password,
+  const { data, error } = await authClient.auth.signInWithPassword({
+    email,
+    password,
   });
 
-  if (error) {
-    return NextResponse.json({ error: 'The admin ID or password is incorrect.' }, { status: 401 });
+  if (error || !data.user) {
+    return NextResponse.json({ error: 'The email address or password is incorrect.' }, { status: 401 });
+  }
+
+  const { data: profile, error: profileError } = await adminClient
+    .from('profiles')
+    .select('role')
+    .eq('id', data.user.id)
+    .maybeSingle();
+
+  if (profileError || !profile || !['admin', 'staff'].includes(profile.role)) {
+    await authClient.auth.signOut({ scope: 'local' });
+    if (profileError) {
+      return NextResponse.json({ error: 'We could not verify this account’s practice access.' }, { status: 500 });
+    }
+    return NextResponse.json({ error: 'This account is not authorised for the practice workspace.' }, { status: 403 });
   }
 
   return NextResponse.json({ ok: true });

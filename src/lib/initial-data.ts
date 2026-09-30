@@ -21,150 +21,12 @@ export const initialSiteSettings: SiteSettings = {
   address: 'Level 4, Corporate Heights, New Baneshwor, Kathmandu, Nepal',
   office_hours_summary: 'Sunday – Friday: 09:30 AM – 05:30 PM (Saturday Closed)',
   careers_enabled: true, // Master Hiring Toggle
-  announcement_active: true,
-  announcement_text: 'Notice: Income Tax & VAT Return submission deadline for Quarter 2 extended by IRD.',
+  announcement_active: false,
+  announcement_text: '',
   announcement_link: '/tax-updates',
 };
 
-export const initialTaxUpdates: TaxUpdate[] = [
-  {
-    id: 'tax-1',
-    title: 'E-billing and CBMS checks for VAT-registered businesses',
-    slug: 'new-vat-rule-directives-e-billing-2081-82',
-    category: 'VAT',
-    update_type: 'Update',
-    topic: 'VAT & Invoicing',
-    effective_date: 'Current filing guidance',
-    summary: 'Inland Revenue Department circular mandating real-time Central Billing Monitoring System (CBMS) integration for taxpayers exceeding turnover threshold.',
-    content: `The Inland Revenue Department (IRD) has released updated procedural directives regarding electronic billing (CBMS integration) and mandatory VAT reporting.
-
-What this means for you:
-1. All commercial taxpayers with aggregate annual turnover above NRs 250 Million must synchronize directly with the Central Billing Monitoring System (CBMS).
-2. Credit note reconciliation timeline reduced to 7 working days from date of issuance.
-3. Penalties for delayed monthly VAT statement uploads have been revised in accordance with Section 19 of the Value Added Tax Act.
-
-Action Checklist:
-• Confirm software certification with IRD approved vendors.
-• Ensure daily fiscal closure reports are stored on encrypted local backup.
-• Reconcile monthly sales register against CBMS transmission logs prior to the 25th of each Nepali month.`,
-    source_name: 'Inland Revenue Department (IRD)',
-    source_url: 'https://ird.gov.np',
-    is_urgent: true,
-    status: 'published',
-    published_at: '2026-09-15',
-  },
-  {
-    id: 'tax-2',
-    title: 'Filing Reminder: Monthly VAT & Withholding Tax (TDS) Deposit Deadline',
-    slug: 'filing-reminder-monthly-vat-tds-deposit-deadline',
-    category: 'VAT',
-    update_type: 'Deadline',
-    topic: 'Compliance Deadline',
-    effective_date: '25th of Every Nepali Month',
-    summary: 'Mandatory statutory deadline for filing monthly VAT returns, input tax claim adjustments, and electronic withholding tax (E-TDS) payments.',
-    content: `All VAT registered entities in Nepal are reminded to complete and file their monthly VAT return along with applicable withholding tax (TDS) by the 25th of the current Nepali calendar month.
-
-What this means for you:
-• Delays incur statutory fine of 0.1% per day or NPR 1,000 per month (whichever is higher) under Sec 19 of VAT Act.
-• Input VAT credits not submitted within the prescribed period will trigger manual scrutiny during statutory audit.
-• Withholding tax vouchers must be issued directly via IRD portal to ensure vendor reconciliation.`,
-    source_name: 'IRD Compliance Directorate',
-    source_url: 'https://ird.gov.np',
-    is_urgent: true,
-    status: 'published',
-    published_at: '2026-09-18',
-  },
-  {
-    id: 'tax-3',
-    title: 'How NFRS/IFRS Transition Directly Affects Your Corporate Financial Reporting',
-    slug: 'how-nfrs-ifrs-transition-affects-corporate-financial-reporting',
-    category: 'Finance Acts',
-    update_type: 'Guide',
-    topic: 'Financial Reporting',
-    effective_date: 'Current reporting guidance',
-    summary: 'Comprehensive breakdown of opening balance sheet reconciliations, fair value asset measurement, and technical disclosures mandated by ICAN.',
-    content: `As the Institute of Chartered Accountants of Nepal (ICAN) expands the mandatory enforcement of Nepal Financial Reporting Standards (NFRS), organizations must upgrade beyond traditional accounting methods.
-
-What this means for you:
-1. Balance Sheet Transition: Reclassification of operating leases into Right-of-Use (ROU) assets and corresponding lease liabilities under NFRS 16.
-2. Financial Instruments: Adoption of Expected Credit Loss (ECL) provisioning rather than incurred loss models under NFRS 9.
-3. Revenue Recognition: Multi-step contract evaluations under NFRS 15 for businesses with bundle contracts or milestone-based delivery.
-
-Strategic Advisory Note:
-Our technical advisory team conducts gap-analysis audits to ensure audit committees and executive directors maintain zero qualification risk.`,
-    source_name: 'Technical Standards Desk / ICAN',
-    source_url: 'https://en.ican.org.np/en/',
-    is_urgent: false,
-    status: 'published',
-    published_at: '2026-09-12',
-  },
-  {
-    id: 'tax-4',
-    title: 'Hydropower Sector Regulatory Note: Royalty Payments, Carbon Revenue & Tax Holidays',
-    slug: 'hydropower-sector-regulatory-note-royalty-tax-holidays',
-    category: 'Corporate Tax',
-    update_type: 'Sector Note',
-    topic: 'Hydropower & Energy',
-    sector: 'Hydropower',
-    effective_date: 'Sector guidance',
-    summary: 'Specialized regulatory insights on 100% income tax exemption timelines, subsequent 50% concession periods, and transmission wheeling tax guidelines.',
-    content: `Energy producers operating commercial hydropower generation projects in Nepal operate under specific statutory tax incentive structures enacted in the Income Tax Act Section 11.
-
-What this means for you:
-• 10-Year Full Tax Holiday: 100% tax exemption for first 10 years of commercial generation, followed by 50% exemption for subsequent 5 years.
-• Local Government Royalty: Exact calculation of royalty split between Department of Electricity Development and provincial/local authorities.
-• Capital Goods Customs Concessions: Verified documentation required for 1% customs duty import of electromechanical components.`,
-    source_name: 'Department of Electricity Development / IRD',
-    source_url: 'https://mof.gov.np',
-    is_urgent: false,
-    status: 'published',
-    published_at: '2026-09-05',
-  },
-  {
-    id: 'tax-5',
-    title: 'What the New National Fiscal Budget Means for SMEs & Manufacturing Units',
-    slug: 'what-new-budget-means-for-smes-manufacturing',
-    category: 'Income Tax',
-    update_type: 'Guide',
-    topic: 'Budget & SMEs',
-    sector: 'Manufacturing',
-    effective_date: 'Current budget guidance',
-    summary: 'Executive summary detailing changes in corporate income tax concessions, special export subsidies, and revised turnover tax brackets.',
-    content: `The current fiscal budget contains several critical measures aimed at incentivizing domestic production and formalizing micro and small businesses.
-
-What this means for you:
-• Concessional 20% Corporate Rate for manufacturing units utilizing domestic raw materials.
-• Simplified Turnover Tax thresholds for small taxpayers with annual revenue below NPR 30 Lakhs and NPR 1 Crore.
-• Digital Payment Rebate: 10% VAT refund for consumers paying via electronic QR/card systems directly reflected on cash registers.`,
-    source_name: 'Ministry of Finance',
-    source_url: 'https://mof.gov.np',
-    is_urgent: false,
-    status: 'published',
-    published_at: '2026-08-25',
-  },
-  {
-    id: 'tax-6',
-    title: 'Banking & Financial Institutions Note: NRB Unified Directives & Capital Adequacy',
-    slug: 'banking-financial-institutions-nrb-unified-directives',
-    category: 'Circulars',
-    update_type: 'Sector Note',
-    topic: 'Banking & Finance',
-    sector: 'Banking',
-    effective_date: 'Current NRB guidance',
-    summary: 'Actionable guidance on loan loss provisioning, working capital guidelines compliance, and single borrower limits for commercial banks.',
-    content: `Nepal Rastra Bank (NRB) has issued unified directives updating asset classification criteria and regulatory capital buffers.
-
-What this means for you:
-• Rigorous classification of overdue loans and stricter provisioning for restructured credit facilities.
-• Verification of borrower audited financial statements against IRD tax portal records before credit sanction.
-• Enhanced internal governance expectations for bank statutory auditors during annual closing reviews.`,
-    source_name: 'Nepal Rastra Bank (NRB)',
-    source_url: 'https://www.nrb.org.np/',
-    is_urgent: false,
-    status: 'published',
-    published_at: '2026-08-20',
-  },
-];
+export const initialTaxUpdates: TaxUpdate[] = [];
 
 export const initialBlogPosts: BlogPost[] = [];
 
@@ -235,110 +97,11 @@ export const initialServices: ServiceItem[] = [
   },
 ];
 
-export const initialVacancies: Vacancy[] = [
-  {
-    id: 'vac-1',
-    title: 'Senior Audit Associate',
-    department: 'Assurance & Audit',
-    location: 'Kathmandu Office (On-site)',
-    employment_type: 'Full-time',
-    description: 'We are seeking an experienced Audit Associate to lead statutory and internal audit engagements for corporate clients across diverse sectors.',
-    requirements: [
-      'CA Semi-Qualified / ACCA Affiliate or Masters in Accounting with 2+ years audit experience.',
-      'Strong command of Nepal Standards on Auditing (NSA) and Income Tax Act.',
-      'Proficiency in ERP systems, Tally, and advanced Excel financial modeling.',
-      'Strong client communication and team leadership capabilities.',
-    ],
-    deadline: '2026-10-15',
-    is_active: true,
-  },
-  {
-    id: 'vac-2',
-    title: 'Article Trainee (Chartered Accountancy)',
-    department: 'Assurance & Direct Tax',
-    location: 'Kathmandu Office (On-site)',
-    employment_type: 'Article Trainee',
-    description: 'ICAN registered students who have cleared CAP-II / Intermediate level seeking 3-year rigorous practical training in taxation, statutory audit, and corporate compliance.',
-    requirements: [
-      'Cleared ICAN CAP-II examinations.',
-      'Eager to learn and work under direct supervision of Senior Chartered Accountants.',
-      'Sound analytical skills and commitment to professional ethics.',
-    ],
-    deadline: '2026-10-20',
-    is_active: true,
-  },
-  {
-    id: 'vac-3',
-    title: 'Tax Associate & Corporate Secretarial Officer',
-    department: 'Taxation & Legal',
-    location: 'Kathmandu Office (On-site)',
-    employment_type: 'Full-time',
-    description: 'Responsible for managing monthly VAT returns, withholding tax (TDS) filings, company incorporation, and OCR annual compliances for corporate clients.',
-    requirements: [
-      'Semi-Qualified CA / ACCA or BBA/MBS with 1+ year direct tax filing experience.',
-      'Proficiency in IRD portal, OCR electronic filings, and CBMS billing synchronization.',
-      'Detail-oriented with strong statutory deadline adherence.',
-    ],
-    deadline: '2026-10-25',
-    is_active: true,
-  },
-];
+export const initialVacancies: Vacancy[] = [];
 
-export const initialJobApplications: JobApplication[] = [
-  {
-    id: 'app-101',
-    vacancy_id: 'vac-1',
-    vacancy_title: 'Senior Audit Associate',
-    applicant_name: 'Prakash Sharma',
-    applicant_email: 'prakash.sharma@example.com',
-    applicant_phone: '+977 9841234567',
-    cover_note: 'I have 3 years of audit experience with manufacturing and banking clients. Completed CAP-II and currently preparing for Final.',
-    cv_filename: 'Prakash_Sharma_CV.pdf',
-    status: 'review',
-    submitted_at: '2026-09-26 14:30',
-  },
-  {
-    id: 'app-102',
-    vacancy_id: 'vac-2',
-    vacancy_title: 'Article Trainee (Chartered Accountancy)',
-    applicant_name: 'Anjali Khadka',
-    applicant_email: 'anjali.khadka@example.com',
-    applicant_phone: '+977 9818765432',
-    cover_note: 'Recently cleared ICAN CAP-II with distinction in Taxation and Auditing. Seeking articleship under Narahari Sir.',
-    cv_filename: 'Anjali_Khadka_Resume.pdf',
-    status: 'new',
-    submitted_at: '2026-09-27 08:15',
-  },
-];
+export const initialJobApplications: JobApplication[] = [];
 
-export const initialAppointments: Appointment[] = [
-  {
-    id: 'apt-201',
-    client_name: 'Sunil Bajracharya',
-    client_email: 'sunil@himalayantraders.com',
-    client_phone: '+977 9851122334',
-    service_title: 'Tax Advisory & Compliance',
-    consultation_type: 'Office Meeting',
-    date: '2026-09-28',
-    time_slot: '11:00 AM – 11:45 AM',
-    notes: 'Discussion regarding new VAT e-invoicing threshold for our wholesale branches.',
-    status: 'confirmed',
-    created_at: '2026-09-26 10:20',
-  },
-  {
-    id: 'apt-202',
-    client_name: 'Rashmi Shrestha',
-    client_email: 'rashmi@fintechsolution.io',
-    client_phone: '+977 9801239876',
-    service_title: 'Corporate Secretarial & Legal Advisory',
-    consultation_type: 'Online Meeting',
-    date: '2026-09-28',
-    time_slot: '02:30 PM – 03:15 PM',
-    notes: 'Consultation for cross-border software revenue withholding tax and NRB repatriation clearance.',
-    status: 'pending',
-    created_at: '2026-09-26 16:40',
-  },
-];
+export const initialAppointments: Appointment[] = [];
 
 export const initialGovernmentLinks: GovernmentLink[] = [
   {
@@ -431,44 +194,7 @@ export const initialGovernmentLinks: GovernmentLink[] = [
   },
 ];
 
-export const initialDownloads: DownloadResource[] = [
-  {
-    id: 'dl-1',
-    title: 'Income Tax Return (ITR) Schedule 1 to 5 Prescribed Forms',
-    category: 'Tax Form',
-    file_format: 'PDF',
-    file_size: '2.4 MB',
-    download_url: '#',
-    downloads_count: 342,
-  },
-  {
-    id: 'dl-2',
-    title: 'Annual Statutory Audit Readiness Checklist for Businesses',
-    category: 'Checklist',
-    file_format: 'PDF',
-    file_size: '680 KB',
-    download_url: '#',
-    downloads_count: 819,
-  },
-  {
-    id: 'dl-3',
-    title: 'Standard Board Resolution & Shareholder Meeting Minutes Template',
-    category: 'Template',
-    file_format: 'DOCX',
-    file_size: '420 KB',
-    download_url: '#',
-    downloads_count: 512,
-  },
-  {
-    id: 'dl-4',
-    title: 'Comprehensive VAT Compliance Guide & Input Tax Credit Rules',
-    category: 'Guide',
-    file_format: 'PDF',
-    file_size: '1.8 MB',
-    download_url: '#',
-    downloads_count: 670,
-  },
-];
+export const initialDownloads: DownloadResource[] = [];
 
 export const initialOfficeHours: OfficeHourDay[] = [
   { day: 'Sunday', hours: '09:30 AM – 05:30 PM', is_open: true },

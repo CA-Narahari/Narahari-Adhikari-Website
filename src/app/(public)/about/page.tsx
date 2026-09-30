@@ -61,28 +61,24 @@ export default function AboutPage() {
 
   const faqsList = [
     {
-      q: 'What are the statutory audit submission timelines for companies in Nepal?',
-      a: 'Under the Company Act 2063 and Income Tax Act 2058, every registered entity must conduct an annual statutory audit by a certified Chartered Accountant within six months of the fiscal year-end (typically by the end of Poush, with allowable 3-month extensions upon IRD approval). Audited financial statements must then be tabled at the Annual General Meeting and filed with the Office of the Company Registrar (OCR) and Inland Revenue Department.',
+      q: 'How do I get started?',
+      a: 'Send a short note about your organisation and the decision or filing you need help with. We can suggest a suitable first meeting and let you know what to bring.',
     },
     {
-      q: 'Who is required to file monthly VAT returns and what is the statutory deadline?',
-      a: 'All entities registered under the Value Added Tax Act 2052 must submit their monthly VAT returns and deposit the net tax payable by the 25th of the following month. Failure to file on time attracts statutory penal fines under Section 19 of 0.1% per day or NPR 1,000 per month, whichever is higher.',
+      q: 'What should I bring to a first meeting?',
+      a: 'Bring the notice, accounts, or documents related to your question if you have them. We will tell you in advance if anything else is needed.',
     },
     {
-      q: 'How does your practice assist with NFRS/IFRS transition?',
-      a: 'We perform diagnostic gap-analyses against traditional Nepal Accounting Standards (NAS), establish opening balance sheet reconciliations, draft technical accounting policy notes for leases (NFRS 16) and financial assets (NFRS 9), and guide internal finance teams through auditor review readiness.',
+      q: 'Can you help if I am unsure which service I need?',
+      a: 'Yes. Describe what is happening in plain terms and we can discuss the right next step together.',
     },
     {
-      q: 'What is the procedure for handling Inland Revenue Department (IRD) tax assessments or disputes?',
-      a: 'When an assessment order or scrutiny notice is issued by the IRD, our practice conducts an evidentiary review of your books, prepares formal rebuttals, calculates statutory security deposit requirements, and provides representation during Administrative Review (Section 115) and before the Revenue Tribunal.',
+      q: 'Do you meet with clients in person?',
+      a: 'You can request an in-person meeting at our Kathmandu office. Online appointments are available through the Calendly option on the consultation page.',
     },
     {
-      q: 'Are all employers required to enroll in the Social Security Fund (SSF)?',
-      a: 'Yes. Under the Labor Act 2074 and Social Security Act 2074, all formal sector employers in Nepal must contribute 31% of the employee\'s basic salary (20% employer contribution + 11% employee contribution) through the SSF online portal every month.',
-    },
-    {
-      q: 'How is working paper confidentiality and professional privilege maintained?',
-      a: 'All client communications, working papers, and proprietary trade information remain protected under the ICAN Code of Professional Conduct. We do not disclose client data to third parties without lawful statutory authorization or explicit written client consent.',
+      q: 'What can we discuss?',
+      a: 'Tax, audit, financial reporting, or business advisory questions are all a good place to start. If your needs fall elsewhere, we will say so plainly.',
     },
   ];
 
@@ -274,7 +270,7 @@ export default function AboutPage() {
                 Frequently Asked Questions<span className="text-[#2CBC63]">.</span>
               </h2>
               <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-                Essential compliance answers regarding statutory audit, tax disputes, and corporate filings in Nepal.
+                A few practical details before you get in touch.
               </p>
             </div>
             <Link

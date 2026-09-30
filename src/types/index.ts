@@ -40,6 +40,8 @@ export interface BlogPost {
   content: string;
   author: string;
   read_time: string;
+  featured_image?: string;
+  tags?: string[];
   status: 'draft' | 'published';
   published_at: string;
 }
@@ -77,6 +79,7 @@ export interface JobApplication {
   applicant_phone: string;
   cover_note: string;
   cv_filename: string;
+  cv_file_url?: string | null;
   status: 'new' | 'review' | 'shortlisted' | 'rejected';
   submitted_at: string;
 }

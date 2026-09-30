@@ -26,7 +26,7 @@ export default function AdminCareersPage() {
   const [newLocation, setNewLocation] = useState('Kathmandu Office (On-site)');
   const [newDesc, setNewDesc] = useState('');
   const [newReqs, setNewReqs] = useState('');
-  const [newDeadline, setNewDeadline] = useState('2026-10-31');
+  const [newDeadline, setNewDeadline] = useState('');
 
   const handleCreateVacancy = (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,7 +222,7 @@ export default function AdminCareersPage() {
                   <label className="block font-semibold mb-1">Employment Type</label>
                   <select
                     value={newType}
-                    onChange={(e) => setNewType(e.target.value as any)}
+                    onChange={(e) => setNewType(e.target.value as typeof newType)}
                     className="w-full p-2 border rounded"
                   >
                     <option value="Full-time">Full-time</option>
@@ -230,6 +230,29 @@ export default function AdminCareersPage() {
                     <option value="Contract">Contract</option>
                     <option value="Article Trainee">Article Trainee</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1">Location</label>
+                  <input
+                    type="text"
+                    required
+                    value={newLocation}
+                    onChange={(e) => setNewLocation(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1">Application deadline</label>
+                  <input
+                    type="date"
+                    required
+                    value={newDeadline}
+                    onChange={(e) => setNewDeadline(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  />
                 </div>
               </div>
 

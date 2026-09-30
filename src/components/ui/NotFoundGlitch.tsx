@@ -41,7 +41,6 @@ function Scramble({ text }: { text: string }) {
 
   useEffect(() => {
     if (reduce) {
-      setDisplay(text);
       return;
     }
     const chars = text.split('');

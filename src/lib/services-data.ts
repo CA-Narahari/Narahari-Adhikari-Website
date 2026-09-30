@@ -118,7 +118,7 @@ export const servicesData: ServiceData[] = [
     title: 'Mergers and Acquisitions',
     shortTitle: 'Mergers & Acquisitions',
     description:
-      'As pioneers in Mergers and Acquisitions, we have facilitated numerous successful transactions in Nepal.',
+      'Support for transaction reviews, financial due diligence, valuations, and the practical steps involved in a merger or acquisition.',
     image: '/services/service-ma.jpg',
     icon: Handshake,
     accentColor: '#023A51',
@@ -155,7 +155,7 @@ export const servicesData: ServiceData[] = [
     title: 'Advisory Services',
     shortTitle: 'Advisory Services',
     description:
-      'Our growth is linked to our clients\' success, driving our commitment to strategic advisory services.',
+      'Guidance for planning, evaluating options, and making informed decisions as your organisation changes.',
     image: '/services/service-advisory.jpg',
     icon: MessageSquareQuote,
     accentColor: '#023A51',
@@ -235,7 +235,7 @@ export const servicesData: ServiceData[] = [
     title: 'NFRS/IFRS Implementation',
     shortTitle: 'NFRS/IFRS Implementation',
     description:
-      'We have led financial reporting transformation, contributing to NFRS/IFRS adoption.',
+      'Support with financial reporting policies, transition planning, and applying NFRS or IFRS requirements to your reporting.',
     image: '/services/service-ifrs.jpg',
     icon: LineChart,
     accentColor: '#023A51',
@@ -262,7 +262,7 @@ export const servicesData: ServiceData[] = [
     title: 'Training and Seminar',
     shortTitle: 'Training & Seminar',
     description:
-      'We provide expert training in taxation, financial reporting, business structuring, and compliance.',
+      'Practical sessions for teams on taxation, financial reporting, business structuring, and compliance.',
     image: '/services/service-training.jpg',
     icon: GraduationCap,
     accentColor: '#023A51',

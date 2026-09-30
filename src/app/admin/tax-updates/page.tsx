@@ -164,7 +164,7 @@ export default function AdminTaxUpdatesPage() {
                   <label className="block font-semibold mb-1">Tax Category</label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as any)}
+                    onChange={(e) => setCategory(e.target.value as typeof category)}
                     className="w-full p-2 border rounded"
                   >
                     <option value="Income Tax">Income Tax</option>
@@ -179,7 +179,7 @@ export default function AdminTaxUpdatesPage() {
                   <label className="block font-semibold mb-1">Publication Status</label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
+                    onChange={(e) => setStatus(e.target.value as typeof status)}
                     className="w-full p-2 border rounded"
                   >
                     <option value="published">Published (Live Immediately)</option>

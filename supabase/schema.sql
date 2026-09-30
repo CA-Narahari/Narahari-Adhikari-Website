@@ -109,6 +109,7 @@ create table if not exists public.applications (
   cover_note text not null default '',
   cv_file_url text,
   cv_filename text,
+  privacy_consent boolean not null default false,
   status public.application_status not null default 'new',
   submitted_at timestamptz not null default now()
 );
@@ -123,6 +124,7 @@ create table if not exists public.appointments (
   requested_date date not null,
   requested_time text not null,
   notes text not null default '',
+  privacy_consent boolean not null default false,
   status public.appointment_status not null default 'pending',
   created_at timestamptz not null default now()
 );
@@ -173,6 +175,14 @@ create table if not exists public.office_hours (
   hours text not null default '',
   is_open boolean not null default true
 );
+
+alter table public.applications add column if not exists privacy_consent boolean not null default false;
+alter table public.appointments add column if not exists privacy_consent boolean not null default false;
+
+-- CVs are private and should only be uploaded and downloaded by server routes.
+insert into storage.buckets (id, name, public)
+values ('application-cvs', 'application-cvs', false)
+on conflict (id) do nothing;
 
 create index if not exists tax_updates_published_idx on public.tax_updates (status, published_at desc);
 create index if not exists posts_published_idx on public.posts (status, published_at desc);
