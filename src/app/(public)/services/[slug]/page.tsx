@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { Phone } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Phone } from 'lucide-react';
 import { getServiceBySlug } from '@/lib/services-data';
 
 export default function ServiceDetailPage() {
@@ -26,7 +26,7 @@ export default function ServiceDetailPage() {
           </p>
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-sm transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white font-bold text-sm transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Services
@@ -82,7 +82,7 @@ export default function ServiceDetailPage() {
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <Link
                   href="/book-appointment"
-                  className="px-5 py-2.5 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-xs transition-all shadow-xs"
+                  className="px-5 py-2.5 rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white font-bold text-xs transition-all shadow-xs"
                 >
                   Consult Our Team
                 </Link>
@@ -98,43 +98,49 @@ export default function ServiceDetailPage() {
           </div>
 
           {/* Right Column: Narrative Editorial Article */}
-          <div className="lg:col-span-7 space-y-7 text-[#023A51]">
+          <div className="lg:col-span-7 max-w-3xl space-y-8 text-[#023A51]">
             {/* Primary Article Paragraphs */}
-            <div className="space-y-4 text-[15px] sm:text-[16px] text-[#023A51] leading-[1.8] font-normal">
+            <div className="space-y-5 text-[15px] sm:text-[16px] text-[#33475B] leading-[1.85] font-normal">
               {service.articleParagraphs.map((paragraph, pIdx) => (
-                <p key={pIdx}>
+                <p key={pIdx} className={pIdx === 0 ? 'text-[17px] sm:text-[18px] leading-[1.75] text-[#023A51] font-medium' : ''}>
                   {paragraph}
                 </p>
               ))}
             </div>
 
             {/* Detailed Article Sections (Lists, Offerings, Sub-services) */}
-            <div className="space-y-8 pt-6 border-t border-[#E8EBEF]">
+            <div className="space-y-7 pt-7 border-t border-[#E8EBEF]">
               {service.sections.map((section, sIdx) => (
-                <div key={sIdx} className="space-y-3">
-                  <h2 className="text-[18px] sm:text-[19px] font-bold text-[#023A51] tracking-tight">
-                    {section.heading}
-                  </h2>
+                <section key={sIdx} className="space-y-3.5 border-l-2 border-[#2CBC63]/60 pl-5 sm:pl-6">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E8F4F8] text-[11px] font-bold text-[#023A51]">
+                      {String(sIdx + 1).padStart(2, '0')}
+                    </span>
+                    <h2 className="text-[18px] sm:text-[19px] font-bold text-[#023A51] tracking-tight leading-snug">
+                      {section.heading}
+                    </h2>
+                  </div>
 
                   {section.description && (
-                    <p className="text-[14.5px] text-[#33475B] leading-relaxed">
+                    <p className="pl-9 text-[14.5px] text-[#4A5259] leading-[1.75]">
                       {section.description}
                     </p>
                   )}
 
                   {section.items && section.items.length > 0 && (
-                    <ul className="space-y-2.5 pt-1 pl-5">
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5 pl-9">
                       {section.items.map((item, iIdx) => (
                         <li
                           key={iIdx}
-                          className="text-[14px] sm:text-[14.5px] text-[#023A51] list-disc marker:text-[#023A51] leading-relaxed"
+                          className="flex items-start gap-2 text-[14px] sm:text-[14.5px] text-[#33475B] leading-relaxed"
                         >
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#2CBC63]" />
                           {item}
                         </li>
                       ))}
                     </ul>
                   )}
-                </div>
+                </section>
               ))}
             </div>
           </div>

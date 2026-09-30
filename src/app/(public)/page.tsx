@@ -167,10 +167,10 @@ export default function HomePage() {
             <div className="lg:col-span-5 space-y-8">
               <div className="space-y-3">
                 <h2 className="text-3xl sm:text-4xl font-extrabold leading-tight text-white tracking-tight">
-                  Consult with CA Narahari Adhikari<span className="text-[#2CBC63]">.</span>
+                  Have a tax, audit, or reporting question<span className="text-[#2CBC63]">?</span>
                 </h2>
                 <p className="text-[14.5px] text-slate-300 leading-relaxed font-normal">
-                  Schedule an advisory session to review your statutory audit compliance, tax assessments, or corporate matters in Nepal.
+                  Tell us what you are working through. We will point you to the right person, next step, or meeting format.
                 </p>
               </div>
 
@@ -182,9 +182,9 @@ export default function HomePage() {
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-white text-[14px]">Firm Office</div>
+                      <div className="font-bold text-white text-[14px]">In person or online</div>
                     <div className="text-xs sm:text-[13px] text-slate-300 mt-1 leading-relaxed">
-                      {settings.address}
+                      Choose an office meeting in Kathmandu, an online session, or a phone call.
                     </div>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-white text-[14px]">Direct Channels</div>
+                      <div className="font-bold text-white text-[14px]">A direct reply</div>
                     <div className="text-xs sm:text-[13px] text-slate-300 mt-1 space-y-1">
                       <a href={`mailto:${settings.email}`} className="hover:text-[#2CBC63] transition-colors block">
                         {settings.email}

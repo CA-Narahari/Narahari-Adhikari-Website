@@ -19,7 +19,6 @@ export interface ServiceData {
   slug: string;
   title: string;
   shortTitle: string;
-  tagline: string;
   description: string;
   image: string;
   icon: LucideIcon;
@@ -33,15 +32,14 @@ export const servicesData: ServiceData[] = [
     slug: 'audit-and-assurance',
     title: 'Audit & Assurance',
     shortTitle: 'Audit & Assurance',
-    tagline: 'Transparency, Trust & Regulatory Compliance',
     description:
       'We provide audit and assurance services to enhance transparency, build stakeholder trust, and ensure regulatory compliance.',
     image: '/services/service-audit.jpg',
     icon: FileText,
     accentColor: '#023A51',
     articleParagraphs: [
-      'We provide comprehensive audit and assurance services designed to enhance transparency, strengthen stakeholder trust, and ensure compliance with regulatory standards. Our experienced team is committed to delivering the highest level of accuracy, integrity, and value in every engagement.',
-      'We follow globally accepted audit procedures aligned with the Nepal Standards on Auditing (NSA)/International Standards on Auditing (ISA) and the professional codes prescribed by the Institute of Chartered Accountants of Nepal. At the core of our services is a steadfast commitment to delivering high-quality assurance.',
+      'An audit should leave you with a clearer understanding of the business, not just another report. We review the records, controls, and decisions behind the numbers and explain what needs attention.',
+      'Our work follows the Nepal Standards on Auditing and the professional requirements of ICAN. We plan the engagement around your business, keep communication direct, and document the points that matter.',
     ],
     sections: [
       {
@@ -63,8 +61,8 @@ export const servicesData: ServiceData[] = [
         ],
       },
       {
-        heading: 'Other Quality Services',
-        description: 'Other than auditing services, we provide the following additional quality services as well:',
+        heading: 'Related support',
+        description: 'Where an audit raises a wider question, we can help with the next step as well:',
         items: [
           'NFRS/IFRS Implementation and Compliance',
           'Due Diligence Review',
@@ -84,19 +82,18 @@ export const servicesData: ServiceData[] = [
     slug: 'taxation-consultancy',
     title: 'Taxation Consultancy Services',
     shortTitle: 'Taxation Consultancy',
-    tagline: '31 Years of Unmatched Tax Advisory',
     description:
-      'With 31 years of experience and leadership in Nepal\'s tax system, we offer unmatched tax advisory and policy expertise.',
+      'Clear support for tax filings, reviews, planning, and conversations with the tax authority.',
     image: '/services/service-tax.jpg',
     icon: TrendingUp,
     accentColor: '#023A51',
     articleParagraphs: [
-      'With a strong foundation in taxation, shaped by our founding partner\'s extensive involvement as a Member of the High-level Tax System Review Commission, IRD and Member of the Expert Committee, IRD, Ministry of Finance and with our experience of 31 years, the firm offers unparalleled expertise in tax advisory and policy development.',
-      'We specialize in helping businesses adhere the complexities of local and international tax regulations, and develop effective tax strategies that supports growth while ensuring compliance. If you are dealing with contentious tax issues, need assistance with policy development, or seek greater transparency in your tax operations, our team of experts is here to help.',
+      'Tax questions rarely arrive in a neat order. We help businesses make sense of their filings, notices, transactions, and decisions before a small issue becomes an expensive one.',
+      'That can mean preparing a return, reviewing a VAT position, planning a transaction, or responding to an IRD query. We explain the options and the records needed for each one.',
     ],
     sections: [
       {
-        heading: 'Our Tax Consulting Expertise on:',
+        heading: 'Where we help',
         items: [
           'Tax Planning and Strategy',
           'Tax Policy Development',
@@ -107,7 +104,7 @@ export const servicesData: ServiceData[] = [
         ],
       },
       {
-        heading: 'Others:',
+        heading: 'Regulatory reading',
         items: [
           'Acts',
           'Tax Facilities',
@@ -120,15 +117,14 @@ export const servicesData: ServiceData[] = [
     slug: 'mergers-and-acquisitions',
     title: 'Mergers and Acquisitions',
     shortTitle: 'Mergers & Acquisitions',
-    tagline: 'Pioneers in M&A Transactions in Nepal',
     description:
       'As pioneers in Mergers and Acquisitions, we have facilitated numerous successful transactions in Nepal.',
     image: '/services/service-ma.jpg',
     icon: Handshake,
     accentColor: '#023A51',
     articleParagraphs: [
-      'Merger and Acquisitions are being widely implemented as strategic decisions in Nepalese business sectors. S.R. Pandey & Co., Chartered Accountants has been a pioneer in the Mergers and Acquisitions in the country which has assisted in successful mergers and acquisitions of numerous entities over the years.',
-      'Our team of expertise with extensive industry knowledge and experience help you confidently navigate the complexities of uniting organizations. Mergers and acquisitions are significant undertakings that can shape the future of your business. To navigate these complex transactions for mergers and acquisitions successfully, partnering with an experienced and dedicated mergers and acquisitions firm is crucial.',
+      'A merger or acquisition changes more than the shareholding. It affects contracts, people, tax positions, reporting, and the way the combined business will operate.',
+      'We help buyers and sellers understand the numbers and the practical risks before they commit, then stay involved through the financial and reporting work that follows completion.',
     ],
     sections: [
       {
@@ -158,36 +154,35 @@ export const servicesData: ServiceData[] = [
     slug: 'advisory-services',
     title: 'Advisory Services',
     shortTitle: 'Advisory Services',
-    tagline: 'Strategic Consulting for Sustainable Growth',
     description:
       'Our growth is linked to our clients\' success, driving our commitment to strategic advisory services.',
     image: '/services/service-advisory.jpg',
     icon: MessageSquareQuote,
     accentColor: '#023A51',
     articleParagraphs: [
-      'We believe that our growth is directly connected to the growth of our clients which drives our commitment to providing comprehensive advisory services to help businesses navigate changing priorities and achieve sustainable growth.',
-      'To support our clients, we provide a wide range of advisory services which includes – Management Consulting, Risk Consulting, Compliance Review, Taxation Consulting, Strategic Planning and other consultancy as required by our clients.',
+      'Sometimes a business needs an outside view before it changes direction. We work with owners and finance teams on the practical questions behind growth, risk, controls, and cash.',
+      'The work may be a focused review or a longer project. Either way, we start with the decision you need to make and build the analysis around it.',
     ],
     sections: [
       {
         heading: 'Management Consulting',
         description:
-          'We provide strategic advisory services to help businesses optimize operations, improve efficiency, and drive growth. Our consulting expertise covers financial planning, risk management, business process improvement, business restructuring and turnaround and strategic decision-making.',
+          'We review the numbers, processes, and responsibilities that shape day-to-day decisions, then turn the findings into a practical plan.',
       },
       {
         heading: 'Standard Operating Procedure (SOP) Formulation and Compliance Test',
         description:
-          'S.R. Pandey & Co., Chartered Accountants, provides specialized services in Standard Operating Procedure (SOP) Formulations in businesses to setup the Internal procedures of the organization and to help strength the structures and internal control systems.',
+          'We help teams document the way important work should be done and test whether the process is being followed in practice.',
       },
       {
         heading: 'Public Procurement Policy Compliances',
         description:
-          'We help entities ensure that the procurements of the goods and services of both capital and revenue nature are in compliance with the requirements of the Public Procurement Policies and to ensure that such procurements are made at most economical option available.',
+          'We review procurement steps, approvals, and records so purchases follow the applicable public procurement rules and make commercial sense.',
       },
       {
         heading: 'Fraud Risk Assessment',
         description:
-          'We help entities asses their internal structures and control systems so that loopholes and gaps in their systems may be detected on a timely manner and potential frauds may be avoided beforehand.',
+          'We review controls and responsibilities to find gaps early and reduce the chance of fraud or avoidable loss.',
       },
       {
         heading: 'Fraud Investigations',
@@ -200,14 +195,13 @@ export const servicesData: ServiceData[] = [
     slug: 'business-support-outsourcing',
     title: 'Business Support and Outsourcing',
     shortTitle: 'Support & Outsourcing',
-    tagline: 'Tailored Back-Office & Compliance Solutions',
     description:
-      'We grow alongside our clients, providing strategic advisory services to help businesses adapt and achieve sustainable success.',
+      'Reliable back-office support for the records, filings, and approvals that keep a business moving.',
     image: '/services/service-bpo.jpg',
     icon: HeartHandshake,
     accentColor: '#023A51',
     articleParagraphs: [
-      'Our firm provides comprehensive business support and outsourcing solutions tailored to meet your unique needs. With our expertise, we help you focus on your core operations while we handle the complexities of compliance, approvals, and administrative functions.',
+      'We take care of recurring records, filings, and administrative work so owners and finance teams can focus on the business. The scope can be a single process or a regular monthly service.',
     ],
     sections: [
       {
@@ -220,7 +214,7 @@ export const servicesData: ServiceData[] = [
       },
       {
         heading: 'Financial Consulting and Bookkeeping',
-        description: 'Our expertise ensures accurate bookkeeping and compliance with accounting standards and legal requirements.',
+        description: 'We keep books current and prepare records that are easier to review, reconcile, and use.',
       },
       {
         heading: 'Cost Accounting',
@@ -240,15 +234,14 @@ export const servicesData: ServiceData[] = [
     slug: 'nfrs-ifrs-implementation',
     title: 'NFRS/IFRS Implementation',
     shortTitle: 'NFRS/IFRS Implementation',
-    tagline: 'Pioneering Financial Reporting Transformation',
     description:
       'We have led financial reporting transformation, contributing to NFRS/IFRS adoption.',
     image: '/services/service-ifrs.jpg',
     icon: LineChart,
     accentColor: '#023A51',
     articleParagraphs: [
-      'We have been at the forefront of financial reporting transformation in Nepal, actively contributing to the adoption and implementation of NFRS/IFRS. Our team of skilled professionals led by partners with extensive expertise in the field has strengthened our ability to guide businesses through complex financial reporting challenges.',
-      'Whether in preparing for initial adoption or enhancing compliance with NFRS/IFRS, our expertise ensures that your financial reporting aligns with global standards. We have track record of successfully implementing NFRS in banks, insurance companies, micro finance companies, investment companies, capital markets, mutual funds and other service industries. We have been delivering specialized training on NFRS/IFRS to various regulatory organizations, banks, insurance companies, microfinance institutions, investment firms, capital markets, mutual funds, and other service industries, while also providing comprehensive assistance to ensure a smooth and efficient NFRS/IFRS implementation.',
+      'NFRS/IFRS work is easier when the team knows what changes, why it changes, and what evidence will support the final numbers. We help finance teams map that work before the reporting deadline.',
+      'Our support can cover opening balances, accounting policies, disclosures, and training for the people who prepare and review the statements.',
     ],
     sections: [
       {
@@ -268,14 +261,13 @@ export const servicesData: ServiceData[] = [
     slug: 'training-and-seminar',
     title: 'Training and Seminar',
     shortTitle: 'Training & Seminar',
-    tagline: 'Practical Skills for Financial & Compliance Excellence',
     description:
       'We provide expert training in taxation, financial reporting, business structuring, and compliance.',
     image: '/services/service-training.jpg',
     icon: GraduationCap,
     accentColor: '#023A51',
     articleParagraphs: [
-      'We have been actively providing various trainings designed for professionals, business and regulators to equip with practical skills in taxation, financial reporting, business structuring/ restructuring, merger and acquisition, financial management and regulatory compliance with the goal of promoting financial expertise, ensuring smooth operations and long-term business success.',
+      'Our sessions are built around the work people actually have to do: prepare a filing, read a standard, improve a control, or explain a financial decision. Sessions can be run for a small team or a larger organisation.',
     ],
     sections: [
       {

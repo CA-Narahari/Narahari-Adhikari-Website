@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import {
   ShieldCheck,
-  Award,
   ArrowRight,
   MapPin,
   Phone,
@@ -16,7 +15,6 @@ import {
   FileCheck,
   CheckCircle2,
   ChevronDown,
-  HelpCircle,
 } from 'lucide-react';
 
 export default function AboutPage() {
@@ -27,9 +25,9 @@ export default function AboutPage() {
   const primaryPractitioner = {
     name: 'CA Narahari Adhikari',
     title: 'Chartered Accountant & Principal',
-    credential: 'FCA &bull; ICAN Member',
+    credential: 'FCA | ICAN Member',
     image: '/profile-picture.png',
-    bio: 'Fellow Chartered Accountant with extensive experience navigating Nepal\'s fiscal legislation, revenue administration, and statutory auditing frameworks. With decades of continuous practice, he specializes in high-stakes IRD tax assessments, corporate reorganizations, and international accounting standard (NFRS/IFRS) compliance.',
+    bio: 'Fellow Chartered Accountant with long experience in Nepal\'s tax system, statutory audits, and financial reporting. He works with businesses on IRD assessments, corporate reorganisations, and NFRS/IFRS implementation.',
     specialties: [
       'Statutory & Forensic Audit',
       'Direct & Indirect Tax Advisory',
@@ -40,23 +38,23 @@ export default function AboutPage() {
 
   const practiceCommitments = [
     {
-      title: 'Regulatory Independence & Ethics',
-      desc: 'Strict adherence to the professional code of ethics prescribed by the Institute of Chartered Accountants of Nepal (ICAN) and International Standards on Auditing (ISA).',
+      title: 'Independent and ethical work',
+      desc: 'We follow ICAN and auditing standards, and keep our advice independent of the outcome a client wants.',
       icon: Scale,
     },
     {
-      title: 'Privileged Client Confidentiality',
-      desc: 'Every corporate ledger, working paper, and financial document is guarded under institutional confidentiality and fiduciary privilege.',
+      title: 'Client confidentiality',
+      desc: 'Your records, working papers, and business information are handled discreetly and shared only when there is a proper reason to do so.',
       icon: ShieldCheck,
     },
     {
-      title: 'Partner-Led Direct Engagement',
-      desc: 'Clients receive hands-on analysis directly from experienced practitioners, ensuring actionable strategies rather than generic reports.',
+      title: 'Direct senior involvement',
+      desc: 'You speak with the people reviewing the work, so recommendations stay practical and connected to your situation.',
       icon: Briefcase,
     },
     {
-      title: 'Statutory Verification & Accuracy',
-      desc: 'Zero tolerance for compliance ambiguity. We provide rigorous, evidence-backed reconciliations recognized by the Inland Revenue Department.',
+      title: 'Careful records and clear answers',
+      desc: 'We trace the numbers, explain the assumptions, and flag the points that need attention before a filing or review.',
       icon: FileCheck,
     },
   ];
@@ -101,7 +99,7 @@ export default function AboutPage() {
               About the Practice<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Delivering authoritative statutory audit, specialized taxation consultancy, and strategic advisory with uncompromising technical integrity in Nepal.
+              Experienced advice for businesses that need clear answers on tax, audit, reporting, and compliance in Nepal.
             </p>
           </div>
         </div>
@@ -114,10 +112,10 @@ export default function AboutPage() {
         <section className="space-y-6">
           <div className="border-b border-[#E8EBEF] pb-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
-              Lead Practitioner & Advisory Expertise<span className="text-[#2CBC63]">.</span>
+              Meet the principal<span className="text-[#2CBC63]">.</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-              Direct supervision and partner-level involvement on every engagement.
+              Every engagement is reviewed directly by an experienced Chartered Accountant.
             </p>
           </div>
 
@@ -157,7 +155,7 @@ export default function AboutPage() {
                 {/* Core Competencies */}
                 <div className="pt-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2.5">
-                    Practice Focus Areas:
+                    Areas of focus
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {primaryPractitioner.specialties.map((s, idx) => (
@@ -195,14 +193,14 @@ export default function AboutPage() {
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-6 space-y-5">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight leading-tight">
-              Rigorous financial oversight rooted in deep regulatory experience<span className="text-[#2CBC63]">.</span>
+              Clear advice, grounded in experience<span className="text-[#2CBC63]">.</span>
             </h2>
             <div className="space-y-3.5 text-sm sm:text-[14.5px] text-[#4A5259] leading-relaxed">
               <p>
-                Operating in full alignment with the Nepal Chartered Accountants Act and standards issued by the Institute of Chartered Accountants of Nepal (ICAN), our practice represents the intersection of technical mastery and dependable governance.
+                Our work follows the Nepal Chartered Accountants Act and the standards issued by ICAN. That gives clients a clear process for making decisions and keeping their records in order.
               </p>
               <p>
-                From advising growing domestic businesses on monthly VAT and E-TDS reconciliations to guiding corporate enterprises through complex reorganizations, foreign exchange approvals with Nepal Rastra Bank, and NFRS conversions, our engagements are anchored in precision and statutory clarity.
+                We help growing businesses with monthly VAT and E-TDS work, and support larger organisations with restructuring, Nepal Rastra Bank approvals, and NFRS conversions.
               </p>
             </div>
             <div className="pt-2">
@@ -210,7 +208,7 @@ export default function AboutPage() {
                 href="/services"
                 className="inline-flex items-center gap-2 text-sm font-bold text-[#023A51] hover:text-[#2CBC63] transition-colors"
               >
-                <span>View All 7 Practice Areas</span>
+                <span>See all 7 services</span>
                 <ArrowRight className="w-4 h-4 text-[#2CBC63]" />
               </Link>
             </div>
@@ -234,10 +232,10 @@ export default function AboutPage() {
         <section className="space-y-6">
           <div className="border-b border-[#E8EBEF] pb-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
-              Guiding Principles of Our Engagements<span className="text-[#2CBC63]">.</span>
+              How we work<span className="text-[#2CBC63]">.</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-              Maintaining institutional objectivity and technical rigor in every mandate.
+              Independent thinking, careful work, and plain communication on every engagement.
             </p>
           </div>
 
@@ -336,14 +334,14 @@ export default function AboutPage() {
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-[#023A51] block">Principal Office:</span>
+                    <span className="font-bold text-[#023A51] block">Office:</span>
                     <span>{settings.address}</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Mail className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-[#023A51] block">Direct Electronic Mail:</span>
+                    <span className="font-bold text-[#023A51] block">Email:</span>
                     <a href={`mailto:${settings.email}`} className="text-[#023A51] hover:underline font-mono">
                       {settings.email}
                     </a>
@@ -352,7 +350,7 @@ export default function AboutPage() {
                 <div className="flex items-start gap-3">
                   <Phone className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-[#023A51] block">Practice Telephone:</span>
+                    <span className="font-bold text-[#023A51] block">Phone:</span>
                     <a href={`tel:${settings.phone}`} className="text-[#023A51] hover:underline font-mono">
                       {settings.phone}
                     </a>

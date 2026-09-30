@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   Calculator,
   Receipt,
@@ -15,10 +14,8 @@ import {
   Layers,
   AlertCircle,
   HelpCircle,
-  X,
-  ArrowRight,
-  ExternalLink,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ResourcesToolsPage() {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
@@ -137,6 +134,13 @@ export default function ResourcesToolsPage() {
     };
   };
 
+  const selectTool = (toolId: string) => {
+    setActiveToolId(toolId);
+    window.requestAnimationFrame(() => {
+      document.getElementById('tool-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
   const toolsList = [
     {
       id: 'vat',
@@ -237,11 +241,23 @@ export default function ResourcesToolsPage() {
               Accounting & Tax Calculators<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Standardized statutory calculation models for VAT, personal income tax, SSF payroll, and corporate compliance in Nepal.
+              Choose a calculator, enter your figures, and review the estimate immediately. These tools are for planning and should be checked against your records and the latest official guidance.
             </p>
           </div>
         </div>
       </section>
+
+      <div className="max-w-[1240px] mx-auto px-6 pt-8">
+        <div className="flex flex-col gap-3 rounded-2xl border border-[#CCD7DC] bg-[#E8F4F8] p-5 sm:flex-row sm:items-start sm:gap-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#023A51]">
+            <Calculator className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-[#023A51]">Start with one question</h2>
+            <p className="mt-1 text-xs leading-relaxed text-[#33475B]">Select a tool below. The selected calculator will open underneath the list, where you can change inputs and see the result update as you type.</p>
+          </div>
+        </div>
+      </div>
 
       {/* Tools Grid */}
       <div className="max-w-[1240px] mx-auto px-6 pt-8">
@@ -251,8 +267,14 @@ export default function ResourcesToolsPage() {
             return (
               <div
                 key={tool.id}
-                onClick={() => setActiveToolId(tool.id)}
-                className="bg-white rounded-2xl border border-[#E8EBEF] p-5 shadow-xs hover:shadow-lg hover:border-[#2CBC63]/60 transition-all duration-200 cursor-pointer flex flex-col justify-between group"
+                onClick={() => selectTool(tool.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') selectTool(tool.id);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-pressed={activeToolId === tool.id}
+                className={`bg-white rounded-2xl border p-5 shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between group ${activeToolId === tool.id ? 'border-[#023A51] shadow-md' : 'border-[#E8EBEF] hover:border-[#2CBC63]/60'}`}
               >
                 <div className="space-y-2.5">
                   <div className="w-9 h-9 rounded-xl bg-[#E8F4F8] text-[#023A51] group-hover:bg-[#2CBC63] group-hover:text-white transition-colors flex items-center justify-center">
@@ -270,7 +292,7 @@ export default function ResourcesToolsPage() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#023A51] group-hover:text-[#2CBC63]">
-                  <span>Launch Tool &rarr;</span>
+                  <span>{activeToolId === tool.id ? 'Selected below' : 'Open calculator'} &rarr;</span>
                 </div>
               </div>
             );
@@ -278,10 +300,10 @@ export default function ResourcesToolsPage() {
         </div>
       </div>
 
-      {/* Interactive Modal */}
+      {/* Selected tool workspace */}
       {activeToolId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto space-y-5 border border-[#E8EBEF] shadow-2xl">
+        <section id="tool-workspace" className="max-w-3xl mx-auto px-6 pt-12">
+          <div className="bg-white rounded-2xl w-full p-6 sm:p-8 space-y-5 border border-[#E8EBEF] shadow-sm">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#2CBC63]/10 text-[#2CBC63] flex items-center justify-center">
@@ -296,12 +318,14 @@ export default function ResourcesToolsPage() {
                   </span>
                 </div>
               </div>
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setActiveToolId(null)}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
-                <X className="w-5 h-5" />
-              </button>
+                <span>Close tool</span>
+              </Button>
             </div>
 
             {/* Tool 1: VAT Calculator */}
@@ -317,22 +341,26 @@ export default function ResourcesToolsPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    type="button"
+                    size="sm"
                     onClick={() => setVatMode('exclusive')}
-                    className={`flex-1 py-2 rounded-lg font-bold text-xs ${
+                    className={`flex-1 rounded-lg font-bold text-xs ${
                       vatMode === 'exclusive' ? 'bg-[#023A51] text-white' : 'bg-slate-100 text-slate-700'
                     }`}
                   >
                     VAT Exclusive (+13%)
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
                     onClick={() => setVatMode('inclusive')}
-                    className={`flex-1 py-2 rounded-lg font-bold text-xs ${
+                    className={`flex-1 rounded-lg font-bold text-xs ${
                       vatMode === 'inclusive' ? 'bg-[#023A51] text-white' : 'bg-slate-100 text-slate-700'
                     }`}
                   >
                     VAT Inclusive (Reverse)
-                  </button>
+                  </Button>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl space-y-2 border">
                   <div className="flex justify-between">
@@ -660,7 +688,7 @@ export default function ResourcesToolsPage() {
                   <label className="font-bold text-slate-700 block mb-1">Holding Period</label>
                   <select
                     value={cgtType}
-                    onChange={(e) => setCgtType(e.target.value as any)}
+                    onChange={(e) => setCgtType(e.target.value as 'equity_short' | 'equity_long' | 'property_short' | 'property_long')}
                     className="w-full px-3 py-2 border rounded-lg"
                   >
                     <option value="equity_short">Equities &lt; 365 days (7.5%)</option>
@@ -695,7 +723,7 @@ export default function ResourcesToolsPage() {
                   <label className="font-bold text-slate-700 block mb-1">Pool</label>
                   <select
                     value={deprPool}
-                    onChange={(e) => setDeprPool(e.target.value as any)}
+                    onChange={(e) => setDeprPool(e.target.value as 'A' | 'B' | 'C' | 'D')}
                     className="w-full px-3 py-2 border rounded-lg"
                   >
                     <option value="A">Block A: Buildings (5%)</option>
@@ -767,7 +795,7 @@ export default function ResourcesToolsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

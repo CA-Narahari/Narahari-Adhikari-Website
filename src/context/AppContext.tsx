@@ -25,6 +25,7 @@ import {
   initialDownloads,
   initialOfficeHours,
 } from '@/lib/initial-data';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 interface AppContextType {
   settings: SiteSettings;
@@ -88,40 +89,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Load from local storage for persistence across admin and public views
   useEffect(() => {
-    try {
-      const storedSettings = localStorage.getItem('ca_site_settings');
-      if (storedSettings) setSettings(JSON.parse(storedSettings));
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      try {
+        const storedSettings = localStorage.getItem('ca_site_settings');
+        if (storedSettings) setSettings(JSON.parse(storedSettings));
 
-      const storedTax = localStorage.getItem('ca_tax_updates');
-      if (storedTax) setTaxUpdates(JSON.parse(storedTax));
+        const storedTax = localStorage.getItem('ca_tax_updates');
+        if (storedTax) setTaxUpdates(JSON.parse(storedTax));
 
-      const storedVac = localStorage.getItem('ca_vacancies');
-      if (storedVac) setVacancies(JSON.parse(storedVac));
+        const storedVac = localStorage.getItem('ca_vacancies');
+        if (storedVac) setVacancies(JSON.parse(storedVac));
 
-      const storedApps = localStorage.getItem('ca_applications');
-      if (storedApps) setApplications(JSON.parse(storedApps));
+        const storedApps = localStorage.getItem('ca_applications');
+        if (storedApps) setApplications(JSON.parse(storedApps));
 
-      const storedApts = localStorage.getItem('ca_appointments');
-      if (storedApts) setAppointments(JSON.parse(storedApts));
+        const storedApts = localStorage.getItem('ca_appointments');
+        if (storedApts) setAppointments(JSON.parse(storedApts));
 
-      const storedGov = localStorage.getItem('ca_gov_links');
-      if (storedGov) {
-        const parsed = JSON.parse(storedGov);
-        if (Array.isArray(parsed) && parsed.length >= 11) {
-          setGovernmentLinks(parsed);
-        } else {
-          setGovernmentLinks(initialGovernmentLinks);
+        const storedGov = localStorage.getItem('ca_gov_links');
+        if (storedGov) {
+          const parsed = JSON.parse(storedGov);
+          setGovernmentLinks(Array.isArray(parsed) && parsed.length >= 11 ? parsed : initialGovernmentLinks);
         }
+
+        const storedDl = localStorage.getItem('ca_downloads');
+        if (storedDl) setDownloads(JSON.parse(storedDl));
+
+        const storedHours = localStorage.getItem('ca_office_hours');
+        if (storedHours) setOfficeHours(JSON.parse(storedHours));
+      } catch {
+        // ignore malformed local data and keep the initial fallback
       }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-      const storedDl = localStorage.getItem('ca_downloads');
-      if (storedDl) setDownloads(JSON.parse(storedDl));
+  useEffect(() => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return;
+    const supabase = client;
 
-      const storedHours = localStorage.getItem('ca_office_hours');
-      if (storedHours) setOfficeHours(JSON.parse(storedHours));
-    } catch {
-      // ignore
+    let cancelled = false;
+
+    async function loadPublishedContent() {
+      const [taxResult, postsResult, vacanciesResult, linksResult, downloadsResult, hoursResult] = await Promise.all([
+        supabase.from('tax_updates').select('*').eq('status', 'published').order('published_at', { ascending: false }),
+        supabase.from('posts').select('*').eq('status', 'published').order('published_at', { ascending: false }),
+        supabase.from('vacancies').select('*').eq('is_active', true).order('deadline', { ascending: true }),
+        supabase.from('government_links').select('*').order('display_order', { ascending: true }),
+        supabase.from('download_resources').select('*').order('created_at', { ascending: false }),
+        supabase.from('office_hours').select('*'),
+      ]);
+
+      if (cancelled) return;
+      if (!taxResult.error && taxResult.data) setTaxUpdates(taxResult.data as TaxUpdate[]);
+      if (!postsResult.error && postsResult.data) setBlogPosts(postsResult.data as BlogPost[]);
+      if (!vacanciesResult.error && vacanciesResult.data) setVacancies(vacanciesResult.data as Vacancy[]);
+      if (!linksResult.error && linksResult.data) setGovernmentLinks(linksResult.data as GovernmentLink[]);
+      if (!downloadsResult.error && downloadsResult.data) setDownloads(downloadsResult.data as DownloadResource[]);
+      if (!hoursResult.error && hoursResult.data) setOfficeHours(hoursResult.data as OfficeHourDay[]);
     }
+
+    void loadPublishedContent();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {

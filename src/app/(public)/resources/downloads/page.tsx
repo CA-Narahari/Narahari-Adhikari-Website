@@ -1,16 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   ExternalLink,
   Download,
-  FileText,
   Search,
-  Landmark,
-  ShieldCheck,
-  CheckCircle2,
 } from 'lucide-react';
 
 export default function ResourcesDownloadsPage() {
@@ -37,7 +34,7 @@ export default function ResourcesDownloadsPage() {
               Regulatory Portals & Downloads<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Direct access to Nepal's official governmental authorities, revenue departments, and statutory download schedules.
+              One place for official links and the working documents businesses commonly need. Always confirm a filing requirement with the issuing authority.
             </p>
           </div>
         </div>
@@ -61,12 +58,12 @@ export default function ResourcesDownloadsPage() {
             {/* Quick Filter */}
             <div className="relative w-full md:w-64">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
+              <Input
                 type="text"
-                placeholder="Filter authorities..."
+                placeholder="Search authorities..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-white border border-[#E8EBEF] rounded-lg text-xs text-[#023A51] focus:outline-none focus:border-[#2CBC63]"
+                className="h-10 w-full pl-8 text-xs md:w-64"
               />
             </div>
           </div>
@@ -144,7 +141,8 @@ export default function ResourcesDownloadsPage() {
                   </div>
                 </div>
 
-                <a
+                <Button asChild size="sm" variant="secondary" className="w-full rounded-[8px] text-xs">
+                  <a
                   href={dl.download_url}
                   download
                   onClick={(e) => {
@@ -153,11 +151,11 @@ export default function ResourcesDownloadsPage() {
                       alert(`Downloading official "${dl.title}" file.`);
                     }
                   }}
-                  className="w-full py-2 rounded-xl bg-slate-100 hover:bg-[#023A51] hover:text-white text-[#023A51] text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download File</span>
-                </a>
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download file</span>
+                  </a>
+                </Button>
               </div>
             ))}
           </div>

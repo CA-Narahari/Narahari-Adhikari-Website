@@ -17,7 +17,6 @@ import {
   Clock,
   Settings,
   ExternalLink,
-  Power,
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
@@ -46,27 +45,27 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col justify-between shrink-0 min-h-screen">
+    <aside className="w-64 bg-[#023A51] border-r border-[#012C3D] text-slate-200 flex flex-col justify-between shrink-0 min-h-screen">
       <div>
         {/* Brand Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-amber-600 flex items-center justify-center font-bold text-slate-950">
+            <div className="w-9 h-9 rounded bg-[#2CBC63] flex items-center justify-center font-bold text-white">
               CA
             </div>
             <div>
               <div className="text-sm font-bold text-white leading-tight">CA Firm Admin</div>
-              <div className="text-[11px] text-slate-400">Content & Operations</div>
+              <div className="text-[11px] text-slate-300">Content and operations</div>
             </div>
           </div>
         </div>
 
         {/* Quick Master Switch: Careers Toggle */}
-        <div className="p-4 mx-3 my-3 rounded-lg bg-slate-800/80 border border-slate-700/80">
+        <div className="p-4 mx-3 my-3 rounded-lg bg-white/10 border border-white/10">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-white block">Careers Status</span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-300">
                 {settings.careers_enabled ? 'Hiring Active on Navbar' : 'Hidden from Public Site'}
               </span>
             </div>
@@ -76,16 +75,16 @@ export default function AdminSidebar() {
               title="Toggle Careers Page On/Off"
             >
               {settings.careers_enabled ? (
-                <ToggleRight className="w-7 h-7 text-emerald-400" />
+                <ToggleRight className="w-7 h-7 text-[#65BC7B]" />
               ) : (
-                <ToggleLeft className="w-7 h-7 text-slate-500" />
+                <ToggleLeft className="w-7 h-7 text-slate-300" />
               )}
             </button>
           </div>
         </div>
 
         {/* Navigation items */}
-        <nav className="px-3 py-2 space-y-1">
+      <nav className="px-3 py-2 space-y-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = isActive(link.href);
@@ -95,8 +94,8 @@ export default function AdminSidebar() {
                 href={link.href}
                 className={`flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors ${
                   active
-                    ? 'bg-amber-600 text-slate-950 font-bold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-[#2CBC63] text-white font-bold'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -107,8 +106,8 @@ export default function AdminSidebar() {
                   <span
                     className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                       link.badge === 'ON'
-                        ? 'bg-emerald-500 text-slate-950'
-                        : 'bg-slate-700 text-slate-300'
+                        ? 'bg-[#65BC7B] text-[#023A51]'
+                        : 'bg-white/10 text-slate-300'
                     }`}
                   >
                     {link.badge}
@@ -121,17 +120,17 @@ export default function AdminSidebar() {
       </div>
 
       {/* Footer Strip */}
-      <div className="p-4 border-t border-slate-800 space-y-2">
+      <div className="p-4 border-t border-white/10 space-y-2">
         <Link
           href="/"
           target="_blank"
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
           <span>View Live Website</span>
         </Link>
-        <div className="text-[10px] text-center text-slate-500 pt-1">
-          Multi-Client CMS • Version 1.0
+        <div className="text-[10px] text-center text-slate-300 pt-1">
+          CMS workspace • Version 1.0
         </div>
       </div>
     </aside>

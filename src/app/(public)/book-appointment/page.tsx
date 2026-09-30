@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -11,17 +13,13 @@ import {
   Mail,
   Building,
   CheckCircle,
-  Video,
-  MapPin,
   ExternalLink,
-  MessageSquare,
-  Sparkles,
 } from 'lucide-react';
 
 export default function BookAppointmentPage() {
-  const { services, settings, addAppointment } = useApp();
+  const { services, addAppointment } = useApp();
 
-  const [bookingMode, setBookingMode] = useState<'calendly' | 'form'>('calendly');
+  const [bookingMode, setBookingMode] = useState<'calendly' | 'form'>('form');
 
   // Direct On-Site Form State
   const [clientName, setClientName] = useState('');
@@ -86,7 +84,7 @@ export default function BookAppointmentPage() {
               Schedule a Consultation<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Book a direct consultation with CA Narahari Adhikari. Choose an instant slot via Calendly for virtual meetings, or submit a request for an in-person session at our Kathmandu office.
+              Talk through your tax, audit, or reporting question with CA Narahari Adhikari. Choose a quick online meeting, or send a request for a visit to our Kathmandu office.
             </p>
           </div>
         </div>
@@ -96,7 +94,7 @@ export default function BookAppointmentPage() {
       <div className="max-w-[1240px] mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* LEFT: Booking Panel (Calendly or Direct Form) */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-12 space-y-6">
             {/* Mode Switcher Tabs */}
             <div className="flex flex-wrap items-center gap-2 p-1.5 bg-[#F4F6F8] rounded-2xl border border-[#E8EBEF]">
               <button
@@ -109,7 +107,7 @@ export default function BookAppointmentPage() {
                 }`}
               >
                 <CalendarIcon className="w-4 h-4 text-[#2CBC63]" />
-                <span>Instant Online Scheduling (Calendly)</span>
+                <span>Book online with Calendly</span>
               </button>
 
               <button
@@ -122,7 +120,7 @@ export default function BookAppointmentPage() {
                 }`}
               >
                 <Clock className="w-4 h-4 text-[#2CBC63]" />
-                <span>Direct Office Meeting Request</span>
+                <span>Request an office meeting</span>
               </button>
             </div>
 
@@ -132,10 +130,10 @@ export default function BookAppointmentPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E8EBEF]">
                   <div>
                     <h2 className="text-xl font-bold text-[#023A51]">
-                      30-Minute Advisory Session
+                      30-minute online consultation
                     </h2>
                     <p className="text-xs text-[#59667D] mt-0.5">
-                      Direct meeting with CA Narahari Adhikari via Google Meet or Phone.
+                      Choose a time that works for a focused conversation about your situation.
                     </p>
                   </div>
                   <a
@@ -144,7 +142,7 @@ export default function BookAppointmentPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#E8F4F8] hover:bg-[#2CBC63] text-[#023A51] hover:text-white text-xs font-bold transition-colors shrink-0"
                   >
-                    <span>Open Calendly in New Tab</span>
+                    <span>Open scheduler</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -162,7 +160,7 @@ export default function BookAppointmentPage() {
                 </div>
 
                 <p className="text-[11.5px] text-[#59667D] text-center pt-2">
-                  After booking through Calendly, an automatic calendar invitation with meeting coordinates will be emailed to you immediately.
+                  You will receive the meeting details by email after you confirm the time.
                 </p>
               </div>
             )}
@@ -204,10 +202,10 @@ export default function BookAppointmentPage() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="border-b border-[#E8EBEF] pb-4">
                       <h2 className="text-xl font-bold text-[#023A51]">
-                        Submit Consultation Request
+                        Tell us how we can help
                       </h2>
                       <p className="text-xs text-[#59667D] mt-0.5">
-                        Tell us your preferred timing and advisory requirements. We respond within 24 hours.
+                        Share a little about your question and preferred meeting time. We usually reply within one working day.
                       </p>
                     </div>
 
@@ -219,13 +217,13 @@ export default function BookAppointmentPage() {
                         </label>
                         <div className="relative">
                           <User className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                          <input
+                          <Input
                             type="text"
                             required
                             value={clientName}
                             onChange={(e) => setClientName(e.target.value)}
                             placeholder="e.g. Ramesh Shrestha"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] focus:outline-none focus:border-[#2CBC63] focus:ring-1 focus:ring-[#2CBC63]"
+                            className="h-11 w-full rounded-xl pl-10 text-xs sm:text-sm"
                           />
                         </div>
                       </div>
@@ -236,13 +234,13 @@ export default function BookAppointmentPage() {
                         </label>
                         <div className="relative">
                           <Phone className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                          <input
+                          <Input
                             type="tel"
                             required
                             value={clientPhone}
                             onChange={(e) => setClientPhone(e.target.value)}
                             placeholder="+977 98XXXXXXXX"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] focus:outline-none focus:border-[#2CBC63] focus:ring-1 focus:ring-[#2CBC63]"
+                            className="h-11 w-full rounded-xl pl-10 text-xs sm:text-sm"
                           />
                         </div>
                       </div>
@@ -255,13 +253,13 @@ export default function BookAppointmentPage() {
                         </label>
                         <div className="relative">
                           <Mail className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                          <input
+                          <Input
                             type="email"
                             required
                             value={clientEmail}
                             onChange={(e) => setClientEmail(e.target.value)}
                             placeholder="name@organization.com"
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] focus:outline-none focus:border-[#2CBC63] focus:ring-1 focus:ring-[#2CBC63]"
+                            className="h-11 w-full rounded-xl pl-10 text-xs sm:text-sm"
                           />
                         </div>
                       </div>
@@ -272,12 +270,12 @@ export default function BookAppointmentPage() {
                         </label>
                         <div className="relative">
                           <Building className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-                          <input
+                          <Input
                             type="text"
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}
                             placeholder="e.g. Kathmandu Trading Pvt. Ltd."
-                            className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] focus:outline-none focus:border-[#2CBC63] focus:ring-1 focus:ring-[#2CBC63]"
+                            className="h-11 w-full rounded-xl pl-10 text-xs sm:text-sm"
                           />
                         </div>
                       </div>
@@ -330,11 +328,11 @@ export default function BookAppointmentPage() {
                         <label className="block text-xs font-bold text-[#023A51] mb-1.5">
                           Preferred Date
                         </label>
-                        <input
+                        <Input
                           type="date"
                           value={preferredDate}
                           onChange={(e) => setPreferredDate(e.target.value)}
-                          className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] focus:outline-none focus:border-[#2CBC63] bg-white"
+                          className="h-11 w-full rounded-xl bg-white text-xs sm:text-sm"
                         />
                       </div>
 
@@ -361,23 +359,23 @@ export default function BookAppointmentPage() {
                       <label className="block text-xs font-bold text-[#023A51] mb-1.5">
                         Brief Context or Specific Questions (Optional)
                       </label>
-                      <textarea
+                      <Textarea
                         rows={3}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Briefly state your tax year, filing deadline, or consultation objective..."
-                        className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] focus:outline-none focus:border-[#2CBC63] resize-none"
+                        className="min-h-24 w-full rounded-xl text-xs sm:text-sm"
                       />
                     </div>
 
                     <div className="pt-2">
-                      <button
+                      <Button
                         type="submit"
                         disabled={submitting}
-                        className="w-full py-3.5 px-6 rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white font-bold text-xs sm:text-sm transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+                        className="h-12 w-full rounded-full text-xs sm:text-sm"
                       >
-                        {submitting ? 'Transmitting Request...' : 'Confirm Consultation Request'}
-                      </button>
+                        {submitting ? 'Sending request...' : 'Send consultation request'}
+                      </Button>
                     </div>
                   </form>
                 )}
@@ -385,86 +383,6 @@ export default function BookAppointmentPage() {
             )}
           </div>
 
-          {/* RIGHT: Office & Contact Information */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-[#E8F4F8] rounded-3xl p-6 sm:p-8 border border-[#CCD7DC]/80 space-y-6">
-              <div>
-                <h3 className="text-lg font-bold text-[#023A51]">
-                  Direct Office Contact
-                </h3>
-                <p className="text-xs text-[#59667D] mt-1 leading-relaxed">
-                  For immediate statutory matters or urgent tax assessment deadlines, reach our team directly.
-                </p>
-              </div>
-
-              <div className="space-y-4 text-xs sm:text-[13px] text-[#4A5259]">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-[#023A51] block">Location:</span>
-                    <span>{settings.address}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-[#023A51] block">Telephone:</span>
-                    <a
-                      href={`tel:${settings.phone}`}
-                      className="text-[#023A51] font-mono hover:underline"
-                    >
-                      {settings.phone}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Mail className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-[#023A51] block">Electronic Mail:</span>
-                    <a
-                      href={`mailto:${settings.email}`}
-                      className="text-[#023A51] font-mono hover:underline"
-                    >
-                      {settings.email}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Clock className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-[#023A51] block">Office Hours:</span>
-                    <span>Sunday &ndash; Friday: 10:00 AM &ndash; 5:00 PM</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* WhatsApp direct */}
-              <div className="pt-2 border-t border-[#CCD7DC]/60">
-                <a
-                  href={`https://wa.me/${settings.whatsapp_number.replace(/[^0-9]/g, '')}?text=Hello%20CA%20Narahari%20Adhikari%2C%20I%20would%20like%20to%20schedule%20a%20consultation.`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-[#023A51] hover:text-[#2CBC63] border border-[#CCD7DC] text-xs font-bold flex items-center justify-center gap-2 transition-colors"
-                >
-                  <MessageSquare className="w-4 h-4 text-[#2CBC63]" />
-                  <span>Chat on WhatsApp</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Confidentiality & ICAN Notice */}
-            <div className="bg-white rounded-3xl p-6 border border-[#E8EBEF] text-xs text-[#59667D] space-y-2">
-              <div className="font-bold text-[#023A51] text-xs">
-                Confidentiality & Compliance
-              </div>
-              <p className="leading-relaxed">
-                All client discussions, accounting records, and tax disclosures are held in strict professional confidence under the Institute of Chartered Accountants of Nepal (ICAN) Code of Ethics.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

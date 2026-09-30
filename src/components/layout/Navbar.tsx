@@ -260,13 +260,13 @@ export default function Navbar() {
                           >
                             <div className="grid grid-cols-2 gap-2">
                               {[
-                                { label: 'Audit & Assurance', sub: 'Trust, compliance & statutory audits', href: '/services/audit-and-assurance' },
-                                { label: 'Taxation Consultancy', sub: '31 years tax & IRD advisory', href: '/services/taxation-consultancy' },
-                                { label: 'Mergers & Acquisitions', sub: 'M&A pioneers & deal execution', href: '/services/mergers-and-acquisitions' },
-                                { label: 'Advisory Services', sub: 'Strategic business & growth advice', href: '/services/advisory-services' },
-                                { label: 'Business Support & BPO', sub: 'Bookkeeping, payroll & OCR', href: '/services/business-support-outsourcing' },
-                                { label: 'NFRS/IFRS Implementation', sub: 'Financial reporting transformation', href: '/services/nfrs-ifrs-implementation' },
-                                { label: 'Training & Seminars', sub: 'Expert-led corporate workshops', href: '/services/training-and-seminar' },
+                                { label: 'Audit & Assurance', sub: 'Clearer records and stronger controls', href: '/services/audit-and-assurance' },
+                                { label: 'Tax Advisory', sub: 'Practical advice for tax decisions', href: '/services/taxation-consultancy' },
+                                { label: 'Mergers & Acquisitions', sub: 'Guidance from review to closing', href: '/services/mergers-and-acquisitions' },
+                                { label: 'Business Advisory', sub: 'A steady hand for growth', href: '/services/advisory-services' },
+                                { label: 'Business Support', sub: 'Bookkeeping, payroll, and filings', href: '/services/business-support-outsourcing' },
+                                { label: 'NFRS/IFRS', sub: 'Reporting that meets the standard', href: '/services/nfrs-ifrs-implementation' },
+                                { label: 'Training', sub: 'Useful sessions for your team', href: '/services/training-and-seminar' },
                               ].map((s) => (
                                 <Link
                                   key={s.label}
@@ -284,14 +284,14 @@ export default function Navbar() {
                             </div>
                             <div className="border-t border-[#E8EBEF] mt-3 pt-3 flex items-center justify-between px-2">
                               <span className="text-[12px] text-[#7A889B]">
-                                Explore all 7 specialized practice areas
+                                Explore all 7 services
                               </span>
                               <Link
                                 href="/services"
                                 onClick={() => setServicesDropdown(false)}
                                 className="text-[12.5px] font-bold text-[#2CBC63] hover:text-[#25A456] transition-colors inline-flex items-center gap-1"
                               >
-                                View All Services &rarr;
+                                View all services &rarr;
                               </Link>
                             </div>
                           </motion.div>
@@ -315,11 +315,11 @@ export default function Navbar() {
                                 className="group/res block p-3.5 rounded-xl hover:bg-[#E8F4F8] transition-all"
                               >
                                 <div className="font-bold text-[#023A51] group-hover/res:text-[#2CBC63] transition-colors flex items-center justify-between text-[13.5px]">
-                                  <span>Interactive Calculators & Tools</span>
+                                  <span>Calculators & Tools</span>
                                   <span className="text-[11px] opacity-0 group-hover/res:opacity-100 transition-opacity text-[#2CBC63]">→</span>
                                 </div>
                                 <p className="text-[11.5px] text-[#7A889B] mt-1 leading-snug">
-                                  12 Real-time financial models: VAT 13%, individual income tax slabs, loan EMI, SSF & TDS lookup.
+                                  VAT, income tax, loan, SSF, and TDS tools.
                                 </p>
                               </Link>
 
@@ -329,25 +329,25 @@ export default function Navbar() {
                                 className="group/res block p-3.5 rounded-xl hover:bg-[#E8F4F8] transition-all"
                               >
                                 <div className="font-bold text-[#023A51] group-hover/res:text-[#2CBC63] transition-colors flex items-center justify-between text-[13.5px]">
-                                  <span>Regulatory Portals & Downloads</span>
+                                  <span>Portals & Downloads</span>
                                   <span className="text-[11px] opacity-0 group-hover/res:opacity-100 transition-opacity text-[#2CBC63]">→</span>
                                 </div>
                                 <p className="text-[11.5px] text-[#7A889B] mt-1 leading-snug">
-                                  Direct access to 11 official authorities (ICAN, IRD, NRB, OCR, Customs) & downloadable statutory schedules.
+                                  Official links and useful filing schedules.
                                 </p>
                               </Link>
                             </div>
 
                             <div className="border-t border-[#E8EBEF] mt-3 pt-3 flex items-center justify-between px-2">
                               <span className="text-[11.5px] text-[#7A889B]">
-                                Statutory directories & tools
+                                Official links and tools
                               </span>
                               <Link
                                 href="/resources"
                                 onClick={() => setResourcesDropdown(false)}
                                 className="text-[12px] font-bold text-[#2CBC63] hover:text-[#25A456] transition-colors"
                               >
-                                All Resources &rarr;
+                                View all resources &rarr;
                               </Link>
                             </div>
                           </motion.div>

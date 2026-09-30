@@ -4,12 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import {
-  Bell,
-  Search,
-  Plus,
   ExternalLink,
-  ShieldCheck,
-  User,
 } from 'lucide-react';
 
 export default function AdminHeader() {
@@ -18,7 +13,7 @@ export default function AdminHeader() {
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <span className="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded">
+        <span className="text-xs font-semibold px-2.5 py-1 bg-[#E8F4F8] text-[#023A51] border border-[#CCD7DC] rounded">
           {settings.company_name}
         </span>
         <span className="text-xs text-slate-400">•</span>
@@ -40,7 +35,7 @@ export default function AdminHeader() {
 
         {/* User Profile */}
         <div className="flex items-center gap-2 pl-4 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-slate-900 text-amber-400 font-bold flex items-center justify-center text-xs">
+          <div className="w-8 h-8 rounded-full bg-[#023A51] text-[#65BC7B] font-bold flex items-center justify-center text-xs">
             CA
           </div>
           <div className="text-left hidden sm:block">

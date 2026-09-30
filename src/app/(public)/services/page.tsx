@@ -19,7 +19,7 @@ export default function ServicesPage() {
               Services<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Comprehensive chartered accountancy, statutory audit, taxation consultancy, and financial advisory services in Nepal.
+              Practical accounting, audit, tax, and advisory support for businesses in Nepal.
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@ export default function ServicesPage() {
                     href={`/services/${service.slug}`}
                     className="inline-flex items-center gap-2 text-[13.5px] font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors"
                   >
-                    <span>View Service Details</span>
+                    <span>View details</span>
                     <ArrowRight className="w-4 h-4 text-[#2CBC63] group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>

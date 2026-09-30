@@ -39,10 +39,10 @@ export default function ServicesCarousel() {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
   }, [maxIndex]);
 
-  // Auto-slide every 3.5 seconds
+  // Keep the service showcase moving at a calm two-second pace.
   useEffect(() => {
     if (isPaused) return;
-    const interval = setInterval(nextSlide, 3500);
+    const interval = setInterval(nextSlide, 2000);
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
 

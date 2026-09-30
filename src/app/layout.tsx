@@ -11,8 +11,20 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: 'Narahari Adhikari | Chartered Accountant, Tax Advisory & Offshore Accounting Services',
-  description: 'We are preparing a new home for our Tax Business Advisory & Offshore Accounting Services. In the meantime, our team remains fully reachable — please get in touch through any of the options below.',
+  title: {
+    default: 'Narahari Adhikari | Chartered Accountants',
+    template: '%s | Narahari Adhikari',
+  },
+  description: 'Chartered accountancy support in Nepal for tax, audit, financial reporting, business advisory, and compliance decisions.',
+  applicationName: 'Narahari Adhikari Chartered Accountants',
+  keywords: ['chartered accountant Nepal', 'tax advisory Nepal', 'statutory audit Nepal', 'NFRS IFRS Nepal'],
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: 'website',
+    siteName: 'Narahari Adhikari Chartered Accountants',
+    title: 'Narahari Adhikari | Chartered Accountants',
+    description: 'Practical support for tax, audit, reporting, and compliance decisions in Nepal.',
+  },
 };
 
 export default function RootLayout({

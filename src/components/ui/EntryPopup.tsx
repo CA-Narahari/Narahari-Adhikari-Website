@@ -4,9 +4,13 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, ArrowRight } from 'lucide-react';
+import { X, CheckCircle, ArrowRight, Mail, Phone } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function EntryPopup() {
+  const { settings } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -90,14 +94,14 @@ export default function EntryPopup() {
 
               <div>
                 <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#023A51] leading-tight tracking-tight">
-                  Looking For A Reliable Partner In Business<span className="text-[#2CBC63]">?</span>
+                  Looking for a reliable partner in business<span className="text-[#2CBC63]">?</span>
                 </h3>
 
                 {/* Accent line */}
                 <div className="h-1 w-12 bg-[#2CBC63] mt-3 mb-4 rounded-full" />
 
                 <p className="text-xs sm:text-[13px] text-[#4A5259] leading-relaxed mb-6">
-                  We are preparing a new home for our Tax Business Advisory & Offshore Accounting Services. In the meantime, our team remains fully reachable — please get in touch through any of the options below.
+                  We are preparing a new home for our tax and business advisory practice. Until then, you can reach us directly for help with a filing, audit, or financial decision.
                 </p>
 
                 {submitted ? (
@@ -109,36 +113,49 @@ export default function EntryPopup() {
                     </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <input
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Button asChild className="h-11 rounded-[8px] text-xs">
+                        <Link href="/book-appointment" onClick={handleClose}>
+                          Schedule a consultation
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" className="h-11 rounded-[8px] text-xs">
+                        <a href={`tel:${settings.phone}`} onClick={handleClose}>
+                          <Phone className="h-4 w-4 text-[#2CBC63]" />
+                          Call the office
+                        </a>
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-[11px] text-[#59667D]">
+                      <span className="h-px flex-1 bg-[#E8EBEF]" />
+                      <span>or ask a question by email</span>
+                      <span className="h-px flex-1 bg-[#E8EBEF]" />
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                      <label htmlFor="entry-email" className="sr-only">Email address</label>
+                      <Input
+                        id="entry-email"
                         type="email"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email *"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-[#023A51] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2CBC63] focus:border-transparent transition-all"
+                        placeholder="Your email address"
                       />
-                    </div>
-
-                    <div>
-                      <button
-                        type="submit"
-                        className="w-full py-3 px-6 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-xs shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <span>Subscribe & Inquire</span>
+                      <Button type="submit" variant="secondary" className="w-full h-11 rounded-[8px] text-xs">
+                        <Mail className="h-4 w-4 text-[#2CBC63]" />
+                        Ask us to get in touch
                         <ArrowRight className="w-4 h-4 ml-1" />
-                      </button>
-                    </div>
+                      </Button>
+                    </form>
 
-                    <p className="text-[10px] text-slate-400 text-center">
-                      By entering your email, you are agreed to our{' '}
-                      <Link href="/about" onClick={handleClose} className="underline text-slate-600 hover:text-[#023A51]">
-                        Terms & Conditions
-                      </Link>
-                      .
+                    <p className="text-[10px] text-[#59667D] text-center">
+                      We use your details only to reply to your enquiry.
                     </p>
-                  </form>
+                  </div>
                 )}
               </div>
             </div>

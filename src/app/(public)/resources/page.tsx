@@ -1,29 +1,17 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import {
   Calculator,
-  Receipt,
   Landmark,
-  Download,
   ArrowRight,
   ExternalLink,
-  ShieldCheck,
-  Percent,
-  Coins,
-  Calendar,
 } from 'lucide-react';
 
 export default function ResourcesGatewayPage() {
-  const router = useRouter();
-  const { governmentLinks, downloads } = useApp();
-
-  useEffect(() => {
-    router.replace('/resources/tools');
-  }, [router]);
+  const { governmentLinks } = useApp();
 
   return (
     <div className="pb-24 overflow-x-hidden">
@@ -35,13 +23,13 @@ export default function ResourcesGatewayPage() {
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-2xl space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-[#2CBC63]">
-              Knowledge & Utilities
+              Tools, links, and useful files
             </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
               Resources<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Standardized statutory calculation tools and direct directories to Nepal's official regulatory authorities.
+              Simple calculators for everyday planning, plus direct links to the authorities and documents businesses use most.
             </p>
           </div>
         </div>
@@ -62,13 +50,13 @@ export default function ResourcesGatewayPage() {
 
               <div>
                 <span className="text-[11px] font-bold text-[#2CBC63] uppercase tracking-wider">
-                  Interactive Models
+                  Work out an estimate
                 </span>
                 <h2 className="text-2xl font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors mt-1">
                   Financial & Tax Calculators
                 </h2>
                 <p className="text-xs sm:text-[13.5px] text-[#59667D] leading-relaxed mt-2">
-                  12 real-time computation models for VAT 13%, individual income tax slabs, withholding TDS rates, loan EMI, SSF contributions, and corporate tax.
+                  Check VAT, personal tax, TDS, loan repayments, payroll contributions, and other common figures without opening a spreadsheet.
                 </p>
               </div>
 
@@ -107,13 +95,13 @@ export default function ResourcesGatewayPage() {
 
               <div>
                 <span className="text-[11px] font-bold text-[#2CBC63] uppercase tracking-wider">
-                  Official Authorities & Files
+                  Go to the source
                 </span>
                 <h2 className="text-2xl font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors mt-1">
                   Regulatory Portals & Downloads
                 </h2>
                 <p className="text-xs sm:text-[13.5px] text-[#59667D] leading-relaxed mt-2">
-                  Direct external access to all 11 official regulatory bodies (ICAN, IRD, NRB, OCR, Customs, SEBON) and downloadable statutory filing schedules.
+                  Find official portals and practical checklists for tax filing, company records, audit preparation, and regulatory work.
                 </p>
               </div>
 

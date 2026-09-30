@@ -29,12 +29,12 @@ export const initialSiteSettings: SiteSettings = {
 export const initialTaxUpdates: TaxUpdate[] = [
   {
     id: 'tax-1',
-    title: 'New VAT Rule Directives & E-Billing (CBMS) Mandatory Integration 2081/82',
+    title: 'E-billing and CBMS checks for VAT-registered businesses',
     slug: 'new-vat-rule-directives-e-billing-2081-82',
     category: 'VAT',
     update_type: 'Update',
     topic: 'VAT & Invoicing',
-    effective_date: '01 Shrawan 2081',
+    effective_date: 'Current filing guidance',
     summary: 'Inland Revenue Department circular mandating real-time Central Billing Monitoring System (CBMS) integration for taxpayers exceeding turnover threshold.',
     content: `The Inland Revenue Department (IRD) has released updated procedural directives regarding electronic billing (CBMS integration) and mandatory VAT reporting.
 
@@ -81,7 +81,7 @@ What this means for you:
     category: 'Finance Acts',
     update_type: 'Guide',
     topic: 'Financial Reporting',
-    effective_date: 'Effective FY 2081/82 onwards',
+    effective_date: 'Current reporting guidance',
     summary: 'Comprehensive breakdown of opening balance sheet reconciliations, fair value asset measurement, and technical disclosures mandated by ICAN.',
     content: `As the Institute of Chartered Accountants of Nepal (ICAN) expands the mandatory enforcement of Nepal Financial Reporting Standards (NFRS), organizations must upgrade beyond traditional accounting methods.
 
@@ -106,7 +106,7 @@ Our technical advisory team conducts gap-analysis audits to ensure audit committ
     update_type: 'Sector Note',
     topic: 'Hydropower & Energy',
     sector: 'Hydropower',
-    effective_date: 'Gazette Notice 2081',
+    effective_date: 'Sector guidance',
     summary: 'Specialized regulatory insights on 100% income tax exemption timelines, subsequent 50% concession periods, and transmission wheeling tax guidelines.',
     content: `Energy producers operating commercial hydropower generation projects in Nepal operate under specific statutory tax incentive structures enacted in the Income Tax Act Section 11.
 
@@ -128,7 +128,7 @@ What this means for you:
     update_type: 'Guide',
     topic: 'Budget & SMEs',
     sector: 'Manufacturing',
-    effective_date: 'Fiscal Year 2081/82',
+    effective_date: 'Current budget guidance',
     summary: 'Executive summary detailing changes in corporate income tax concessions, special export subsidies, and revised turnover tax brackets.',
     content: `The current fiscal budget contains several critical measures aimed at incentivizing domestic production and formalizing micro and small businesses.
 
@@ -150,7 +150,7 @@ What this means for you:
     update_type: 'Sector Note',
     topic: 'Banking & Finance',
     sector: 'Banking',
-    effective_date: 'NRB Directive Circular 04/2081',
+    effective_date: 'Current NRB guidance',
     summary: 'Actionable guidance on loan loss provisioning, working capital guidelines compliance, and single borrower limits for commercial banks.',
     content: `Nepal Rastra Bank (NRB) has issued unified directives updating asset classification criteria and regulatory capital buffers.
 
@@ -166,32 +166,7 @@ What this means for you:
   },
 ];
 
-export const initialBlogPosts: BlogPost[] = [
-  {
-    id: 'blog-1',
-    title: 'How to Register a Private Limited Company in Nepal: Step-by-Step Legal & Tax Blueprint',
-    slug: 'how-to-register-private-limited-company-nepal',
-    category: 'Corporate Compliance',
-    excerpt: 'A practical walkthrough from Office of Company Registrar (OCR) name reservation to PAN/VAT registration and local government ward licensing.',
-    content: `Registering a company requires structured adherence to Company Act 2063 procedures. In this guide, our senior partners outline the exact procedural path, fee structures, and post-incorporation tax mandates.`,
-    author: 'CA Narahari Adhikari, FCA',
-    read_time: '6 min read',
-    status: 'published',
-    published_at: '2026-09-10',
-  },
-  {
-    id: 'blog-2',
-    title: 'Internal Audit vs Statutory Audit: What Growing Businesses Often Misunderstand',
-    slug: 'internal-audit-vs-statutory-audit-differences',
-    category: 'Auditing',
-    excerpt: 'Clarifying the legal requirements, scope differences, and risk-management value of internal operational reviews versus annual statutory audits.',
-    content: `While statutory audit is a compliance mandate for filing annual financial statements, internal audit is an executive tool for operational governance and risk mitigation.`,
-    author: 'Senior Audit Team',
-    read_time: '4 min read',
-    status: 'published',
-    published_at: '2026-09-01',
-  },
-];
+export const initialBlogPosts: BlogPost[] = [];
 
 export const initialServices: ServiceItem[] = [
   {
