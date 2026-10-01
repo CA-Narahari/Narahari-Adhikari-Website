@@ -36,9 +36,9 @@ export default function BlogPage() {
   });
 
   return (
-    <div className="pb-28 overflow-x-hidden bg-[#FAFCFD]">
-      {/* 1. Header Section matching Ideas/BLOG IDEA.webp */}
-      <section id="hero-section" className="relative border-b border-[#E8EBEF] bg-white pt-10 pb-12 sm:pt-14 sm:pb-16">
+    <div className="pb-28 overflow-x-hidden">
+      {/* 1. Header Section */}
+      <section id="hero-section" className="relative bg-hero-gradient pt-8 pb-12 sm:pt-12 sm:pb-16 overflow-hidden">
         <div className="mx-auto max-w-[1240px] px-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="max-w-2xl space-y-3">

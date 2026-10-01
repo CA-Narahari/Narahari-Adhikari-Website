@@ -12,7 +12,7 @@ export default function ServicesPage() {
       {/* 1. Header Section */}
       <section
         id="hero-section"
-        className="relative bg-white border-b border-[#E8EBEF] pt-10 pb-14 sm:pt-14 sm:pb-16"
+        className="relative bg-hero-gradient pt-8 pb-14 sm:pt-12 sm:pb-16 overflow-hidden"
       >
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-2xl space-y-3">

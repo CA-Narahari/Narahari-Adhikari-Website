@@ -74,9 +74,14 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
           <div className="hidden h-8 w-px bg-[#E3E9E8] sm:block" />
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E7F6EC] text-[11px] font-bold text-[#16723B]">NA</span>
-            <span className="max-w-36 truncate text-xs font-semibold text-[#33475B]">Practice account</span>
+          <div className="hidden items-center gap-2.5 sm:flex">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#023A51] text-xs font-bold text-white shadow-xs">
+              CA
+            </div>
+            <div className="min-w-0">
+              <span className="block truncate text-xs font-bold text-[#023A51]">CA Narahari Adhikari</span>
+              <span className="block text-[10.5px] font-semibold text-[#258E50]">Practice Admin</span>
+            </div>
           </div>
           <button
             type="button"

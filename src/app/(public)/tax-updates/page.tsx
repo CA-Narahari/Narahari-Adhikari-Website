@@ -35,18 +35,26 @@ export default function TaxUpdatesPage() {
   }, [taxUpdates, query, category]);
 
   return (
-    <main className="bg-[#FAFCFD] pb-20">
-      <header className="border-b border-[#E8EBEF] bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-          <p className="mb-3 text-sm font-semibold text-[#2CBC63]">Tax and regulatory desk</p>
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-[#023A51] sm:text-5xl">
-            Updates that affect your next filing.
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-[#4A5259]">
-            Read notices published by our practice, with a link to the issuing authority so you can check the original circular or announcement.
-          </p>
+    <div className="pb-24 overflow-x-hidden">
+      {/* 1. Header Section */}
+      <section
+        id="hero-section"
+        className="relative bg-hero-gradient pt-8 pb-14 sm:pt-12 sm:pb-16 overflow-hidden"
+      >
+        <div className="max-w-[1240px] mx-auto px-6 relative z-10">
+          <div className="max-w-3xl space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#2CBC63]">
+              Official Circulars & Compliance Directives
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
+              Tax Updates<span className="text-[#2CBC63]">.</span>
+            </h1>
+            <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
+              Timely analysis, statutory circulars, and tax compliance updates issued by the Inland Revenue Department (IRD), Ministry of Finance, and regulatory authorities in Nepal.
+            </p>
+          </div>
         </div>
-      </header>
+      </section>
 
       <div className="mx-auto grid max-w-6xl gap-12 px-6 py-12 lg:grid-cols-[minmax(0,1fr)_280px]">
         <section aria-labelledby="updates-heading">
@@ -147,6 +155,6 @@ export default function TaxUpdatesPage() {
           </div>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }

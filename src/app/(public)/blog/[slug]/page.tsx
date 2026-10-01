@@ -89,8 +89,8 @@ export default function BlogArticlePage() {
 
   return (
     <article className="pb-28 bg-[#FAFCFD] overflow-x-hidden">
-      {/* 1. Header Section matching Ideas/Article Idea.png */}
-      <section className="bg-white border-b border-[#E8EBEF] pt-8 pb-10 sm:pt-12 sm:pb-14">
+      {/* 1. Header Section */}
+      <section id="hero-section" className="relative bg-hero-gradient pt-8 pb-12 sm:pt-12 sm:pb-16 overflow-hidden">
         <div className="mx-auto max-w-[1140px] px-6">
           {/* Back Button */}
           <Link

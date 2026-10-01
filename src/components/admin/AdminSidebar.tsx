@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -83,13 +84,21 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
         className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] shrink-0 flex-col border-r border-white/10 bg-[#023A51] text-white shadow-xl transition-transform duration-200 md:sticky md:top-0 md:z-20 md:translate-x-0 md:shadow-none ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
         aria-label="CMS navigation"
       >
-        <div className="flex h-[76px] items-center justify-between border-b border-white/10 px-5">
-          <Link href="/admin" onClick={onNavigate} className="flex items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2CBC63]">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2CBC63] text-sm font-extrabold tracking-tight text-[#023A51]">NA</span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-bold leading-5">Narahari Adhikari</span>
-              <span className="mt-0.5 block text-[11px] leading-4 text-white/65">Website workspace</span>
-            </span>
+        <div className="flex h-[84px] items-center justify-between border-b border-white/10 px-4">
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className="flex items-center gap-2.5 rounded-xl bg-white px-3 py-2 shadow-xs transition-opacity hover:opacity-95"
+            title="Narahari Adhikari Chartered Accountants"
+          >
+            <Image
+              src="/Logo.png"
+              alt="Narahari Adhikari Chartered Accountants"
+              width={180}
+              height={45}
+              priority
+              className="h-8 w-auto object-contain"
+            />
           </Link>
           <button type="button" className="rounded-lg p-2 text-white/75 hover:bg-white/10 md:hidden" onClick={onNavigate} aria-label="Close navigation">
             <X className="h-4 w-4" />

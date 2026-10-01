@@ -364,7 +364,7 @@ export default function Navbar() {
                   href="/book-appointment"
                   className="px-6 py-2.5 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-[14px] shadow-sm hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center cursor-pointer"
                 >
-                  Book a consultation
+                  Free Consultation
                 </Link>
               </div>
             </div>
