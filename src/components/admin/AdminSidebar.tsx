@@ -43,7 +43,7 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
     {
       label: 'Website content',
       links: [
-        { name: 'Tax updates', href: '/admin/tax-updates', icon: ReceiptText },
+        { name: 'Updates', href: '/admin/tax-updates', icon: ReceiptText },
         { name: 'Articles', href: '/admin/blog', icon: BookOpenText },
         { name: 'Services', href: '/admin/services', icon: Building2 },
         { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },

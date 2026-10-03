@@ -48,7 +48,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/tax-updates" className="hover:text-[#2CBC63] transition-colors duration-200">
-                  Tax Updates
+                  Updates
                 </Link>
               </li>
               <li>
@@ -70,7 +70,7 @@ export default function Footer() {
           </div>
 
           {/* Col 3: Secondary links (2 cols) */}
-          <div className="lg:col-span-2 space-y-4 lg:pt-[29px]">
+          <div className="lg:col-span-2 space-y-4 lg:mt-[29px]">
             <ul className="space-y-2.5 text-[14px] text-[#33475B]">
               <li>
                 <Link href="/book-appointment" className="hover:text-[#2CBC63] transition-colors duration-200">

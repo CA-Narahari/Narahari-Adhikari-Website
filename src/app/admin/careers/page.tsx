@@ -190,7 +190,7 @@ export default function AdminCareersPage() {
       {/* New Vacancy Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-xl w-full p-6 space-y-4 shadow-xl border border-slate-200">
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
             <h3 className="text-lg font-bold text-slate-900 border-b pb-3">
               Post a New Vacancy
             </h3>
@@ -208,7 +208,7 @@ export default function AdminCareersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block font-semibold mb-1">Department</label>
                   <input
@@ -233,7 +233,7 @@ export default function AdminCareersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block font-semibold mb-1">Location</label>
                   <input

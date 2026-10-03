@@ -22,9 +22,6 @@ export default function ResourcesGatewayPage() {
       >
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-2xl space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2CBC63]">
-              Tools, links, and useful files
-            </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
               Resources<span className="text-[#2CBC63]">.</span>
             </h1>

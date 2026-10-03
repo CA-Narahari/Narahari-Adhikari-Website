@@ -25,31 +25,49 @@ export default function Navbar() {
   const [isPastHero, setIsPastHero] = useState(false);
 
   // Detect scroll to handle color change and stickiness strictly until hero section ends
+  //
+  // Behaviour contract:
+  //   • At the very top (scrollY ≈ 0) → hero gradient bg, sticky
+  //   • Scrolling within the hero     → white bg + shadow, still sticky
+  //   • Past the hero section         → white bg, NOT sticky (relative)
+  //
+  const headerRef = React.useRef<HTMLElement>(null);
+
   useEffect(() => {
     const onScroll = () => {
       const scrollY = window.scrollY;
-      setScrolled(scrollY > 15);
+      setScrolled(scrollY > 10);
 
-      // Sticky till the hero / img component section, but below that not sticky
       const heroSection = document.getElementById('hero-section');
+      const navHeight = headerRef.current?.offsetHeight || 80;
+
       if (heroSection) {
         const rect = heroSection.getBoundingClientRect();
-        setIsPastHero(rect.bottom <= 60);
+        // Stickiness ends when reaching the next section (hero bottom reaches navbar)
+        setIsPastHero(rect.bottom <= navHeight);
       } else {
-        setIsPastHero(scrollY > 680);
+        // Pages without hero-section: un-stick after ~85% of viewport height
+        setIsPastHero(scrollY > window.innerHeight * 0.85);
       }
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+    const rafId = requestAnimationFrame(onScroll);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
   // Approved navbar navigation items
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services', hasDropdown: true },
-    { name: 'Tax Updates', href: '/tax-updates' },
+    { name: 'Updates', href: '/tax-updates' },
     { name: 'Resources', href: '/resources', hasDropdown: true },
     { name: 'About Us', href: '/about' },
     { name: 'Blog', href: '/blog' },
@@ -65,16 +83,16 @@ export default function Navbar() {
 
   return (
     <header
-      className={`w-full transition-all duration-300 ${
-        isPastHero
-          ? 'relative z-40 bg-white border-b border-[#E8EBEF]'
-          : 'sticky top-0 z-50'
-      } ${
-        !isPastHero && scrolled
-          ? 'bg-white shadow-[0_4px_20px_-4px_rgba(2,58,81,0.08)] border-b border-[#E8EBEF]'
-          : !isPastHero
-          ? 'bg-hero-gradient border-none'
-          : ''
+      ref={headerRef}
+      style={{
+        transform: isPastHero ? 'translateY(-100%)' : 'translateY(0)',
+        transition:
+          'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease',
+      }}
+      className={`sticky top-0 z-50 w-full ${
+        scrolled
+          ? 'bg-white/95 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(2,58,81,0.08)] border-b border-[#E8EBEF]'
+          : 'bg-hero-gradient border-b border-transparent'
       }`}
     >
       <div className="max-w-[1280px] mx-auto px-6">
@@ -104,7 +122,7 @@ export default function Navbar() {
                   href="/tax-updates"
                   className="hover:text-[#2CBC63] transition-colors duration-150"
                 >
-                  Tax Updates
+                  Updates
                 </Link>
                 {settings.careers_enabled && (
                   <Link
@@ -458,7 +476,7 @@ export default function Navbar() {
                       </Link>
                     )}
 
-                    {item.name === 'Resources' && (
+                    {item.name === 'Resources' && resourcesDropdown && (
                       <div className="pl-6 space-y-1 pb-1">
                         <Link
                           href="/resources/tools"

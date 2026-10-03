@@ -70,10 +70,6 @@ export default function ServiceDetailPage() {
           </Link>
 
           <div className="mt-6 max-w-4xl space-y-4">
-            <span className="inline-block px-3 py-1 rounded-full bg-[#E8F4F8] text-[#023A51] text-xs font-bold uppercase tracking-wider">
-              Practice Area Article
-            </span>
-
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold text-[#023A51] leading-[1.2] tracking-tight">
               {service.title}<span className="text-[#2CBC63]">.</span>
             </h1>

@@ -42,9 +42,6 @@ export default function BlogPage() {
         <div className="mx-auto max-w-[1240px] px-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="max-w-2xl space-y-3">
-              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#2CBC63]">
-                Practice Journal & Articles
-              </span>
               <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
                 Tax, Business & Legal Insights<span className="text-[#2CBC63]">.</span>
               </h1>
@@ -225,7 +222,7 @@ export default function BlogPage() {
                 href="/tax-updates"
                 className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm text-center transition-all border border-white/20"
               >
-                View Tax Updates
+                View Updates
               </Link>
             </div>
           </div>

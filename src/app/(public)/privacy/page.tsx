@@ -9,8 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
-      <p className="text-sm font-semibold text-[#2CBC63]">Your information</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight text-[#023A51]">Privacy Policy</h1>
+      <h1 className="text-4xl font-bold tracking-tight text-[#023A51]">Privacy Policy</h1>
       <p className="mt-5 text-base leading-7 text-[#4A5259]">
         This notice explains what happens when you send a request or job application through this website.
       </p>

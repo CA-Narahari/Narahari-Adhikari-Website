@@ -60,23 +60,23 @@ export default function AdminTaxUpdatesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Tax Articles & Official Circulars
+            Practice Updates &amp; Official Circulars
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Publish tax law changes, VAT rules, and emergency gazette directives.
+            Publish regulatory notices, statutory circulars, and compliance updates.
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded text-xs transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold rounded text-xs transition-colors"
         >
           <Plus className="w-4 h-4" />
-          <span>Publish New Tax Article</span>
+          <span>Publish New Update</span>
         </button>
       </div>
 
-      {/* Tax Updates Table */}
+      {/* Updates Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <span className="text-xs font-bold text-slate-700">
@@ -123,7 +123,7 @@ export default function AdminTaxUpdatesPage() {
 
                 <button
                   onClick={() => {
-                    if (confirm('Delete this tax article?')) {
+                    if (confirm('Delete this update?')) {
                       deleteTaxUpdate(item.id);
                     }
                   }}
@@ -138,12 +138,12 @@ export default function AdminTaxUpdatesPage() {
         </div>
       </div>
 
-      {/* Add Tax Article Modal */}
+      {/* Add Update Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-slate-900 border-b pb-3">
-              Add New Tax Article / Circular
+              Add New Update / Circular
             </h3>
 
             <form onSubmit={handleCreate} className="space-y-3 text-xs">
@@ -159,7 +159,7 @@ export default function AdminTaxUpdatesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block font-semibold mb-1">Tax Category</label>
                   <select
@@ -211,7 +211,7 @@ export default function AdminTaxUpdatesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block font-semibold mb-1">Source Name</label>
                   <input
@@ -257,7 +257,7 @@ export default function AdminTaxUpdatesPage() {
                   type="submit"
                   className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded"
                 >
-                  Save Tax Article
+                  Save Update
                 </button>
               </div>
             </form>

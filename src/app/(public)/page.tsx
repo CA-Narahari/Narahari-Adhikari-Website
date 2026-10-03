@@ -85,7 +85,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
               className="lg:col-span-5 flex items-center justify-center relative py-4 lg:py-6"
             >
-              <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] h-[440px] sm:h-[480px] lg:h-[510px] flex items-center justify-center">
+              <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[500px] h-[440px] sm:h-[480px] lg:h-[510px] flex items-center justify-center overflow-hidden">
                 {/* MagicRings Component as interactive background aura */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-auto overflow-visible">
                   <div className="w-[520px] h-[520px] sm:w-[580px] sm:h-[580px] lg:w-[620px] lg:h-[620px] shrink-0">

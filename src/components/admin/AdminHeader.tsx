@@ -9,7 +9,7 @@ type AdminHeaderProps = { onMenuClick: () => void };
 
 const pageNames: Record<string, string> = {
   '/admin': 'Dashboard',
-  '/admin/tax-updates': 'Tax updates',
+  '/admin/tax-updates': 'Updates',
   '/admin/blog': 'Articles',
   '/admin/services': 'Services',
   '/admin/announcements': 'Announcements',

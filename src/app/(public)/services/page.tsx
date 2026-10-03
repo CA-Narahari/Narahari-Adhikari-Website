@@ -16,9 +16,6 @@ export default function ServicesPage() {
       >
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-2xl space-y-3">
-            <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#2CBC63]">
-              Chartered Accountancy Practice
-            </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
               Our Professional Services<span className="text-[#2CBC63]">.</span>
             </h1>

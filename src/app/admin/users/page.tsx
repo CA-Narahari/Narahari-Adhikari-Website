@@ -1,9 +1,34 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, Check, LoaderCircle, LockKeyhole, RefreshCw, ShieldCheck, UserPlus, UsersRound } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  KeyRound,
+  LoaderCircle,
+  Lock,
+  LockKeyhole,
+  RefreshCw,
+  ShieldCheck,
+  UserPlus,
+  UsersRound,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 
 type PracticeRole = 'admin' | 'staff';
 
@@ -23,10 +48,21 @@ export default function AdminUsersPage() {
   const [loadError, setLoadError] = useState('');
   const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Add Account form state (signup-01 pattern)
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<PracticeRole>('staff');
+
+  // Password Changing modal / section state
+  const [changingPasswordUser, setChangingPasswordUser] = useState<PracticeUser | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [isUpdatingPw, setIsUpdatingPw] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
@@ -58,10 +94,21 @@ export default function AdminUsersPage() {
     };
   }, []);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError('');
     setSuccess('');
+
+    if (password !== confirmPassword) {
+      setFormError('Passwords do not match. Please verify both password fields.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setFormError('Password must be at least 8 characters long.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -79,85 +126,188 @@ export default function AdminUsersPage() {
       setDisplayName('');
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
       setRole('staff');
       setSuccess(`${result.user.displayName} can now sign in as ${result.user.role === 'admin' ? 'an administrator' : 'staff'}.`);
       await loadUsers();
     } catch {
-      setFormError('The account service could not be reached. Please try again.');
+      setFormError('The account service could not be reached. Please check connectivity and try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handlePasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setPwError('');
+    setPwSuccess('');
+
+    if (!changingPasswordUser) return;
+
+    if (newPassword !== confirmNewPassword) {
+      setPwError('New passwords do not match.');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPwError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    setIsUpdatingPw(true);
+
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: changingPasswordUser.id, password: newPassword }),
+      });
+      const result = (await response.json()) as { message?: string; error?: string };
+
+      if (!response.ok) {
+        setPwError(result.error || 'Failed to update password.');
+        return;
+      }
+
+      setPwSuccess(`Password for ${changingPasswordUser.displayName} was updated successfully!`);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setTimeout(() => {
+        setChangingPasswordUser(null);
+        setPwSuccess('');
+      }, 2500);
+    } catch {
+      setPwError('Failed to communicate with authentication server.');
+    } finally {
+      setIsUpdatingPw(false);
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-6xl space-y-7">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-6xl space-y-8">
+      {/* Header */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-[#E8EBEF] pb-5">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#258E50]">Configuration</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#023A51]">Staff access</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64727D]">Add practice accounts and choose whether each person can manage the site or has staff access.</p>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E7F6EC] text-[#16723B] text-[11px] font-bold uppercase tracking-wider mb-1.5">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Staff Management & Security</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#023A51]">
+            Practice Staff & Access Control
+          </h1>
+          <p className="mt-1 text-sm text-[#59667D] max-w-2xl">
+            Create practice accounts, manage role access levels, and securely update staff passwords.
+          </p>
         </div>
-        <div className="inline-flex items-center gap-2 self-start rounded-lg border border-[#DCE7E3] bg-white px-3.5 py-2.5 text-xs font-semibold text-[#59667D] shadow-sm sm:self-auto">
-          <UsersRound className="h-4 w-4 text-[#258E50]" aria-hidden="true" />
-          {users.length} {users.length === 1 ? 'account' : 'accounts'}
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-[#DCE7E3] bg-white px-3.5 py-2 text-xs font-semibold text-[#59667D] shadow-xs">
+            <UsersRound className="h-4 w-4 text-[#2CBC63]" aria-hidden="true" />
+            <span>{users.length} {users.length === 1 ? 'account' : 'accounts'}</span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void loadUsers()}
+            disabled={isLoading}
+            className="h-9 gap-1.5 rounded-xl border-slate-200 text-xs text-[#023A51]"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <span>Refresh</span>
+          </Button>
         </div>
       </header>
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="overflow-hidden rounded-xl border border-[#E2E9E7] bg-white shadow-sm" aria-labelledby="practice-accounts-heading">
-          <div className="flex items-center justify-between gap-4 border-b border-[#E8EEEB] px-5 py-4 sm:px-6">
+      {/* Main Grid: Accounts List + Create Form (signup-01) */}
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Left Column: Practice Accounts Table */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs" aria-labelledby="practice-accounts-heading">
+          <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
-              <h2 id="practice-accounts-heading" className="text-sm font-bold text-[#023A51]">Practice accounts</h2>
-              <p className="mt-1 text-xs text-[#74838A]">Only accounts with an admin or staff role are listed.</p>
+              <h2 id="practice-accounts-heading" className="text-base font-bold text-[#023A51]">
+                Active Practice Accounts
+              </h2>
+              <p className="text-xs text-[#74838A]">
+                Authorized team members with access to the CMS portal.
+              </p>
             </div>
-            <Button type="button" variant="outline" onClick={() => void loadUsers()} disabled={isLoading} className="h-9 gap-2 rounded-lg border-[#D8E1DF] px-3 text-xs text-[#33475B]">
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
-              Refresh
-            </Button>
           </div>
 
           {loadError ? (
-            <div className="m-5 flex items-start gap-3 rounded-lg border border-[#F0C7C2] bg-[#FFF7F6] p-4 text-sm text-[#8A3429]" role="alert">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              <div><p className="font-semibold">Could not load accounts</p><p className="mt-1 text-xs leading-5">{loadError}</p></div>
+            <div className="m-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-800" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">Could not load accounts</p>
+                <p className="mt-1 leading-5">{loadError}</p>
+              </div>
             </div>
           ) : isLoading ? (
-            <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-[#74838A]" role="status">
-              <LoaderCircle className="h-4 w-4 animate-spin text-[#258E50]" aria-hidden="true" />
-              Loading practice accounts…
+            <div className="flex min-h-56 items-center justify-center gap-2 text-sm text-[#74838A]" role="status">
+              <LoaderCircle className="h-5 w-5 animate-spin text-[#2CBC63]" aria-hidden="true" />
+              <span>Loading practice accounts…</span>
             </div>
           ) : users.length === 0 ? (
             <div className="px-6 py-14 text-center">
-              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-[#EAF6EE] text-[#258E50]"><UsersRound className="h-5 w-5" aria-hidden="true" /></div>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF6EE] text-[#2CBC63]">
+                <UsersRound className="h-6 w-6" aria-hidden="true" />
+              </div>
               <h3 className="mt-4 text-sm font-bold text-[#023A51]">No practice accounts yet</h3>
-              <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-[#74838A]">Add an administrator or staff account to grant someone access to the CMS.</p>
+              <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-[#74838A]">
+                Use the form on the right to add an administrator or staff member.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[570px] text-left text-sm">
-                <thead className="bg-[#F8FAF9] text-[10px] font-bold uppercase tracking-[0.1em] text-[#74838A]">
+              <table className="w-full min-w-[540px] text-left text-sm">
+                <thead className="bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-[#59667D] border-b border-slate-100">
                   <tr>
-                    <th scope="col" className="px-5 py-3 sm:px-6">Account</th>
-                    <th scope="col" className="px-4 py-3">Access</th>
-                    <th scope="col" className="px-4 py-3">Email status</th>
-                    <th scope="col" className="px-4 py-3">Added</th>
+                    <th scope="col" className="px-5 py-3.5 sm:px-6">Team Member</th>
+                    <th scope="col" className="px-4 py-3.5">Role</th>
+                    <th scope="col" className="px-4 py-3.5">Status</th>
+                    <th scope="col" className="px-4 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#EEF1F0]">
+                <tbody className="divide-y divide-slate-100">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-[#FBFCFC]">
+                    <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-5 py-4 sm:px-6">
-                        <p className="font-semibold text-[#33475B]">{user.displayName}</p>
-                        <p className="mt-1 text-xs text-[#74838A]">{user.email}</p>
+                        <div className="font-bold text-[#023A51]">{user.displayName}</div>
+                        <div className="text-xs text-[#74838A]">{user.email}</div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${user.role === 'admin' ? 'bg-[#EAF1F8] text-[#245978]' : 'bg-[#EAF6EE] text-[#237445]'}`}>
-                          {user.role === 'admin' && <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />}
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                          user.role === 'admin'
+                            ? 'bg-[#E8F4F8] text-[#023A51] border border-[#CCD7DC]'
+                            : 'bg-[#E7F6EC] text-[#16723B] border border-[#BFE5CB]'
+                        }`}>
+                          {user.role === 'admin' && <ShieldCheck className="h-3.5 w-3.5 text-[#2CBC63]" aria-hidden="true" />}
                           {user.role === 'admin' ? 'Administrator' : 'Staff'}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-xs text-[#59667D]">{user.emailConfirmed ? 'Confirmed' : 'Pending'}</td>
-                      <td className="px-4 py-4 text-xs text-[#74838A]">{formatDate(user.createdAt)}</td>
+                      <td className="px-4 py-4 text-xs text-[#59667D]">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`h-1.5 w-1.5 rounded-full ${user.emailConfirmed ? 'bg-[#2CBC63]' : 'bg-amber-400'}`} />
+                          {user.emailConfirmed ? 'Active' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setChangingPasswordUser(user);
+                            setPwError('');
+                            setPwSuccess('');
+                            setNewPassword('');
+                            setConfirmNewPassword('');
+                          }}
+                          className="h-8 gap-1.5 text-xs text-[#023A51] hover:text-[#2CBC63] hover:bg-[#E8F4F8] rounded-lg"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                          <span>Change Password</span>
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -166,67 +316,279 @@ export default function AdminUsersPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-[#E2E9E7] bg-white p-5 shadow-sm sm:p-6" aria-labelledby="add-account-heading">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF6EE] text-[#258E50]"><UserPlus className="h-5 w-5" aria-hidden="true" /></div>
-            <div>
-              <h2 id="add-account-heading" className="text-sm font-bold text-[#023A51]">Add an account</h2>
-              <p className="mt-1 text-xs leading-5 text-[#74838A]">New accounts can sign in as soon as they are created.</p>
-            </div>
-          </div>
+        {/* Right Column: Add Staff Account Card based on signup-01 */}
+        <div className="space-y-6">
+          <Card className="rounded-2xl border border-slate-200/90 bg-white shadow-xs">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2.5 mb-1 text-[#2CBC63]">
+                <UserPlus className="h-5 w-5" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]">Staff Management</span>
+              </div>
+              <CardTitle className="text-xl font-extrabold text-[#023A51]">
+                Add Practice Account
+              </CardTitle>
+              <CardDescription className="text-xs text-[#59667D]">
+                Enter information below to create a new team account with CMS access.
+              </CardDescription>
+            </CardHeader>
 
-          {success && (
-            <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#BFE5CB] bg-[#F1FAF4] px-3.5 py-3 text-xs leading-5 text-[#236B3F]" role="status">
-              <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{success}</span>
-            </div>
-          )}
-          {formError && (
-            <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-[#F0C7C2] bg-[#FFF7F6] px-3.5 py-3 text-xs leading-5 text-[#8A3429]" role="alert">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{formError}</span>
-            </div>
-          )}
+            <CardContent>
+              {success && (
+                <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-[#BFE5CB] bg-[#F1FAF4] p-3 text-xs text-[#236B3F]" role="status">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#2CBC63]" aria-hidden="true" />
+                  <span className="font-medium">{success}</span>
+                </div>
+              )}
+              {formError && (
+                <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800" role="alert">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" aria-hidden="true" />
+                  <span className="font-medium">{formError}</span>
+                </div>
+              )}
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <div>
-              <label htmlFor="staff-name" className="mb-1.5 block text-xs font-semibold text-[#33475B]">Full name</label>
-              <Input id="staff-name" name="name" autoComplete="name" required minLength={2} maxLength={100} value={displayName} onChange={(event) => setDisplayName(event.target.value)} className="h-10 rounded-lg border-[#D8E1DF] text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/30" />
-            </div>
-            <div>
-              <label htmlFor="staff-email" className="mb-1.5 block text-xs font-semibold text-[#33475B]">Work email</label>
-              <Input id="staff-email" name="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@yourfirm.com" className="h-10 rounded-lg border-[#D8E1DF] text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/30" />
-            </div>
-            <div>
-              <label htmlFor="staff-password" className="mb-1.5 block text-xs font-semibold text-[#33475B]">Temporary password</label>
-              <Input id="staff-password" name="password" type="password" autoComplete="new-password" required minLength={10} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} className="h-10 rounded-lg border-[#D8E1DF] text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/30" />
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] leading-4 text-[#74838A]"><LockKeyhole className="h-3 w-3 shrink-0" aria-hidden="true" />Use a unique password and share it directly with the account holder.</p>
-            </div>
-            <div>
-              <label htmlFor="staff-role" className="mb-1.5 block text-xs font-semibold text-[#33475B]">Access level</label>
-              <select id="staff-role" name="role" value={role} onChange={(event) => setRole(event.target.value as PracticeRole)} className="h-10 w-full rounded-lg border border-[#D8E1DF] bg-white px-3 text-sm text-[#33475B] outline-none focus:border-[#2CBC63] focus:ring-2 focus:ring-[#2CBC63]/20">
-                <option value="staff">Staff — manage practice content</option>
-                <option value="admin">Administrator — manage content and accounts</option>
-              </select>
-            </div>
-            <Button type="submit" disabled={isSubmitting} className="h-10 w-full rounded-lg bg-[#2CBC63] text-sm font-bold text-white hover:bg-[#25A456] disabled:cursor-wait disabled:opacity-70">
-              {isSubmitting ? <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />Creating account…</> : <><UserPlus className="mr-2 h-4 w-4" aria-hidden="true" />Add practice account</>}
-            </Button>
-          </form>
-        </section>
+              <form onSubmit={handleCreateAccount}>
+                <FieldGroup className="space-y-3.5">
+                  <Field>
+                    <FieldLabel htmlFor="staff-name" className="text-xs font-bold text-[#023A51]">
+                      Full Name
+                    </FieldLabel>
+                    <Input
+                      id="staff-name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      minLength={2}
+                      maxLength={100}
+                      value={displayName}
+                      onChange={(event) => setDisplayName(event.target.value)}
+                      placeholder="e.g. Ramesh Shrestha"
+                      className="h-10 rounded-xl border-slate-200 text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="staff-email" className="text-xs font-bold text-[#023A51]">
+                      Work Email
+                    </FieldLabel>
+                    <Input
+                      id="staff-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="name@narahariadhikari.com"
+                      className="h-10 rounded-xl border-slate-200 text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="staff-password" className="text-xs font-bold text-[#023A51]">
+                      Temporary Password
+                    </FieldLabel>
+                    <Input
+                      id="staff-password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      maxLength={128}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      placeholder="Must be at least 8 characters"
+                      className="h-10 rounded-xl border-slate-200 text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25 font-mono"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="staff-confirm-password" className="text-xs font-bold text-[#023A51]">
+                      Confirm Password
+                    </FieldLabel>
+                    <Input
+                      id="staff-confirm-password"
+                      name="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      maxLength={128}
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      placeholder="Re-enter password"
+                      className="h-10 rounded-xl border-slate-200 text-sm focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25 font-mono"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="staff-role" className="text-xs font-bold text-[#023A51]">
+                      Access Level
+                    </FieldLabel>
+                    <select
+                      id="staff-role"
+                      name="role"
+                      value={role}
+                      onChange={(event) => setRole(event.target.value as PracticeRole)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-[#023A51] outline-none focus:border-[#2CBC63] focus:ring-2 focus:ring-[#2CBC63]/20 transition-all font-medium"
+                    >
+                      <option value="staff">Staff — manage practice content</option>
+                      <option value="admin">Administrator — manage content &amp; staff</option>
+                    </select>
+                  </Field>
+
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-10 rounded-xl bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        <span>Creating account…</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        <span>Add Practice Account</span>
+                      </>
+                    )}
+                  </Button>
+
+                  <FieldDescription className="text-center text-[11px] text-[#7A889B] pt-1">
+                    New accounts can log in immediately with the assigned credentials.
+                  </FieldDescription>
+                </FieldGroup>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* Password Changing Modal / Section (signup-01 style) */}
+      {changingPasswordUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="w-full max-w-md relative">
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-2xl p-2 sm:p-4">
+              <CardHeader className="pb-3 relative">
+                <button
+                  type="button"
+                  onClick={() => setChangingPasswordUser(null)}
+                  className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  aria-label="Close dialog"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="inline-flex items-center gap-1.5 text-[#2CBC63] text-xs font-bold uppercase tracking-wider mb-1">
+                  <KeyRound className="w-4 h-4" />
+                  <span>Security &amp; Credentials</span>
+                </div>
+                <CardTitle className="text-xl font-extrabold text-[#023A51]">
+                  Change Password
+                </CardTitle>
+                <CardDescription className="text-xs text-[#59667D]">
+                  Updating password for <strong className="text-[#023A51]">{changingPasswordUser.displayName}</strong> ({changingPasswordUser.email})
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                {pwSuccess && (
+                  <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-[#BFE5CB] bg-[#F1FAF4] p-3 text-xs text-[#236B3F]">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#2CBC63]" />
+                    <span className="font-medium">{pwSuccess}</span>
+                  </div>
+                )}
+                {pwError && (
+                  <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                    <span className="font-medium">{pwError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <FieldGroup className="space-y-3.5">
+                    <Field>
+                      <FieldLabel htmlFor="new-pw" className="text-xs font-bold text-[#023A51]">
+                        New Password
+                      </FieldLabel>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          id="new-pw"
+                          type="password"
+                          required
+                          minLength={8}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••••••"
+                          className="pl-9 h-10 rounded-xl border-slate-200 text-sm font-mono focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25"
+                        />
+                      </div>
+                      <FieldDescription className="text-[11px] text-[#7A889B]">
+                        Must be at least 8 characters long.
+                      </FieldDescription>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel htmlFor="confirm-new-pw" className="text-xs font-bold text-[#023A51]">
+                        Confirm New Password
+                      </FieldLabel>
+                      <div className="relative">
+                        <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          id="confirm-new-pw"
+                          type="password"
+                          required
+                          minLength={8}
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
+                          placeholder="••••••••••••"
+                          className="pl-9 h-10 rounded-xl border-slate-200 text-sm font-mono focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25"
+                        />
+                      </div>
+                    </Field>
+
+                    <div className="flex items-center justify-end gap-2.5 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setChangingPasswordUser(null)}
+                        className="rounded-xl border-slate-200 text-xs"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isUpdatingPw}
+                        className="rounded-xl bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-xs"
+                      >
+                        {isUpdatingPw ? (
+                          <>
+                            <LoaderCircle className="w-4 h-4 mr-1.5 animate-spin" />
+                            <span>Updating…</span>
+                          </>
+                        ) : (
+                          <span>Update Password</span>
+                        )}
+                      </Button>
+                    </div>
+                  </FieldGroup>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function formatDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-async function fetchPracticeUsers() {
-  const response = await fetch('/api/admin/users', { cache: 'no-store' });
-  const result = (await response.json()) as { users?: PracticeUser[]; error?: string };
-  if (!response.ok) throw new Error(result.error || 'We could not load practice accounts.');
-  return result.users ?? [];
+function fetchPracticeUsers(): Promise<PracticeUser[]> {
+  return fetch('/api/admin/users', { cache: 'no-store' })
+    .then(async (response) => {
+      const result = (await response.json()) as { users?: PracticeUser[]; error?: string };
+      if (!response.ok) throw new Error(result.error || 'We could not load practice accounts.');
+      return result.users ?? [];
+    });
 }

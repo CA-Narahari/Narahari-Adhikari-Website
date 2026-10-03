@@ -57,7 +57,7 @@ export default function AdminAppointmentsPage() {
                     </span>
                   </div>
                   <div className="text-xs text-slate-600 mt-1">
-                    Service: <strong className="text-slate-900">{apt.service_title}</strong> • Mode: <span className="font-semibold text-slate-800">{apt.consultation_type}</span>
+                    Service: <strong className="text-slate-900">{apt.service_title}</strong> <span className="hidden sm:inline">•</span> <br className="sm:hidden" />Mode: <span className="font-semibold text-slate-800">{apt.consultation_type}</span>
                   </div>
                 </div>
 

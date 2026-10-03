@@ -9,8 +9,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
-      <p className="text-sm font-semibold text-[#2CBC63]">Website information</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight text-[#023A51]">Terms of Website Use</h1>
+      <h1 className="text-4xl font-bold tracking-tight text-[#023A51]">Terms of Website Use</h1>
       <p className="mt-5 text-base leading-7 text-[#4A5259]">
         These notes explain the limits of the information and request forms on this website.
       </p>
@@ -18,7 +17,7 @@ export default function TermsPage() {
       <div className="mt-10 space-y-8 text-sm leading-7 text-[#33475B]">
         <section>
           <h2 className="text-xl font-bold text-[#023A51]">General information</h2>
-          <p className="mt-2">Website articles, tax updates, resources, and calculator results are general information. They are not tailored accounting, tax, legal, or investment advice. Rules can change, so confirm current requirements with the relevant authority and a qualified adviser before acting.</p>
+          <p className="mt-2">Website articles, regulatory updates, resources, and calculator results are general information. They are not tailored accounting, tax, legal, or investment advice. Rules can change, so confirm current requirements with the relevant authority and a qualified adviser before acting.</p>
         </section>
         <section>
           <h2 className="text-xl font-bold text-[#023A51]">Consultation requests</h2>

@@ -6,6 +6,7 @@ import { ArrowUpRight, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/context/AppContext';
+import UpdatesNoticeModal from '@/components/tax-updates/UpdatesNoticeModal';
 
 const officialSources = [
   { name: 'Inland Revenue Department', short: 'IRD', href: 'https://ird.gov.np/' },
@@ -36,6 +37,9 @@ export default function TaxUpdatesPage() {
 
   return (
     <div className="pb-24 overflow-x-hidden">
+      {/* Notice modal banner overlay when entering updates section */}
+      <UpdatesNoticeModal />
+
       {/* 1. Header Section */}
       <section
         id="hero-section"
@@ -43,11 +47,8 @@ export default function TaxUpdatesPage() {
       >
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-3xl space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2CBC63]">
-              Official Circulars & Compliance Directives
-            </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
-              Tax Updates<span className="text-[#2CBC63]">.</span>
+              Updates<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
               Timely analysis, statutory circulars, and tax compliance updates issued by the Inland Revenue Department (IRD), Ministry of Finance, and regulatory authorities in Nepal.
@@ -56,7 +57,7 @@ export default function TaxUpdatesPage() {
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-12 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="mx-auto grid max-w-6xl gap-8 lg:gap-12 px-6 py-12 lg:grid-cols-[minmax(0,1fr)_280px]">
         <section aria-labelledby="updates-heading">
           <div className="mb-7 flex flex-col gap-4 border-b border-[#E8EBEF] pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -66,7 +67,7 @@ export default function TaxUpdatesPage() {
             <div className="relative w-full sm:max-w-xs">
               <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#59667D]" />
               <Input
-                aria-label="Search tax updates"
+                aria-label="Search updates"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search notices"

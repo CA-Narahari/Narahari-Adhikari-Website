@@ -148,3 +148,41 @@ export async function POST(request: Request) {
     },
   }, { status: 201 });
 }
+
+export async function PATCH(request: Request) {
+  const access = await getAdminClient();
+  if (access.response) return access.response;
+  const supabase = access.client;
+
+  let body: Record<string, unknown>;
+  try {
+    const parsed: unknown = await request.json();
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return NextResponse.json({ error: 'Invalid request data.' }, { status: 400 });
+    }
+    body = parsed as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: 'Invalid request data.' }, { status: 400 });
+  }
+
+  const userId = typeof body.userId === 'string' ? body.userId.trim() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  if (!userId) {
+    return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
+  }
+
+  if (password.length < 8 || password.length > 128) {
+    return NextResponse.json({ error: 'Password must be between 8 and 128 characters.' }, { status: 400 });
+  }
+
+  const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+    password,
+  });
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message || 'Failed to update user password.' }, { status: 400 });
+  }
+
+  return NextResponse.json({ success: true, message: 'Password updated successfully.' });
+}
