@@ -10,7 +10,7 @@ async function getAdminClient() {
 
   const { data: { user }, error: authError } = await authClient.auth.getUser();
   if (authError || !user) {
-    return { client: null, response: NextResponse.json({ error: 'Sign in to manage practice access.' }, { status: 401 }) };
+    return { client: null, response: NextResponse.json({ error: 'Sign in to manage user access.' }, { status: 401 }) };
   }
 
   const { data: profile, error: profileError } = await adminClient
@@ -20,11 +20,11 @@ async function getAdminClient() {
     .maybeSingle();
 
   if (profileError) {
-    return { client: null, response: NextResponse.json({ error: 'We could not verify your practice access.' }, { status: 500 }) };
+    return { client: null, response: NextResponse.json({ error: 'We could not verify your access permissions.' }, { status: 500 }) };
   }
 
   if (profile?.role !== 'admin') {
-    return { client: null, response: NextResponse.json({ error: 'Only administrators can manage practice access.' }, { status: 403 }) };
+    return { client: null, response: NextResponse.json({ error: 'Only administrators can manage user access.' }, { status: 403 }) };
   }
 
   return { client: adminClient, response: null };
@@ -39,7 +39,7 @@ export async function GET() {
   for (let page = 1; ; page += 1) {
     const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
     if (error) {
-      return NextResponse.json({ error: 'We could not load practice accounts.' }, { status: 500 });
+      return NextResponse.json({ error: 'We could not load user accounts.' }, { status: 500 });
     }
     users.push(...data.users);
     if (data.users.length < 1000) break;
@@ -54,11 +54,11 @@ export async function GET() {
     .in('role', ['admin', 'staff']);
 
   if (profileError) {
-    return NextResponse.json({ error: 'We could not load practice access roles.' }, { status: 500 });
+    return NextResponse.json({ error: 'We could not load staff access roles.' }, { status: 500 });
   }
 
   const userById = new Map(users.map((user) => [user.id, user]));
-  const practiceUsers = (profiles ?? []).flatMap((profile) => {
+  const staffUsers = (profiles ?? []).flatMap((profile) => {
     const authUser = userById.get(profile.id);
     if (!authUser) return [];
     return [{
@@ -71,7 +71,7 @@ export async function GET() {
     }];
   });
 
-  return NextResponse.json({ users: practiceUsers });
+  return NextResponse.json({ users: staffUsers });
 }
 
 export async function POST(request: Request) {
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
   }
 
   const localPart = email.slice(0, email.lastIndexOf('@'));
-  const usernameBase = localPart.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'practice-user';
+  const usernameBase = localPart.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'staff-user';
   const { error: profileInsertError } = await supabase.from('profiles').insert({
     id: created.user.id,
     username: `${usernameBase}-${created.user.id.slice(0, 8)}`,
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
 
   if (profileInsertError) {
     await supabase.auth.admin.deleteUser(created.user.id);
-    return NextResponse.json({ error: 'The account was not granted access because its practice profile could not be saved.' }, { status: 500 });
+    return NextResponse.json({ error: 'The account was not granted access because its profile could not be saved.' }, { status: 500 });
   }
 
   return NextResponse.json({

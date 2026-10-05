@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
     try {
       setUsers(await fetchPracticeUsers());
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'We could not load practice accounts.');
+      setLoadError(error instanceof Error ? error.message : 'We could not load staff accounts.');
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
         if (active) setUsers(practiceUsers);
       })
       .catch((error: unknown) => {
-        if (active) setLoadError(error instanceof Error ? error.message : 'We could not load practice accounts.');
+        if (active) setLoadError(error instanceof Error ? error.message : 'We could not load staff accounts.');
       })
       .finally(() => {
         if (active) setIsLoading(false);
@@ -119,7 +119,7 @@ export default function AdminUsersPage() {
       });
       const result = (await response.json()) as { user?: PracticeUser; error?: string };
       if (!response.ok || !result.user) {
-        setFormError(result.error || 'We could not create this practice account.');
+        setFormError(result.error || 'We could not create this staff account.');
         return;
       }
 
@@ -193,10 +193,10 @@ export default function AdminUsersPage() {
             <span>Staff Management & Security</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#023A51]">
-            Practice Staff & Access Control
+            Staff & Access Control
           </h1>
           <p className="mt-1 text-sm text-[#59667D] max-w-2xl">
-            Create practice accounts, manage role access levels, and securely update staff passwords.
+            Create staff accounts, manage role access levels, and securely update user passwords.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -220,12 +220,12 @@ export default function AdminUsersPage() {
 
       {/* Main Grid: Accounts List + Create Form (signup-01) */}
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-        {/* Left Column: Practice Accounts Table */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs" aria-labelledby="practice-accounts-heading">
+        {/* Left Column: Staff Accounts Table */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs" aria-labelledby="staff-accounts-heading">
           <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
-              <h2 id="practice-accounts-heading" className="text-base font-bold text-[#023A51]">
-                Active Practice Accounts
+              <h2 id="staff-accounts-heading" className="text-base font-bold text-[#023A51]">
+                Active Staff Accounts
               </h2>
               <p className="text-xs text-[#74838A]">
                 Authorized team members with access to the CMS portal.
@@ -244,14 +244,14 @@ export default function AdminUsersPage() {
           ) : isLoading ? (
             <div className="flex min-h-56 items-center justify-center gap-2 text-sm text-[#74838A]" role="status">
               <LoaderCircle className="h-5 w-5 animate-spin text-[#2CBC63]" aria-hidden="true" />
-              <span>Loading practice accounts…</span>
+              <span>Loading staff accounts…</span>
             </div>
           ) : users.length === 0 ? (
             <div className="px-6 py-14 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF6EE] text-[#2CBC63]">
                 <UsersRound className="h-6 w-6" aria-hidden="true" />
               </div>
-              <h3 className="mt-4 text-sm font-bold text-[#023A51]">No practice accounts yet</h3>
+              <h3 className="mt-4 text-sm font-bold text-[#023A51]">No staff accounts yet</h3>
               <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-[#74838A]">
                 Use the form on the right to add an administrator or staff member.
               </p>
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]">Staff Management</span>
               </div>
               <CardTitle className="text-xl font-extrabold text-[#023A51]">
-                Add Practice Account
+                Add Staff Account
               </CardTitle>
               <CardDescription className="text-xs text-[#59667D]">
                 Enter information below to create a new team account with CMS access.
@@ -433,7 +433,7 @@ export default function AdminUsersPage() {
                       onChange={(event) => setRole(event.target.value as PracticeRole)}
                       className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-[#023A51] outline-none focus:border-[#2CBC63] focus:ring-2 focus:ring-[#2CBC63]/20 transition-all font-medium"
                     >
-                      <option value="staff">Staff — manage practice content</option>
+                      <option value="staff">Staff — manage website content</option>
                       <option value="admin">Administrator — manage content &amp; staff</option>
                     </select>
                   </Field>
@@ -451,7 +451,7 @@ export default function AdminUsersPage() {
                     ) : (
                       <>
                         <UserPlus className="mr-2 h-4 w-4" />
-                        <span>Add Practice Account</span>
+                        <span>Add Staff Account</span>
                       </>
                     )}
                   </Button>
@@ -588,7 +588,7 @@ function fetchPracticeUsers(): Promise<PracticeUser[]> {
   return fetch('/api/admin/users', { cache: 'no-store' })
     .then(async (response) => {
       const result = (await response.json()) as { users?: PracticeUser[]; error?: string };
-      if (!response.ok) throw new Error(result.error || 'We could not load practice accounts.');
+      if (!response.ok) throw new Error(result.error || 'We could not load staff accounts.');
       return result.users ?? [];
     });
 }

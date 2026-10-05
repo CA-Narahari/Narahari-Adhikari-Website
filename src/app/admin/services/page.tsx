@@ -11,10 +11,10 @@ export default function AdminServicesPage() {
     <div className="space-y-8 max-w-7xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">
-          Practice Areas & Services Manager
+          Services &amp; Advisory Manager
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Edit service descriptions, deliverables, and practice specializations.
+          Edit service descriptions, deliverables, and practice areas.
         </p>
       </div>
 
@@ -56,9 +56,9 @@ export default function AdminServicesPage() {
               </span>
               <button
                 onClick={() => alert(`Service "${srv.title}" saved successfully!`)}
-                className="px-3 py-1.5 bg-slate-900 text-white rounded font-semibold text-xs hover:bg-slate-800"
+                className="px-3.5 py-1.5 bg-[#0C4A4E] hover:bg-[#083639] text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
               >
-                Save Practice
+                Save Service
               </button>
             </div>
           </div>

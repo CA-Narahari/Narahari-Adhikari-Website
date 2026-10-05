@@ -4,24 +4,20 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, ArrowRight, Mail, Phone } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { X, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function EntryPopup() {
-  const { settings } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    // Show popup after 1.8 seconds on initial load if not dismissed in session
+    // Show popup after 2 seconds on initial load if not dismissed in session
     const dismissed = sessionStorage.getItem('nh_entry_popup_dismissed');
     if (!dismissed) {
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 1800);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -43,8 +39,8 @@ export default function EntryPopup() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[#022A3A]/60 backdrop-blur-sm">
-          {/* Backdrop Click */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm">
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -53,111 +49,85 @@ export default function EntryPopup() {
             className="absolute inset-0"
           />
 
-          {/* Modal Container matching Ideas/Entry Popup Card.png */}
+          {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: 'spring', duration: 0.5, bounce: 0.15 }}
-            className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden z-10 grid grid-cols-1 md:grid-cols-12 border border-[#E8EBEF]"
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ type: 'spring', duration: 0.45, bounce: 0.12 }}
+            className="relative w-full max-w-[680px] bg-white rounded-2xl shadow-2xl overflow-hidden z-10 grid grid-cols-1 md:grid-cols-2"
           >
-            {/* Close Button */}
+            {/* Close */}
             <button
               onClick={handleClose}
               aria-label="Close popup"
-              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors shadow-sm"
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Left Column: Professional Portrait Photo */}
-            <div className="md:col-span-5 relative bg-gradient-to-br from-[#9ec2c0]/40 to-[#e3efe9] min-h-[220px] md:min-h-[420px] flex items-end justify-center overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/60 via-transparent to-transparent pointer-events-none" />
+            {/* Left: Photo */}
+            <div className="relative bg-gradient-to-b from-[#d4e8de] to-[#e8f0eb] min-h-[200px] md:min-h-[360px] flex items-end justify-center overflow-hidden">
               <Image
                 src="/profile-picture.png"
                 alt="CA Narahari Adhikari"
-                width={400}
-                height={500}
-                className="relative z-10 w-full h-full max-h-[380px] object-cover object-top drop-shadow-md"
+                width={340}
+                height={420}
+                className="relative z-10 w-full h-full max-h-[340px] object-cover object-top"
                 priority
               />
-              <div className="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-xs py-1.5 px-3 rounded-lg text-center z-10 border border-white/60 shadow-xs">
-                <span className="text-[11px] font-bold text-[#023A51] block leading-tight">CA Narahari Adhikari</span>
-                <span className="text-[9.5px] text-[#59667D]">Managing Partner • ICAN Fellow Member</span>
-              </div>
             </div>
 
-            {/* Right Column: Content matching Ideas/Entry Popup Card.png */}
-            <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-center relative">
-              {/* Subtle background hexagon/soft shape */}
-              <div className="absolute top-6 right-6 w-24 h-24 bg-[#9ec2c0]/15 rounded-full blur-2xl pointer-events-none" />
-
-              <div>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#023A51] leading-tight tracking-tight">
-                  Looking for a reliable partner in business<span className="text-[#2CBC63]">?</span>
-                </h3>
-
-                {/* Accent line */}
-                <div className="h-1 w-12 bg-[#2CBC63] mt-3 mb-4 rounded-full" />
-
-                <p className="text-xs sm:text-[13px] text-[#4A5259] leading-relaxed mb-6">
-                  We are preparing a new home for our tax and business advisory practice. Until then, you can reach us directly for help with a filing, audit, or financial decision.
-                </p>
-
-                {submitted ? (
-                  <div className="py-6 px-4 bg-[#2CBC63]/10 border border-[#2CBC63]/30 rounded-xl text-center space-y-2">
-                    <CheckCircle className="w-8 h-8 text-[#2CBC63] mx-auto" />
-                    <h4 className="text-sm font-bold text-[#023A51]">Thank you for reaching out!</h4>
-                    <p className="text-xs text-[#33475B]">
-                      Our advisory team will contact you shortly with your consultation details.
-                    </p>
+            {/* Right: Content */}
+            <div className="p-6 sm:p-8 flex flex-col justify-center">
+              {submitted ? (
+                <div className="text-center space-y-3 py-6">
+                  <CheckCircle className="w-10 h-10 text-[#2CBC63] mx-auto" />
+                  <h4 className="text-lg font-bold text-[#023A51]">Thank you!</h4>
+                  <p className="text-sm text-[#59667D]">
+                    We will get back to you shortly.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-[#023A51] leading-tight">
+                      Looking for a reliable partner in business<span className="text-[#2CBC63]">?</span>
+                    </h3>
+                    <div className="h-0.5 w-10 bg-[#2CBC63] mt-3 rounded-full" />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <Button asChild className="h-11 rounded-[8px] text-xs">
-                        <Link href="/book-appointment" onClick={handleClose}>
-                          Schedule a consultation
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button asChild variant="outline" className="h-11 rounded-[8px] text-xs">
-                        <a href={`tel:${settings.phone}`} onClick={handleClose}>
-                          <Phone className="h-4 w-4 text-[#2CBC63]" />
-                          Call the office
-                        </a>
-                      </Button>
-                    </div>
 
-                    <div className="flex items-center gap-3 text-[11px] text-[#59667D]">
-                      <span className="h-px flex-1 bg-[#E8EBEF]" />
-                      <span>or ask a question by email</span>
-                      <span className="h-px flex-1 bg-[#E8EBEF]" />
-                    </div>
+                  <p className="text-sm text-[#4A5259] leading-relaxed">
+                    Subscribe to receive updates on tax regulations, compliance deadlines, and financial advisory insights.
+                  </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                      <label htmlFor="entry-email" className="sr-only">Email address</label>
-                      <Input
-                        id="entry-email"
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Your email address"
-                      />
-                      <Button type="submit" variant="secondary" className="w-full h-11 rounded-[8px] text-xs">
-                        <Mail className="h-4 w-4 text-[#2CBC63]" />
-                        Ask us to get in touch
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </form>
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your email address"
+                      className="w-full h-11 px-4 rounded-lg border border-[#D5E0DC] bg-[#FAFDFB] text-sm text-[#0D3B3E] placeholder:text-[#9AAEB0] focus:border-[#2CBC63] focus:outline-none focus:ring-2 focus:ring-[#2CBC63]/20 transition-all"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full h-11 rounded-lg bg-[#0C4A4E] hover:bg-[#083639] text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
+                    >
+                      Subscribe
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </form>
 
-                    <p className="text-[10px] text-[#59667D] text-center">
-                      We use your details only to reply to your enquiry.
-                    </p>
-                  </div>
-                )}
-              </div>
+                  <p className="text-[10px] text-[#8C9EA1] text-center">
+                    By subscribing, you agree to our{' '}
+                    <Link href="/terms" className="underline hover:text-[#0D3B3E]">
+                      Terms & Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

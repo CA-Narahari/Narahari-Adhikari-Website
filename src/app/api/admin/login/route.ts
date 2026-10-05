@@ -44,9 +44,9 @@ export async function POST(request: Request) {
   if (profileError || !profile || !['admin', 'staff'].includes(profile.role)) {
     await authClient.auth.signOut({ scope: 'local' });
     if (profileError) {
-      return NextResponse.json({ error: 'We could not verify this account’s practice access.' }, { status: 500 });
+      return NextResponse.json({ error: 'We could not verify this account’s access permissions.' }, { status: 500 });
     }
-    return NextResponse.json({ error: 'This account is not authorised for the practice workspace.' }, { status: 403 });
+    return NextResponse.json({ error: 'This account is not authorised for the CMS admin portal.' }, { status: 403 });
   }
 
   return NextResponse.json({ ok: true });

@@ -40,8 +40,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F5F8F7] px-4 text-sm font-medium text-[#59667D]">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#2CBC63]" />
-          <span>Checking your practice account…</span>
+          <span className="h-2 w-2 rounded-full bg-[#2CBC63] animate-pulse" />
+          <span>Authenticating admin session…</span>
         </div>
       </div>
     );
