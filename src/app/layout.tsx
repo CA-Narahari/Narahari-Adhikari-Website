@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   applicationName: 'Narahari Adhikari Chartered Accountants',
   keywords: ['chartered accountant Nepal', 'tax advisory Nepal', 'statutory audit Nepal', 'NFRS IFRS Nepal'],
   robots: { index: true, follow: true },
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
   openGraph: {
     type: 'website',
     siteName: 'Narahari Adhikari Chartered Accountants',

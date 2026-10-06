@@ -11,7 +11,6 @@ import {
   Appointment,
   GovernmentLink,
   DownloadResource,
-  OfficeHourDay,
 } from '@/types';
 import {
   initialSiteSettings,
@@ -23,54 +22,52 @@ import {
   initialAppointments,
   initialGovernmentLinks,
   initialDownloads,
-  initialOfficeHours,
 } from '@/lib/initial-data';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 interface AppContextType {
   settings: SiteSettings;
-  updateSettings: (newSettings: Partial<SiteSettings>) => void;
-  toggleCareers: (forced?: boolean) => void;
-  toggleAnnouncement: (active?: boolean) => void;
+  updateSettings: (newSettings: Partial<SiteSettings>) => Promise<boolean>;
+  toggleCareers: (forced?: boolean) => Promise<boolean>;
+  toggleAnnouncement: (active?: boolean) => Promise<boolean>;
 
   taxUpdates: TaxUpdate[];
-  addTaxUpdate: (item: Omit<TaxUpdate, 'id'>) => void;
-  updateTaxUpdate: (id: string, item: Partial<TaxUpdate>) => void;
-  deleteTaxUpdate: (id: string) => void;
+  addTaxUpdate: (item: Omit<TaxUpdate, 'id'>) => Promise<boolean>;
+  updateTaxUpdate: (id: string, item: Partial<TaxUpdate>) => Promise<boolean>;
+  deleteTaxUpdate: (id: string) => Promise<boolean>;
 
   blogPosts: BlogPost[];
-  addBlogPost: (post: Omit<BlogPost, 'id'>) => void;
-  updateBlogPost: (id: string, post: Partial<BlogPost>) => void;
-  deleteBlogPost: (id: string) => void;
+  addBlogPost: (post: Omit<BlogPost, 'id'>) => Promise<boolean>;
+  updateBlogPost: (id: string, post: Partial<BlogPost>) => Promise<boolean>;
+  deleteBlogPost: (id: string) => Promise<boolean>;
 
   services: ServiceItem[];
-  updateService: (id: string, srv: Partial<ServiceItem>) => void;
+  addService: (srv: Omit<ServiceItem, 'id'>) => Promise<boolean>;
+  updateService: (id: string, srv: Partial<ServiceItem>) => Promise<boolean>;
 
   vacancies: Vacancy[];
-  addVacancy: (vac: Omit<Vacancy, 'id'>) => void;
-  updateVacancy: (id: string, vac: Partial<Vacancy>) => void;
-  deleteVacancy: (id: string) => void;
+  addVacancy: (vac: Omit<Vacancy, 'id'>) => Promise<boolean>;
+  updateVacancy: (id: string, vac: Partial<Vacancy>) => Promise<boolean>;
+  deleteVacancy: (id: string) => Promise<boolean>;
 
   applications: JobApplication[];
-  addApplication: (app: Omit<JobApplication, 'id' | 'submitted_at'>) => void;
-  updateApplicationStatus: (id: string, status: JobApplication['status']) => void;
+  addApplication: (app: Omit<JobApplication, 'id' | 'submitted_at'>) => Promise<boolean>;
+  updateApplicationStatus: (id: string, status: JobApplication['status']) => Promise<boolean>;
 
   appointments: Appointment[];
   addAppointment: (apt: Omit<Appointment, 'id' | 'created_at'>) => Promise<boolean>;
-  updateAppointmentStatus: (id: string, status: Appointment['status']) => void;
+  updateAppointmentStatus: (id: string, status: Appointment['status']) => Promise<boolean>;
 
   governmentLinks: GovernmentLink[];
-  addGovernmentLink: (link: Omit<GovernmentLink, 'id'>) => void;
-  updateGovernmentLink: (id: string, link: Partial<GovernmentLink>) => void;
-  deleteGovernmentLink: (id: string) => void;
+  addGovernmentLink: (link: Omit<GovernmentLink, 'id'>) => Promise<boolean>;
+  updateGovernmentLink: (id: string, link: Partial<GovernmentLink>) => Promise<boolean>;
+  deleteGovernmentLink: (id: string) => Promise<boolean>;
 
   downloads: DownloadResource[];
-  addDownload: (item: Omit<DownloadResource, 'id' | 'downloads_count'>) => void;
-  updateDownload: (id: string, item: Partial<DownloadResource>) => void;
-  deleteDownload: (id: string) => void;
+  addDownload: (item: Omit<DownloadResource, 'id' | 'downloads_count'>) => Promise<boolean>;
+  updateDownload: (id: string, item: Partial<DownloadResource>) => Promise<boolean>;
+  deleteDownload: (id: string) => Promise<boolean>;
 
-  officeHours: OfficeHourDay[];
-  updateOfficeHours: (day: string, hours: string, is_open: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -85,73 +82,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [governmentLinks, setGovernmentLinks] = useState<GovernmentLink[]>(initialGovernmentLinks);
   const [downloads, setDownloads] = useState<DownloadResource[]>(initialDownloads);
-  const [officeHours, setOfficeHours] = useState<OfficeHourDay[]>(initialOfficeHours);
-
-  // Load from local storage for persistence across admin and public views
-  useEffect(() => {
-    let cancelled = false;
-    void Promise.resolve().then(() => {
-      if (cancelled) return;
-      try {
-        const storedSettings = localStorage.getItem('ca_site_settings');
-        if (storedSettings) setSettings(JSON.parse(storedSettings));
-
-        const storedTax = localStorage.getItem('ca_tax_updates');
-        if (storedTax) {
-          const saved = JSON.parse(storedTax) as TaxUpdate[];
-          const cleaned = saved.filter((item) => !/^tax-[1-9]\d*$/.test(item.id));
-          setTaxUpdates(cleaned);
-          if (cleaned.length !== saved.length) localStorage.setItem('ca_tax_updates', JSON.stringify(cleaned));
-        }
-
-        const storedVac = localStorage.getItem('ca_vacancies');
-        if (storedVac) {
-          const saved = JSON.parse(storedVac) as Vacancy[];
-          const cleaned = saved.filter((item) => !/^vac-[1-9]\d*$/.test(item.id));
-          setVacancies(cleaned);
-          if (cleaned.length !== saved.length) localStorage.setItem('ca_vacancies', JSON.stringify(cleaned));
-        }
-
-        const storedApps = localStorage.getItem('ca_applications');
-        if (storedApps) {
-          const saved = JSON.parse(storedApps) as JobApplication[];
-          const cleaned = saved.filter((item) => !/^app-10[1-9]$/.test(item.id));
-          setApplications(cleaned);
-          if (cleaned.length !== saved.length) localStorage.setItem('ca_applications', JSON.stringify(cleaned));
-        }
-
-        const storedApts = localStorage.getItem('ca_appointments');
-        if (storedApts) {
-          const saved = JSON.parse(storedApts) as Appointment[];
-          const cleaned = saved.filter((item) => !/^apt-20[1-9]$/.test(item.id));
-          setAppointments(cleaned);
-          if (cleaned.length !== saved.length) localStorage.setItem('ca_appointments', JSON.stringify(cleaned));
-        }
-
-        const storedGov = localStorage.getItem('ca_gov_links');
-        if (storedGov) {
-          const parsed = JSON.parse(storedGov);
-          setGovernmentLinks(Array.isArray(parsed) && parsed.length >= 11 ? parsed : initialGovernmentLinks);
-        }
-
-        const storedDl = localStorage.getItem('ca_downloads');
-        if (storedDl) {
-          const saved = JSON.parse(storedDl) as DownloadResource[];
-          const cleaned = saved.filter((item) => !/^dl-[1-9]\d*$/.test(item.id));
-          setDownloads(cleaned);
-          if (cleaned.length !== saved.length) localStorage.setItem('ca_downloads', JSON.stringify(cleaned));
-        }
-
-        const storedHours = localStorage.getItem('ca_office_hours');
-        if (storedHours) setOfficeHours(JSON.parse(storedHours));
-      } catch {
-        // ignore malformed local data and keep the initial fallback
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     const client = createSupabaseBrowserClient();
@@ -161,32 +91,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     async function loadPublishedContent() {
-      const [taxResult, postsResult, vacanciesResult, applicationsResult, appointmentsResult, linksResult, downloadsResult, hoursResult] = await Promise.all([
+      const [settingsResult, taxResult, postsResult, vacanciesResult, applicationsResult, appointmentsResult, linksResult, downloadsResult, servicesResult] = await Promise.all([
+        supabase.from('site_settings').select('key,value'),
         supabase.from('tax_updates').select('*').eq('status', 'published').order('published_at', { ascending: false }),
-        supabase.from('posts').select('*').eq('status', 'published').order('published_at', { ascending: false }),
+        supabase.from('posts').select('*').order('created_at', { ascending: false }),
         supabase.from('vacancies').select('*').eq('is_active', true).order('deadline', { ascending: true }),
         supabase.from('applications').select('*').order('submitted_at', { ascending: false }),
         supabase.from('appointments').select('*').order('created_at', { ascending: false }),
         supabase.from('government_links').select('*').order('display_order', { ascending: true }),
         supabase.from('download_resources').select('*').order('created_at', { ascending: false }),
-        supabase.from('office_hours').select('*'),
+        supabase.from('services').select('*').order('display_order', { ascending: true }),
       ]);
 
       if (cancelled) return;
+      if (!settingsResult.error && settingsResult.data?.length) {
+        const dbSettings = settingsResult.data.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {} as Partial<SiteSettings>);
+        setSettings((previous) => ({ ...previous, ...dbSettings }));
+      }
       if (!taxResult.error && taxResult.data) setTaxUpdates(taxResult.data as TaxUpdate[]);
-      if (!postsResult.error && postsResult.data) setBlogPosts(postsResult.data as BlogPost[]);
+      if (!postsResult.error && postsResult.data) {
+        setBlogPosts(postsResult.data as BlogPost[]);
+      }
       if (!vacanciesResult.error && vacanciesResult.data) setVacancies(vacanciesResult.data as Vacancy[]);
-      if (!applicationsResult.error && applicationsResult.data) setApplications(applicationsResult.data as JobApplication[]);
+      if (!applicationsResult.error && applicationsResult.data) {
+        setApplications(applicationsResult.data.map((item) => ({
+          ...item,
+          qualification: item.qualification || item.cover_note?.match(/^Qualification:\s*(.+?)(?:\r?\n\r?\n|$)/)?.[1] || '',
+          cover_note: item.cover_note?.replace(/^Qualification:\s*.+?(?:\r?\n\r?\n|$)/, '') || '',
+        })) as JobApplication[]);
+      }
       if (!appointmentsResult.error && appointmentsResult.data) {
         setAppointments(appointmentsResult.data.map((item) => ({
           ...item,
+          company_name: item.company_name || item.notes?.match(/^Organization:\s*(.+?)(?:\r?\n\r?\n|$)/)?.[1] || '',
+          notes: item.notes?.replace(/^Organization:\s*.+?(?:\r?\n\r?\n|$)/, '') || '',
           date: item.requested_date,
           time_slot: item.requested_time,
         })) as Appointment[]);
       }
       if (!linksResult.error && linksResult.data) setGovernmentLinks(linksResult.data as GovernmentLink[]);
       if (!downloadsResult.error && downloadsResult.data) setDownloads(downloadsResult.data as DownloadResource[]);
-      if (!hoursResult.error && hoursResult.data) setOfficeHours(hoursResult.data as OfficeHourDay[]);
+      if (!servicesResult.error && servicesResult.data && servicesResult.data.length > 0) {
+        const imageMap: Record<string, string> = {
+          'audit-and-assurance': '/Logo.png',
+          'taxation-consultancy': '/Logo.png',
+          'mergers-and-acquisitions': '/Logo.png',
+          'advisory-services': '/Logo.png',
+          'business-support-outsourcing': '/Logo.png',
+          'nfrs-ifrs-implementation': '/Logo.png',
+          'training-and-seminar': '/Logo.png',
+        };
+        setServices(servicesResult.data.map((item: any) => ({
+          ...item,
+          image: item.image || imageMap[item.slug] || '/Logo.png',
+        })) as ServiceItem[]);
+      }
     }
 
     void loadPublishedContent();
@@ -195,330 +154,262 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const updateSettings = (newSettings: Partial<SiteSettings>) => {
-    setSettings((prev) => {
-      const updated = { ...prev, ...newSettings };
-      localStorage.setItem('ca_site_settings', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const toggleCareers = (forced?: boolean) => {
-    setSettings((prev) => {
-      const nextVal = forced !== undefined ? forced : !prev.careers_enabled;
-      const updated = { ...prev, careers_enabled: nextVal };
-      localStorage.setItem('ca_site_settings', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const toggleAnnouncement = (active?: boolean) => {
-    setSettings((prev) => {
-      const nextVal = active !== undefined ? active : !prev.announcement_active;
-      const updated = { ...prev, announcement_active: nextVal };
-      localStorage.setItem('ca_site_settings', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const addTaxUpdate = (item: Omit<TaxUpdate, 'id'>) => {
-    const newItem: TaxUpdate = {
-      ...item,
-      id: `tax-${Date.now()}`,
-    };
-    setTaxUpdates((prev) => {
-      const updated = [newItem, ...prev];
-      localStorage.setItem('ca_tax_updates', JSON.stringify(updated));
-      return updated;
-    });
-
+  const updateSettings = async (newSettings: Partial<SiteSettings>) => {
     const client = createSupabaseBrowserClient();
-    if (client) {
-      void client.from('tax_updates').insert({
-        title: item.title,
-        slug: item.slug,
-        category: item.category,
-        update_type: item.update_type,
-        topic: item.topic,
-        sector: item.sector,
-        effective_date: item.effective_date,
-        summary: item.summary,
-        content: item.content,
-        source_name: item.source_name,
-        source_url: item.source_url,
-        is_urgent: item.is_urgent,
-        status: item.status,
-        published_at: item.published_at || new Date().toISOString().split('T')[0],
-      });
-    }
+    if (!client) return false;
+    const rows = Object.entries(newSettings).map(([key, value]) => ({ key, value }));
+    const { error } = await client.from('site_settings').upsert(rows, { onConflict: 'key' });
+    if (error) return false;
+    setSettings((prev) => ({ ...prev, ...newSettings }));
+    return true;
   };
 
-  const updateTaxUpdate = (id: string, item: Partial<TaxUpdate>) => {
-    setTaxUpdates((prev) => {
-      const updated = prev.map((t) => (t.id === id ? { ...t, ...item } : t));
-      localStorage.setItem('ca_tax_updates', JSON.stringify(updated));
-      return updated;
-    });
+  const toggleCareers = async (forced?: boolean) => updateSettings({ careers_enabled: forced ?? !settings.careers_enabled });
+  const toggleAnnouncement = async (active?: boolean) => updateSettings({ announcement_active: active ?? !settings.announcement_active });
 
+  const addTaxUpdate = async (item: Omit<TaxUpdate, 'id'>) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('tax-')) {
-      void client.from('tax_updates').update(item).eq('id', id);
-    }
+    if (!client) return false;
+    const { data, error } = await client.from('tax_updates').insert(item).select().single();
+    if (error || !data) return false;
+    setTaxUpdates((prev) => [data as TaxUpdate, ...prev]);
+    return true;
   };
 
-  const deleteTaxUpdate = (id: string) => {
-    setTaxUpdates((prev) => {
-      const updated = prev.filter((t) => t.id !== id);
-      localStorage.setItem('ca_tax_updates', JSON.stringify(updated));
-      return updated;
-    });
-
+  const updateTaxUpdate = async (id: string, item: Partial<TaxUpdate>) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('tax-')) {
-      void client.from('tax_updates').delete().eq('id', id);
-    }
+    if (!client || id.startsWith('tax-')) return false;
+    const { error } = await client.from('tax_updates').update(item).eq('id', id);
+    if (error) return false;
+    setTaxUpdates((prev) => prev.map((t) => (t.id === id ? { ...t, ...item } : t)));
+    return true;
   };
 
-  const addBlogPost = (post: Omit<BlogPost, 'id'>) => {
+  const deleteTaxUpdate = async (id: string) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('tax-')) return false;
+    const { error } = await client.from('tax_updates').delete().eq('id', id);
+    if (error) return false;
+    setTaxUpdates((prev) => prev.filter((t) => t.id !== id));
+    return true;
+  };
+
+  const addBlogPost = async (post: Omit<BlogPost, 'id'>) => {
+    const tempId = `blog-${Date.now()}`;
     const newPost: BlogPost = {
       ...post,
-      id: `blog-${Date.now()}`,
+      id: tempId,
     };
-    setBlogPosts((prev) => [newPost, ...prev]);
 
     const client = createSupabaseBrowserClient();
     if (client) {
-      void client.from('posts').insert({
-        title: post.title,
-        slug: post.slug,
-        category: post.category,
-        excerpt: post.excerpt,
-        content: post.content,
-        author: post.author,
-        read_time: post.read_time,
-        featured_image: post.featured_image,
-        tags: post.tags,
-        status: post.status,
-        published_at: post.published_at || new Date().toISOString().split('T')[0],
-      });
+      try {
+        const { data, error } = await client
+          .from('posts')
+          .insert({
+            title: post.title,
+            slug: post.slug,
+            category: post.category,
+            excerpt: post.excerpt,
+            content: post.content,
+            author: post.author,
+            read_time: post.read_time,
+            featured_image: post.featured_image,
+            tags: post.tags,
+            status: post.status,
+            published_at: post.published_at || new Date().toISOString().split('T')[0],
+            meta_title: post.meta_title || '',
+            meta_description: post.meta_description || '',
+            focus_keyword: post.focus_keyword || '',
+          })
+          .select()
+          .single();
+
+        if (error || !data) return false;
+        newPost.id = data.id;
+      } catch { return false; }
     }
+
+    setBlogPosts((prev) => {
+      const updated = [newPost, ...prev.filter((p) => p.slug !== newPost.slug)];
+      return updated;
+    });
+    return true;
   };
 
-  const updateBlogPost = (id: string, post: Partial<BlogPost>) => {
-    setBlogPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...post } : p)));
-
+  const updateBlogPost = async (id: string, post: Partial<BlogPost>) => {
     const client = createSupabaseBrowserClient();
     if (client && !id.startsWith('blog-')) {
-      void client.from('posts').update(post).eq('id', id);
+      const dbPayload: Record<string, unknown> = {};
+      const allowedCols = ['title', 'slug', 'category', 'excerpt', 'content', 'author', 'read_time', 'featured_image', 'tags', 'status', 'published_at', 'meta_title', 'meta_description', 'focus_keyword', 'image_alt'];
+      for (const key of allowedCols) if (key in post && post[key as keyof BlogPost] !== undefined) dbPayload[key] = post[key as keyof BlogPost];
+      const { error } = await client.from('posts').update(dbPayload).eq('id', id);
+      if (error) return false;
     }
+    setBlogPosts((prev) => {
+      return prev.map((p) => (p.id === id ? { ...p, ...post } : p));
+    });
+
+    return true;
   };
 
-  const deleteBlogPost = (id: string) => {
+  const deleteBlogPost = async (id: string) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('blog-')) return false;
+    const { error } = await client.from('posts').delete().eq('id', id);
+    if (error) return false;
     setBlogPosts((prev) => prev.filter((p) => p.id !== id));
+    return true;
+  };
 
+  const addService = async (srv: Omit<ServiceItem, 'id'>) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('blog-')) {
-      void client.from('posts').delete().eq('id', id);
-    }
+    if (!client) return false;
+    const { data, error } = await client.from('services').insert({
+      title: srv.title, slug: srv.slug, short_description: srv.short_description, full_description: srv.full_description,
+      deliverables: srv.deliverables, target_audience: srv.target_audience, icon: srv.icon, display_order: srv.display_order,
+      is_featured: srv.is_featured, image: srv.image, meta_title: srv.meta_title, meta_description: srv.meta_description, focus_keyword: srv.focus_keyword,
+    }).select().single();
+    if (error || !data) return false;
+    setServices((prev) => [...prev, data as ServiceItem]);
+    return true;
   };
 
-  const updateService = (id: string, srv: Partial<ServiceItem>) => {
-    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...srv } : s)));
-  };
-
-  const addVacancy = (vac: Omit<Vacancy, 'id'>) => {
-    const newVac: Vacancy = {
-      ...vac,
-      id: `vac-${Date.now()}`,
-    };
-    setVacancies((prev) => {
-      const updated = [newVac, ...prev];
-      localStorage.setItem('ca_vacancies', JSON.stringify(updated));
-      return updated;
+  const updateService = async (id: string, srv: Partial<ServiceItem>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('service-')) return false;
+    const { error } = await client.from('services').update(srv).eq('id', id);
+    if (error) return false;
+    setServices((prev) => {
+      return prev.map((s) => (s.id === id ? { ...s, ...srv } : s));
     });
-
-    const client = createSupabaseBrowserClient();
-    if (client) {
-      void client.from('vacancies').insert({
-        title: vac.title,
-        department: vac.department,
-        location: vac.location,
-        employment_type: vac.employment_type,
-        description: vac.description,
-        requirements: vac.requirements,
-        deadline: vac.deadline,
-        is_active: vac.is_active,
-      });
-    }
+    return true;
   };
 
-  const updateVacancy = (id: string, vac: Partial<Vacancy>) => {
-    setVacancies((prev) => {
-      const updated = prev.map((v) => (v.id === id ? { ...v, ...vac } : v));
-      localStorage.setItem('ca_vacancies', JSON.stringify(updated));
-      return updated;
-    });
-
+  const addVacancy = async (vac: Omit<Vacancy, 'id'>) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('vac-')) {
-      void client.from('vacancies').update(vac).eq('id', id);
-    }
+    if (!client) return false;
+    const { data, error } = await client.from('vacancies').insert(vac).select().single();
+    if (error || !data) return false;
+    setVacancies((prev) => [data as Vacancy, ...prev]);
+    return true;
   };
 
-  const deleteVacancy = (id: string) => {
-    setVacancies((prev) => {
-      const updated = prev.filter((v) => v.id !== id);
-      localStorage.setItem('ca_vacancies', JSON.stringify(updated));
-      return updated;
-    });
-
+  const updateVacancy = async (id: string, vac: Partial<Vacancy>) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('vac-')) {
-      void client.from('vacancies').delete().eq('id', id);
-    }
+    if (!client || id.startsWith('vac-')) return false;
+    const { error } = await client.from('vacancies').update(vac).eq('id', id);
+    if (error) return false;
+    setVacancies((prev) => prev.map((v) => (v.id === id ? { ...v, ...vac } : v)));
+    return true;
   };
 
-  const addApplication = (app: Omit<JobApplication, 'id' | 'submitted_at'>) => {
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const newApp: JobApplication = {
-      ...app,
-      id: `app-${Date.now()}`,
-      submitted_at: formattedDate,
-    };
-    setApplications((prev) => {
-      const updated = [newApp, ...prev];
-      localStorage.setItem('ca_applications', JSON.stringify(updated));
-      return updated;
-    });
-
+  const deleteVacancy = async (id: string) => {
     const client = createSupabaseBrowserClient();
-    if (client) {
-      void client.from('applications').insert({
-        vacancy_title: app.vacancy_title,
-        applicant_name: app.applicant_name,
-        applicant_email: app.applicant_email,
-        applicant_phone: app.applicant_phone,
-        cover_note: app.cover_note,
-        cv_filename: app.cv_filename,
-        status: 'new',
-      });
-    }
+    if (!client || id.startsWith('vac-')) return false;
+    const { error } = await client.from('vacancies').delete().eq('id', id);
+    if (error) return false;
+    setVacancies((prev) => prev.filter((v) => v.id !== id));
+    return true;
   };
 
-  const updateApplicationStatus = (id: string, status: JobApplication['status']) => {
-    setApplications((prev) => {
-      const updated = prev.map((a) => (a.id === id ? { ...a, status } : a));
-      localStorage.setItem('ca_applications', JSON.stringify(updated));
-      return updated;
-    });
+  const addApplication = async (app: Omit<JobApplication, 'id' | 'submitted_at'>) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('app-')) {
-      void client.from('applications').update({ status }).eq('id', id);
-    }
+    if (!client) return false;
+    const { data, error } = await client.from('applications').insert({ ...app, status: 'new' }).select().single();
+    if (error || !data) return false;
+    setApplications((prev) => [data as JobApplication, ...prev]);
+    return true;
+  };
+
+  const updateApplicationStatus = async (id: string, status: JobApplication['status']) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('app-')) return false;
+    const { error } = await client.from('applications').update({ status }).eq('id', id);
+    if (error) return false;
+    setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    return true;
   };
 
   const addAppointment = async (apt: Omit<Appointment, 'id' | 'created_at'>) => {
-    const client = createSupabaseBrowserClient();
-    if (!client) return false;
-    const { error } = await client.from('appointments').insert({
-      client_name: apt.client_name,
-      client_email: apt.client_email,
-      client_phone: apt.client_phone,
-      service_title: apt.service_title,
-      consultation_type: apt.consultation_type,
-      requested_date: apt.date,
-      requested_time: apt.time_slot,
-      notes: apt.notes,
-      privacy_consent: true,
-      status: 'pending',
+    const response = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apt),
     });
-    if (error) return false;
+    if (!response.ok) return false;
+    const saved = (await response.json()) as { id: string; created_at: string };
 
     const newApt: Appointment = {
       ...apt,
-      id: `apt-${Date.now()}`,
-      created_at: new Date().toISOString(),
+      id: saved.id,
+      created_at: saved.created_at,
     };
     setAppointments((prev) => [newApt, ...prev]);
     return true;
   };
 
-  const updateAppointmentStatus = (id: string, status: Appointment['status']) => {
-    setAppointments((prev) => {
-      const updated = prev.map((a) => (a.id === id ? { ...a, status } : a));
-      localStorage.setItem('ca_appointments', JSON.stringify(updated));
-      return updated;
-    });
+  const updateAppointmentStatus = async (id: string, status: Appointment['status']) => {
     const client = createSupabaseBrowserClient();
-    if (client && !id.startsWith('apt-')) {
-      void client.from('appointments').update({ status }).eq('id', id);
-    }
+    if (!client || id.startsWith('apt-')) return false;
+    const { error } = await client.from('appointments').update({ status }).eq('id', id);
+    if (error) return false;
+    setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    return true;
   };
 
-  const updateOfficeHours = (day: string, hours: string, is_open: boolean) => {
-    setOfficeHours((prev) => {
-      const updated = prev.map((h) => (h.day === day ? { ...h, hours, is_open } : h));
-      localStorage.setItem('ca_office_hours', JSON.stringify(updated));
-      return updated;
-    });
+  const addGovernmentLink = async (link: Omit<GovernmentLink, 'id'>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return false;
+    const { data, error } = await client.from('government_links').insert(link).select().single();
+    if (error || !data) return false;
+    setGovernmentLinks((prev) => [...prev, data as GovernmentLink]);
+    return true;
   };
 
-  const addGovernmentLink = (link: Omit<GovernmentLink, 'id'>) => {
-    const newItem: GovernmentLink = {
-      ...link,
-      id: `gov-${Date.now()}`,
-    };
-    setGovernmentLinks((prev) => {
-      const updated = [...prev, newItem];
-      localStorage.setItem('ca_gov_links', JSON.stringify(updated));
-      return updated;
-    });
+  const updateGovernmentLink = async (id: string, link: Partial<GovernmentLink>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('gov-')) return false;
+    const { error } = await client.from('government_links').update(link).eq('id', id);
+    if (error) return false;
+    setGovernmentLinks((prev) => prev.map((g) => (g.id === id ? { ...g, ...link } : g)));
+    return true;
   };
 
-  const updateGovernmentLink = (id: string, link: Partial<GovernmentLink>) => {
-    setGovernmentLinks((prev) => {
-      const updated = prev.map((g) => (g.id === id ? { ...g, ...link } : g));
-      localStorage.setItem('ca_gov_links', JSON.stringify(updated));
-      return updated;
-    });
+  const deleteGovernmentLink = async (id: string) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('gov-')) return false;
+    const { error } = await client.from('government_links').delete().eq('id', id);
+    if (error) return false;
+    setGovernmentLinks((prev) => prev.filter((g) => g.id !== id));
+    return true;
   };
 
-  const deleteGovernmentLink = (id: string) => {
-    setGovernmentLinks((prev) => {
-      const updated = prev.filter((g) => g.id !== id);
-      localStorage.setItem('ca_gov_links', JSON.stringify(updated));
-      return updated;
-    });
+  const addDownload = async (item: Omit<DownloadResource, 'id' | 'downloads_count'>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return false;
+    const { data, error } = await client.from('download_resources').insert({ ...item, downloads_count: 0 }).select().single();
+    if (error || !data) return false;
+    setDownloads((prev) => [data as DownloadResource, ...prev]);
+    return true;
   };
 
-  const addDownload = (item: Omit<DownloadResource, 'id' | 'downloads_count'>) => {
-    const newItem: DownloadResource = {
-      ...item,
-      id: `dl-${Date.now()}`,
-      downloads_count: 0,
-    };
-    setDownloads((prev) => {
-      const updated = [newItem, ...prev];
-      localStorage.setItem('ca_downloads', JSON.stringify(updated));
-      return updated;
-    });
+  const updateDownload = async (id: string, item: Partial<DownloadResource>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('dl-')) return false;
+    const { error } = await client.from('download_resources').update(item).eq('id', id);
+    if (error) return false;
+    setDownloads((prev) => prev.map((d) => (d.id === id ? { ...d, ...item } : d)));
+    return true;
   };
 
-  const updateDownload = (id: string, item: Partial<DownloadResource>) => {
-    setDownloads((prev) => {
-      const updated = prev.map((d) => (d.id === id ? { ...d, ...item } : d));
-      localStorage.setItem('ca_downloads', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const deleteDownload = (id: string) => {
-    setDownloads((prev) => {
-      const updated = prev.filter((d) => d.id !== id);
-      localStorage.setItem('ca_downloads', JSON.stringify(updated));
-      return updated;
-    });
+  const deleteDownload = async (id: string) => {
+    const client = createSupabaseBrowserClient();
+    if (!client || id.startsWith('dl-')) return false;
+    const { error } = await client.from('download_resources').delete().eq('id', id);
+    if (error) return false;
+    setDownloads((prev) => prev.filter((d) => d.id !== id));
+    return true;
   };
 
   return (
@@ -537,6 +428,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateBlogPost,
         deleteBlogPost,
         services,
+        addService,
         updateService,
         vacancies,
         addVacancy,
@@ -556,8 +448,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addDownload,
         updateDownload,
         deleteDownload,
-        officeHours,
-        updateOfficeHours,
       }}
     >
       {children}

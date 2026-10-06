@@ -3,10 +3,37 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { servicesData } from '@/lib/services-data';
+import {
+  ArrowRight,
+  Briefcase,
+  FileText,
+  ShieldCheck,
+  TrendingUp,
+  Building2,
+  Handshake,
+  MessageSquareQuote,
+  HeartHandshake,
+  LineChart,
+  GraduationCap,
+} from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  ReceiptText: FileText,
+  ShieldCheck: ShieldCheck,
+  TrendingUp: TrendingUp,
+  Building2: Building2,
+  Handshake: Handshake,
+  MessageSquareQuote: MessageSquareQuote,
+  HeartHandshake: HeartHandshake,
+  LineChart: LineChart,
+  GraduationCap: GraduationCap,
+};
 
 export default function ServicesPage() {
+  const { services } = useApp();
+  const displayServices = services;
+
   return (
     <div className="pb-28 overflow-x-hidden bg-[#FAFCFD]">
       {/* 1. Header Section */}
@@ -26,11 +53,12 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* 2. Grid with rich imagery from public/services */}
+      {/* 2. Grid directly from dynamic CMS database */}
       <section className="max-w-[1240px] mx-auto px-6 pt-12 sm:pt-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {servicesData.map((service, index) => {
-            const Icon = service.icon;
+          {displayServices.map((service, index) => {
+            const Icon = iconMap[service.icon] || Briefcase;
+            const serviceImage = service.image || '/Logo.png';
 
             return (
               <div
@@ -41,7 +69,7 @@ export default function ServicesPage() {
                   {/* Service Photo */}
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                     <Image
-                      src={service.image}
+                      src={serviceImage}
                       alt={service.title}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -64,7 +92,7 @@ export default function ServicesPage() {
                       </Link>
                     </h2>
                     <p className="text-xs sm:text-[13.5px] text-[#4A5259] leading-relaxed line-clamp-3">
-                      {service.description}
+                      {service.short_description}
                     </p>
                   </div>
                 </div>
@@ -98,23 +126,24 @@ export default function ServicesPage() {
       <section className="max-w-[1240px] mx-auto px-6 mt-16 sm:mt-20">
         <div className="rounded-3xl bg-[#023A51] p-8 sm:p-12 text-white relative overflow-hidden shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="absolute top-0 right-0 w-80 h-80 bg-[#2CBC63]/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 max-w-2xl space-y-2">
-            <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#2CBC63]">
-              Bespoke Engagements
+          <div className="space-y-2 relative z-10 max-w-xl">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#2CBC63]">
+              Chartered Advisory
             </span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Need assistance with multiple compliance areas?
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              We design integrated accounting and audit retainer packages for corporate groups, hydropower developers, and manufacturing units across Nepal.
+            <h2 className="text-2xl sm:text-3xl font-extrabold !text-white text-white tracking-tight">
+              Need tailored statutory audit or tax advisory?
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Schedule an in-person meeting or virtual consultation with CA Narahari Adhikari.
             </p>
           </div>
+
           <div className="relative z-10 shrink-0">
             <Link
               href="/book-appointment"
-              className="px-7 py-3 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-xs sm:text-sm inline-flex items-center gap-2 transition-all shadow-sm"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2CBC63] hover:bg-[#25a556] text-white font-bold text-sm transition-all shadow-md active:scale-95"
             >
-              <span>Schedule Direct Meeting</span>
+              <span>Book Consultation</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

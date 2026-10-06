@@ -110,7 +110,7 @@ The public website consists strictly of the approved navbar navigation, header C
    - **1. Home (`/`)**: Value proposition hero, core service cards, latest tax updates alert bar, about teaser, why choose us, dynamic stats, quick consultation booking widget.
    - **2. About (`/about`)**: Firm profile, Founder & Senior Partner CA profiles, core principles, legal & regulatory registration details.
    - **3. Services (`/services`)**: Tax Advisory, Audit & Assurance, Accounting & Business Services, Company Secretarial, Financial Consulting. Each links to its dedicated detail view.
-   - **4. TaxUpdates (`/tax-updates`)**: Dedicated tax portal with category filters (Income Tax, VAT, Customs, Corporate Tax, Regulatory Circulars), search bar, publication date, and official regulatory source link.
+   - **4. Updates (`/updates`)**: Dedicated tax portal with category filters (Income Tax, VAT, Customs, Corporate Tax, Regulatory Circulars), search bar, publication date, and official regulatory source link.
    - **5. Blog (`/blog`)**: Knowledge center with categorized articles (e.g., Company Registration in Nepal, VAT filing compliance), reading time, and related article links.
    - **6. Resources (`/resources`)**:
      - **Financial Calculators Hub**: EMI Calculator, Income Tax Estimator, VAT Calculator, Salary Calculator, Compound Interest Calculator.
@@ -248,7 +248,7 @@ The Admin Portal lives at `/admin` and is protected by Supabase Auth (Admin Role
   1. Home (`/`)
   2. About (`/about`)
   3. Services (`/services`)
-  4. TaxUpdates (`/tax-updates`)
+  4. Updates (`/updates`)
   5. Blog (`/blog`)
   6. Resources (`/resources`)
   7. Careers (`/careers`) — **Dynamic Hiring Switch**: Automatically shows/hides based on `careers_enabled` controlled via `/admin/careers`.
@@ -271,7 +271,7 @@ The Admin Portal lives at `/admin` and is protected by Supabase Auth (Admin Role
   - **Home (`/`):** Hero section with CA license badge, 4 trust chips (Professional Expertise, Client Focused, Integrity, Long-Term Partnerships), 3 pillar cards (Structured Audits, Confidential & Secure dark card, Clear Communication), 5-stat counter bar, 6-service grid, and bottom appointment strip.
   - **About (`/about`):** Firm profile, "Who We Are", 3 mission/vision/values cards, 15+ years experience counter, and "Meet Our Experts" team cards.
   - **Services (`/services`):** Full practice spectrum, 6 service cards with direct inquiry links, and featured Tax & Compliance breakdown.
-  - **TaxUpdates (`/tax-updates`):** Categorized tax circulars portal with live search, category tabs, and official IRD source citations.
+  - **Updates (`/updates`):** Categorized tax circulars portal with live search, category tabs, and official IRD source citations.
   - **Blog (`/blog`):** Hero with featured publication, category pills, 2-column layout with 6 articles and right sidebar (Categories count, recent posts, newsletter subscription).
   - **Resources (`/resources`):** Interactive Loan EMI Calculator, 13% VAT Invoice Calculator, Download Center for statutory PDF forms, and Government Directory (IRD, NRB, OCR, SSF, SEBON).
   - **Careers (`/careers`):** Conditional hiring page with active vacancy cards and direct application form with CV file upload (PDF/DOCX).

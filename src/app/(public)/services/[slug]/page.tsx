@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import type { ServiceItem } from '@/types';
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,13 +18,47 @@ import {
   FileCheck,
   Building,
 } from 'lucide-react';
-import { getServiceBySlug, servicesData } from '@/lib/services-data';
 
 export default function ServiceDetailPage() {
   const params = useParams();
-  const slug = params.slug as string;
-  const { settings } = useApp();
-  const service = getServiceBySlug(slug);
+  const slug = (params?.slug as string) || '';
+  const { settings, services } = useApp();
+  const [directService, setDirectService] = useState<ServiceItem | null>(null);
+  const cmsService = services.find((s) => s.slug === slug) || directService;
+
+  useEffect(() => {
+    if (services.some((service) => service.slug === slug)) return;
+    const client = createSupabaseBrowserClient();
+    if (!client || !slug) return;
+    void client.from('services').select('*').eq('slug', slug).maybeSingle().then(({ data }) => {
+      if (data) setDirectService(data as ServiceItem);
+    });
+  }, [services, slug]);
+
+  const service: {
+    title: string;
+    shortTitle: string;
+    description: string;
+    image: string;
+    icon: typeof Building;
+    accentColor: string;
+    articleParagraphs: string[];
+    sections: { heading: string; items: string[] }[];
+  } | undefined = cmsService
+    ? {
+        title: cmsService.title,
+        shortTitle: cmsService.title,
+        description: cmsService.short_description,
+        image: cmsService.image || '/Logo.png',
+        icon: Building,
+        accentColor: '#023A51',
+        articleParagraphs: [String(cmsService.full_description || cmsService.short_description || '')],
+        sections: Array.isArray(cmsService.deliverables) && cmsService.deliverables.length > 0
+          ? [{ heading: 'Key Scope Deliverables', items: cmsService.deliverables.map(String) }]
+          : [],
+      }
+    : undefined;
+
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = () => {
@@ -55,10 +91,19 @@ export default function ServiceDetailPage() {
     );
   }
 
-  const relatedServices = servicesData.filter((s) => s.slug !== slug).slice(0, 3);
+  const relatedServices = services.filter((s) => s.slug !== slug).slice(0, 3);
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.title,
+    description: service.description,
+    url: `/services/${slug}`,
+    provider: { '@type': 'AccountingService', name: settings.company_name },
+  };
 
   return (
     <article className="pb-28 bg-[#FAFCFD] overflow-x-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       {/* 1. Header Section */}
       <section id="hero-section" className="relative bg-hero-gradient pt-8 pb-12 sm:pt-12 sm:pb-16 overflow-hidden">
         <div className="mx-auto max-w-[1140px] px-6">
@@ -230,12 +275,6 @@ export default function ServiceDetailPage() {
                     </h2>
                   </div>
 
-                  {section.description && (
-                    <p className="text-sm sm:text-[15px] leading-[1.8] text-[#4A5259] pl-10">
-                      {section.description}
-                    </p>
-                  )}
-
                   {section.items && section.items.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-10 pt-2">
                       {section.items.map((item, iIdx) => (
@@ -303,7 +342,7 @@ export default function ServiceDetailPage() {
                     {rel.title}
                   </h4>
                   <p className="text-xs text-[#59667D] leading-relaxed line-clamp-2">
-                    {rel.description}
+                    {rel.short_description}
                   </p>
                 </div>
                 <Link

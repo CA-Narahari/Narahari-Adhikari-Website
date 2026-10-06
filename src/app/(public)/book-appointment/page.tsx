@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -34,6 +33,7 @@ export default function BookAppointmentPage() {
   const [preferredDate, setPreferredDate] = useState('');
   const [timeSlot, setTimeSlot] = useState('11:00 AM – 11:45 AM');
   const [notes, setNotes] = useState('');
+  const [privacyConsent, setPrivacyConsent] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
@@ -67,11 +67,13 @@ export default function BookAppointmentPage() {
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone,
+        company_name: companyName.trim(),
         service_title: serviceTitle,
         consultation_type: 'Office Meeting',
         date: preferredDate,
         time_slot: timeSlot,
-        notes: companyName ? `Organization: ${companyName}\n\n${notes}` : notes,
+        notes: notes.trim(),
+        privacy_consent: privacyConsent,
         status: 'pending',
       });
       if (!saved) {
@@ -331,7 +333,7 @@ export default function BookAppointmentPage() {
                 </div>
 
                 <label className="flex items-start gap-2 text-xs leading-5 text-[#59667D]">
-                  <input type="checkbox" required className="mt-0.5 size-4 accent-[#023A51]" />
+                  <input type="checkbox" required checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} className="mt-0.5 size-4 accent-[#023A51]" />
                   <span>I have read the <Link href="/privacy" className="font-semibold text-[#023A51] underline underline-offset-2">Privacy Policy</Link> and consent to the use of my details to respond to this request.</span>
                 </label>
 
@@ -340,13 +342,13 @@ export default function BookAppointmentPage() {
                 )}
 
                 <div className="pt-2">
-                  <Button
+                  <button
                     type="submit"
                     disabled={submitting}
-                    className="h-12 w-full rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white font-bold text-xs sm:text-sm transition-all shadow-md cursor-pointer"
+                    className="h-12 w-full rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-sm tracking-wide transition-all shadow-md hover:shadow-lg active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                   >
                     {submitting ? 'Submitting request...' : 'Send Consultation Request'}
-                  </Button>
+                  </button>
                 </div>
               </form>
             )}

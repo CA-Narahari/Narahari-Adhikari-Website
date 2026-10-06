@@ -44,6 +44,9 @@ export interface BlogPost {
   tags?: string[];
   status: 'draft' | 'published';
   published_at: string;
+  meta_title?: string;
+  meta_description?: string;
+  focus_keyword?: string;
 }
 
 export interface ServiceItem {
@@ -56,6 +59,11 @@ export interface ServiceItem {
   target_audience: string;
   icon: string;
   is_featured: boolean;
+  display_order?: number;
+  image?: string;
+  meta_title?: string;
+  meta_description?: string;
+  focus_keyword?: string;
 }
 
 export interface Vacancy {
@@ -68,6 +76,7 @@ export interface Vacancy {
   requirements: string[];
   deadline: string;
   is_active: boolean;
+  attachment_url?: string;
 }
 
 export interface JobApplication {
@@ -77,6 +86,7 @@ export interface JobApplication {
   applicant_name: string;
   applicant_email: string;
   applicant_phone: string;
+  qualification?: string;
   cover_note: string;
   cv_filename: string;
   cv_file_url?: string | null;
@@ -89,11 +99,13 @@ export interface Appointment {
   client_name: string;
   client_email: string;
   client_phone: string;
+  company_name?: string;
   service_title: string;
   consultation_type: 'Office Meeting' | 'Phone Consultation' | 'Online Meeting';
   date: string;
   time_slot: string;
   notes?: string;
+  privacy_consent?: boolean;
   status: 'pending' | 'confirmed' | 'rescheduled' | 'cancelled';
   created_at: string;
 }
@@ -115,10 +127,4 @@ export interface DownloadResource {
   file_size: string;
   download_url: string;
   downloads_count: number;
-}
-
-export interface OfficeHourDay {
-  day: string;
-  hours: string;
-  is_open: boolean;
 }

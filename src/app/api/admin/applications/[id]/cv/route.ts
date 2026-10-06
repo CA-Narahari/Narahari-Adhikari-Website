@@ -1,22 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase/server';
+import { requireStaff } from '@/lib/supabase/authorization';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const authClient = await createSupabaseServerClient();
-  const adminClient = createSupabaseAdminClient();
-  if (!authClient || !adminClient) return NextResponse.json({ error: 'CV access is not configured.' }, { status: 503 });
-
-  const { data: auth } = await authClient.auth.getUser();
-  if (!auth.user) return NextResponse.json({ error: 'Sign in to access candidate files.' }, { status: 401 });
-
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('role')
-    .eq('id', auth.user.id)
-    .maybeSingle();
-  if (!profile || !['admin', 'staff'].includes(profile.role)) {
-    return NextResponse.json({ error: 'You do not have access to candidate files.' }, { status: 403 });
-  }
+  const access = await requireStaff();
+  if (access.response) return access.response;
+  const { adminClient } = access;
 
   const { id } = await params;
   const { data: application } = await adminClient

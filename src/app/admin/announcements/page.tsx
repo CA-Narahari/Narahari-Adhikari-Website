@@ -74,7 +74,7 @@ export default function AdminAnnouncementsPage() {
               type="text"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="e.g. /tax-updates or external URL"
+              placeholder="e.g. /updates or external URL"
               className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-1 focus:ring-slate-900 focus:outline-none"
             />
           </div>

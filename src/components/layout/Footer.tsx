@@ -47,7 +47,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/tax-updates" className="hover:text-[#2CBC63] transition-colors duration-200">
+                <Link href="/updates" className="hover:text-[#2CBC63] transition-colors duration-200">
                   Updates
                 </Link>
               </li>

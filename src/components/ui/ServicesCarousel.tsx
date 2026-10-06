@@ -4,9 +4,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
 import { servicesData } from '@/lib/services-data';
 
 export default function ServicesCarousel() {
+  const { services } = useApp();
+  const displayServices = services && services.length > 0 ? services : servicesData;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [visibleCount, setVisibleCount] = useState(3);
@@ -29,7 +33,7 @@ export default function ServicesCarousel() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const maxIndex = Math.max(0, servicesData.length - visibleCount);
+  const maxIndex = Math.max(0, displayServices.length - visibleCount);
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
@@ -74,41 +78,48 @@ export default function ServicesCarousel() {
               transform: `translateX(-${currentIndex * (100 / visibleCount + (visibleCount === 3 ? 0.7 : visibleCount === 2 ? 1 : 0))}%)`,
             }}
           >
-            {servicesData.map((service) => (
-              <div
-                key={service.slug}
-                className="shrink-0 flex flex-col"
-                style={{
-                  width: `calc(${100 / visibleCount}% - ${
-                    visibleCount === 3 ? '16px' : visibleCount === 2 ? '12px' : '0px'
-                  })`,
-                }}
-              >
-                <Link
-                  href={`/services/${service.slug}`}
-                  className="group flex flex-col h-full bg-[#E5F1F6] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-white/60"
-                >
-                  {/* Service Top Image (matching reference photo) */}
-                  <div className="relative h-[210px] sm:h-[220px] w-full overflow-hidden bg-slate-200 shrink-0">
-                    <Image
-                      src={service.image}
-                      alt={service.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
+            {displayServices.map((service) => {
+              const imageSrc = service.image || '/Logo.png';
+              const description =
+                'short_description' in service
+                  ? service.short_description
+                  : (service as { description: string }).description;
 
-                  {/* Service Bottom Details (pale light-blue matching reference image) */}
-                  <div className="p-6 sm:p-7 flex flex-col justify-between flex-1 bg-[#E5F1F6]">
-                    <div>
-                      <h3 className="text-[18px] sm:text-[19px] font-bold text-[#023A51] leading-snug group-hover:text-[#2CBC63] transition-colors">
-                        {service.title}
-                      </h3>
-                      <p className="mt-3 text-[13px] sm:text-[13.5px] text-[#1D5367] leading-relaxed line-clamp-3">
-                        {service.description}
-                      </p>
+              return (
+                <div
+                  key={service.slug}
+                  className="shrink-0 flex flex-col"
+                  style={{
+                    width: `calc(${100 / visibleCount}% - ${
+                      visibleCount === 3 ? '16px' : visibleCount === 2 ? '12px' : '0px'
+                    })`,
+                  }}
+                >
+                  <Link
+                    href={`/services/${service.slug}`}
+                    className="group flex flex-col h-full bg-[#E5F1F6] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-white/60"
+                  >
+                    {/* Service Top Image */}
+                    <div className="relative h-[210px] sm:h-[220px] w-full overflow-hidden bg-slate-200 shrink-0">
+                      <Image
+                        src={imageSrc}
+                        alt={service.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     </div>
+
+                    {/* Service Bottom Details */}
+                    <div className="p-6 sm:p-7 flex flex-col justify-between flex-1 bg-[#E5F1F6]">
+                      <div>
+                        <h3 className="text-[18px] sm:text-[19px] font-bold text-[#023A51] leading-snug group-hover:text-[#2CBC63] transition-colors">
+                          {service.title}
+                        </h3>
+                        <p className="mt-3 text-[13px] sm:text-[13.5px] text-[#1D5367] leading-relaxed line-clamp-3">
+                          {description}
+                        </p>
+                      </div>
 
                     {/* Explore Link + Yellow Arrow Circle */}
                     <div className="mt-6 flex items-center gap-2">
@@ -122,7 +133,8 @@ export default function ServicesCarousel() {
                   </div>
                 </Link>
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
 

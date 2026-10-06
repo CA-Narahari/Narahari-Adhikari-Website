@@ -34,7 +34,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'Audit & Assurance',
     description:
       'We provide audit and assurance services to enhance transparency, build stakeholder trust, and ensure regulatory compliance.',
-    image: '/services/service-audit.jpg',
+    image: '/Logo.png',
     icon: FileText,
     accentColor: '#023A51',
     articleParagraphs: [
@@ -84,7 +84,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'Taxation Consultancy',
     description:
       'Clear support for tax filings, reviews, planning, and conversations with the tax authority.',
-    image: '/services/service-tax.jpg',
+    image: '/Logo.png',
     icon: TrendingUp,
     accentColor: '#023A51',
     articleParagraphs: [
@@ -119,7 +119,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'Mergers & Acquisitions',
     description:
       'Support for transaction reviews, financial due diligence, valuations, and the practical steps involved in a merger or acquisition.',
-    image: '/services/service-ma.jpg',
+    image: '/Logo.png',
     icon: Handshake,
     accentColor: '#023A51',
     articleParagraphs: [
@@ -156,7 +156,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'Advisory Services',
     description:
       'Guidance for planning, evaluating options, and making informed decisions as your organisation changes.',
-    image: '/services/service-advisory.jpg',
+    image: '/Logo.png',
     icon: MessageSquareQuote,
     accentColor: '#023A51',
     articleParagraphs: [
@@ -197,7 +197,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'Support & Outsourcing',
     description:
       'Reliable back-office support for the records, filings, and approvals that keep a business moving.',
-    image: '/services/service-bpo.jpg',
+    image: '/Logo.png',
     icon: HeartHandshake,
     accentColor: '#023A51',
     articleParagraphs: [
@@ -236,7 +236,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'NFRS/IFRS Implementation',
     description:
       'Support with financial reporting policies, transition planning, and applying NFRS or IFRS requirements to your reporting.',
-    image: '/services/service-ifrs.jpg',
+    image: '/Logo.png',
     icon: LineChart,
     accentColor: '#023A51',
     articleParagraphs: [
@@ -263,7 +263,7 @@ export const servicesData: ServiceData[] = [
     shortTitle: 'Training & Seminar',
     description:
       'Practical sessions for teams on taxation, financial reporting, business structuring, and compliance.',
-    image: '/services/service-training.jpg',
+    image: '/Logo.png',
     icon: GraduationCap,
     accentColor: '#023A51',
     articleParagraphs: [

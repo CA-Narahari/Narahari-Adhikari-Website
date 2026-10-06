@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Calculator,
@@ -22,11 +22,23 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+
+type CalculatorConfig = { calculator_key: string; fiscal_year: string; assumptions: Record<string, unknown>; source_name: string; source_url: string };
 
 export default function ResourcesToolsPage() {
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [copied, setCopied] = useState(false);
+  const [configs, setConfigs] = useState<Record<string, CalculatorConfig>>({});
+
+  useEffect(() => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return;
+    void client.from('calculator_configs').select('calculator_key,fiscal_year,assumptions,source_name,source_url').then(({ data }) => {
+      if (data) setConfigs(Object.fromEntries((data as CalculatorConfig[]).map((item) => [item.calculator_key, item])));
+    });
+  }, []);
 
   // 1. VAT Calculator
   const [vatAmount, setVatAmount] = useState<number>(50000);
@@ -61,11 +73,12 @@ export default function ResourcesToolsPage() {
 
   // Computations
   const calcVat = () => {
+    const rate = Number(configs.vat?.assumptions?.rate ?? 0.13);
     if (vatMode === 'exclusive') {
-      const vat = vatAmount * 0.13;
+      const vat = vatAmount * rate;
       return { base: vatAmount, vat: Math.round(vat), total: Math.round(vatAmount + vat) };
     } else {
-      const base = vatAmount / 1.13;
+      const base = vatAmount / (1 + rate);
       const vat = vatAmount - base;
       return { base: Math.round(base), vat: Math.round(vat), total: vatAmount };
     }
@@ -73,36 +86,36 @@ export default function ResourcesToolsPage() {
 
   const calcIndividualTax = () => {
     let tax = 0;
-    const slab1 = taxMaritalStatus === 'unmarried' ? 500000 : 600000;
-    const slab2 = taxMaritalStatus === 'unmarried' ? 700000 : 800000;
-    const slab3 = taxMaritalStatus === 'unmarried' ? 1000000 : 1100000;
-    const slab4 = 2000000;
+    const assumptions = configs['individual-tax']?.assumptions ?? {};
+    const slabs = (taxMaritalStatus === 'unmarried' ? assumptions.unmarried_slabs : assumptions.married_slabs) as number[] | undefined;
+    const rates = (assumptions.rates as number[] | undefined) ?? [0.01, 0.10, 0.20, 0.30, 0.39];
+    const [slab1, slab2, slab3, slab4] = slabs ?? [500000, 700000, 1000000, 2000000];
 
     let rem = annualSalary;
     if (rem <= slab1) {
-      tax += rem * 0.01;
+      tax += rem * rates[0];
     } else {
-      tax += slab1 * 0.01;
+      tax += slab1 * rates[0];
       rem -= slab1;
       const band2 = slab2 - slab1;
       if (rem <= band2) {
-        tax += rem * 0.10;
+        tax += rem * rates[1];
       } else {
-        tax += band2 * 0.10;
+        tax += band2 * rates[1];
         rem -= band2;
         const band3 = slab3 - slab2;
         if (rem <= band3) {
-          tax += rem * 0.20;
+          tax += rem * rates[2];
         } else {
-          tax += band3 * 0.20;
+          tax += band3 * rates[2];
           rem -= band3;
           const band4 = slab4 - slab3;
           if (rem <= band4) {
-            tax += rem * 0.30;
+            tax += rem * rates[3];
           } else {
-            tax += band4 * 0.30;
+            tax += band4 * rates[3];
             rem -= band4;
-            tax += rem * 0.39;
+            tax += rem * rates[4];
           }
         }
       }
@@ -129,18 +142,16 @@ export default function ResourcesToolsPage() {
   };
 
   const calcCgt = () => {
-    let rate = 7.5;
-    if (cgtType === 'equity_short') rate = 7.5;
-    if (cgtType === 'equity_long') rate = 5.0;
-    if (cgtType === 'property_short') rate = 7.5;
-    if (cgtType === 'property_long') rate = 5.0;
+    const cgt = configs['capital-gains']?.assumptions ?? {};
+    let rate = Number(cgt[cgtType] ?? 7.5);
     const tax = (cgtGain * rate) / 100;
     return { gain: cgtGain, rate, tax: Math.round(tax), net: Math.round(cgtGain - tax) };
   };
 
   const calcSsf = () => {
-    const employee = Math.round(ssfBasic * 0.11);
-    const employer = Math.round(ssfBasic * 0.20);
+    const ssf = configs.ssf?.assumptions ?? {};
+    const employee = Math.round(ssfBasic * Number(ssf.employee_rate ?? 0.11));
+    const employer = Math.round(ssfBasic * Number(ssf.employer_rate ?? 0.20));
     const total = employee + employer;
     return { basic: ssfBasic, employee, employer, total };
   };
@@ -246,6 +257,11 @@ export default function ResourcesToolsPage() {
             <p className="text-base sm:text-[17px] text-[#4A5259] leading-relaxed">
               Use these calculators to work through an estimate. Tax rates can change by fiscal year and taxpayer, so confirm the applicable figures before filing or paying.
             </p>
+            {Object.values(configs).some((config) => config.fiscal_year && config.fiscal_year !== 'Current') && (
+              <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                <strong>Some figures are tied to an older fiscal year.</strong> Check the source and effective date before relying on an estimate.
+              </div>
+            )}
             <a href="https://ird.gov.np/category/taxrateincentives/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#023A51] underline decoration-[#2CBC63] underline-offset-4 hover:text-[#2CBC63] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#023A51]">
               Check current IRD tax rates <ArrowRight aria-hidden="true" className="size-4" />
             </a>

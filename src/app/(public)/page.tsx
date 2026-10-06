@@ -21,22 +21,56 @@ import ServicesCarousel from '@/components/ui/ServicesCarousel';
 import { servicesData } from '@/lib/services-data';
 
 export default function HomePage() {
-  const { settings } = useApp();
+  const { settings, services, addAppointment } = useApp();
 
   // Consultation form state
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
-    service: 'Tax Advisory & IRD Compliance',
-    subject: 'Personal & Corporate Tax Consultation',
+    service: 'Audit & Assurance Services',
+    subject: 'Statutory Audit / Tax Advisory',
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    setSubmissionError('');
+    if (!formData.name || !formData.email || !formData.phone) {
+      alert('Please fill out your full name, email address, and phone number.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const saved = await addAppointment({
+        client_name: formData.name,
+        client_email: formData.email,
+        client_phone: formData.phone,
+        service_title: formData.service || (services[0]?.title ?? 'Audit & Assurance Services'),
+        consultation_type: 'Office Meeting',
+        date: today,
+        time_slot: 'To be scheduled by practice coordinator',
+        notes: formData.subject
+          ? `Subject: ${formData.subject}\n\nInquiry: ${formData.message}`
+          : formData.message,
+        status: 'pending',
+      });
+
+      if (!saved) {
+        setSubmissionError('We could not save your consultation request. Please try again.');
+        return;
+      }
+      setFormSubmitted(true);
+    } catch {
+      setSubmissionError('We could not save your consultation request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -169,7 +203,7 @@ export default function HomePage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-[#2CBC63] block">
                   Get in Touch
                 </span>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl font-extrabold !text-white text-white tracking-tight leading-tight">
                   Consult with CA Narahari Adhikari<span className="text-[#2CBC63]">.</span>
                 </h2>
                 <p className="text-[14.5px] text-slate-300 leading-relaxed font-normal">
@@ -318,9 +352,9 @@ export default function HomePage() {
                           onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                           className="flex h-11 w-full rounded-[10px] border border-[#E8EBEF] bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-[#023A51] transition-all duration-200 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CBC63]/40 focus-visible:border-[#2CBC63]"
                         >
-                          {servicesData.map((s) => (
-                            <option key={s.slug} value={s.title}>
-                              {s.shortTitle}
+                          {services.map((s) => (
+                            <option key={s.id} value={s.title}>
+                              {s.title}
                             </option>
                           ))}
                         </select>
@@ -355,12 +389,19 @@ export default function HomePage() {
                       />
                     </div>
 
+                    {submissionError && (
+                      <p role="alert" className="text-xs font-medium text-red-600">
+                        {submissionError}
+                      </p>
+                    )}
+
                     <div className="pt-2 space-y-3">
                       <button
                         type="submit"
-                        className="w-full py-3.5 px-6 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer"
+                        disabled={submitting}
+                        className="w-full py-3.5 px-6 rounded-full bg-[#2CBC63] hover:bg-[#25A456] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
                       >
-                        Request Consultation
+                        {submitting ? 'Submitting request...' : 'Request Consultation'}
                       </button>
                       <div className="text-center pt-1">
                         <Link

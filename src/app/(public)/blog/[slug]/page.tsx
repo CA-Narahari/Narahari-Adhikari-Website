@@ -1,63 +1,86 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 import {
   ArrowLeft,
   Calendar,
   Clock,
-  Share2,
   Check,
-  CheckCircle2,
   Copy,
   ArrowRight,
   Phone,
   FileText,
-  AlertCircle,
+  BookOpen,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export default function BlogArticlePage() {
-  const { blogPosts, services, settings } = useApp();
+  const { blogPosts, settings } = useApp();
   const params = useParams();
+  const slugParam = typeof params?.slug === 'string' ? params.slug : '';
+
   const [copied, setCopied] = useState(false);
-  const [activeSection, setActiveSection] = useState('regulatory-landscape');
 
   const post = blogPosts.find(
-    (item) => item.status === 'published' && item.slug === params.slug
+    (item) => item.status === 'published' && item.slug.toLowerCase() === slugParam.toLowerCase()
   );
 
-  const articleSections = [
-    { id: 'regulatory-landscape', title: 'Regulatory Landscape' },
-    { id: 'cbms-invoicing', title: '1. Electronic Billing (CBMS)' },
-    { id: 'tds-matrix', title: '2. Withholding Tax (TDS) Matrix' },
-    { id: 'advance-tax', title: '3. Advance Corporate Tax Schedule' },
-    { id: 'statutory-audit', title: '4. Statutory Audit & Returns' },
-    { id: 'recommendations', title: 'Practice Recommendations' },
-  ];
+  const structuredData = post ? {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.meta_description || post.excerpt,
+    datePublished: post.published_at,
+    author: { '@type': 'Person', name: post.author || 'CA Narahari Adhikari' },
+    image: post.featured_image ? [post.featured_image] : undefined,
+  } : null;
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPos = window.scrollY + 140;
-      for (const section of articleSections) {
-        const el = document.getElementById(section.id);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
-            setActiveSection(section.id);
-            break;
-          }
-        }
+  // Extract headings from content for dynamic Table of Contents
+  const headings = useMemo(() => {
+    if (!post?.content) return [];
+    const list: { id: string; text: string }[] = [];
+
+    // Check for HTML h2 tags
+    const h2Regex = /<h2[^>]*>(.*?)<\/h2>/gi;
+    let match;
+    let index = 0;
+    while ((match = h2Regex.exec(post.content)) !== null) {
+      const cleanText = match[1].replace(/<[^>]+>/g, '').trim();
+      if (cleanText) {
+        list.push({
+          id: `heading-${index++}`,
+          text: cleanText,
+        });
       }
-    };
+    }
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // If no HTML h2 tags, check for lines starting with numbers like "1. ", "2. "
+    if (list.length === 0) {
+      const lines = post.content.split('\n');
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (/^\d+\.\s+[A-Za-z]/.test(trimmed)) {
+          list.push({
+            id: `sec-${index++}`,
+            text: trimmed,
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [post?.content]);
+
+  const relatedPosts = useMemo(() => {
+    if (!post) return [];
+    return blogPosts
+      .filter((p) => p.status === 'published' && p.id !== post.id)
+      .slice(0, 3);
+  }, [blogPosts, post]);
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
@@ -67,21 +90,46 @@ export default function BlogArticlePage() {
     }
   };
 
+  // Convert plain text into HTML paragraphs if raw text is provided
+  const formattedHtml = useMemo(() => {
+    if (!post?.content) return '<p>No content published yet.</p>';
+    if (
+      post.content.includes('<p>') ||
+      post.content.includes('<div') ||
+      post.content.includes('<h1') ||
+      post.content.includes('<h2') ||
+      post.content.includes('<figure')
+    ) {
+      return sanitizeHtml(post.content);
+    }
+    return sanitizeHtml(post.content
+      .split(/\n\n+/)
+      .map((block) => {
+        const trimmed = block.trim();
+        if (/^\d+\.\s+[A-Za-z]/.test(trimmed)) {
+          const [title, ...rest] = trimmed.split('\n');
+          return `<h2 class="text-xl sm:text-2xl font-bold text-[#023A51] mt-8 mb-3">${title}</h2><p class="leading-relaxed text-[#33475B]">${rest.join('<br/>')}</p>`;
+        }
+        return `<p class="my-4 leading-relaxed text-[#33475B]">${trimmed.replace(/\n/g, '<br/>')}</p>`;
+      })
+      .join(''));
+  }, [post?.content]);
+
   if (!post) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center px-6 text-center">
-        <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-          <FileText className="w-7 h-7" />
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+          <FileText className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-bold text-[#023A51]">Article Not Found</h1>
         <p className="mt-2 text-sm text-[#59667D]">
-          The article you are looking for has not been published yet or may have been relocated.
+          The article you are looking for has not been published yet or the link may have changed.
         </p>
         <Link
           href="/blog"
           className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#023A51] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#2CBC63] transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Articles
+          <ArrowLeft className="h-4 w-4" /> Back to All Articles
         </Link>
       </div>
     );
@@ -89,6 +137,7 @@ export default function BlogArticlePage() {
 
   return (
     <article className="pb-28 bg-[#FAFCFD] overflow-x-hidden">
+      {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />}
       {/* 1. Header Section */}
       <section id="hero-section" className="relative bg-hero-gradient pt-8 pb-12 sm:pt-12 sm:pb-16 overflow-hidden">
         <div className="mx-auto max-w-[1140px] px-6">
@@ -120,53 +169,53 @@ export default function BlogArticlePage() {
               <span>•</span>
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-[#2CBC63]" />
-                {post.read_time || '7 min read'}
+                {post.read_time || '6 min read'}
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Hero Image Banner matching Ideas/Article Idea.png */}
-      <div className="mx-auto max-w-[1140px] px-6 pt-8 sm:pt-10">
-        <div className="relative aspect-[16/8] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md border border-[#E8EBEF] bg-slate-100">
-          <Image
-            src={post.featured_image || '/services/service-tax.jpg'}
-            alt={post.title}
-            fill
-            priority
-            sizes="(max-width: 1200px) 100vw, 1140px"
-            className="object-cover"
-          />
+      {/* 2. Hero Featured Image */}
+      {post.featured_image && (
+        <div className="mx-auto max-w-[1140px] px-6 pt-8 sm:pt-10">
+          <div className="relative aspect-[16/8] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md border border-[#E8EBEF] bg-slate-100">
+            <Image
+              src={post.featured_image}
+              alt={post.title}
+              fill
+              priority
+              sizes="(max-width: 1200px) 100vw, 1140px"
+              className="object-cover"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* 3. Two Column Editorial Body matching Ideas/Article Idea.png */}
+      {/* 3. Two Column Editorial Body */}
       <div className="mx-auto max-w-[1140px] px-6 pt-10 sm:pt-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-          {/* Left Column: Sticky Table of Contents & Socials (~30%) */}
+          {/* Left Column: Sticky Sidebar (~30%) */}
           <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
             <div className="bg-white rounded-2xl border border-[#E8EBEF] p-6 shadow-xs space-y-5">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  Table of Contents
-                </h3>
-                <nav className="mt-3 space-y-1.5" aria-label="Article outline">
-                  {articleSections.map((sec) => (
-                    <a
-                      key={sec.id}
-                      href={`#${sec.id}`}
-                      className={`block py-1.5 px-3 rounded-lg text-xs font-semibold transition-all ${
-                        activeSection === sec.id
-                          ? 'bg-[#E8F4F8] text-[#023A51] border-l-3 border-[#2CBC63] font-bold'
-                          : 'text-[#64748B] hover:text-[#023A51] hover:bg-slate-50'
-                      }`}
-                    >
-                      {sec.title}
-                    </a>
-                  ))}
-                </nav>
-              </div>
+              {headings.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Table of Contents
+                  </h3>
+                  <nav className="mt-3 space-y-1.5" aria-label="Article outline">
+                    {headings.map((sec, i) => (
+                      <div
+                        key={sec.id}
+                        className="py-1.5 px-3 rounded-lg text-xs font-semibold text-[#64748B] hover:text-[#023A51] hover:bg-slate-50 transition-colors"
+                      >
+                        <span className="text-[#2CBC63] mr-1.5">{String(i + 1).padStart(2, '0')}.</span>
+                        <span>{sec.text}</span>
+                      </div>
+                    ))}
+                  </nav>
+                </div>
+              )}
 
               {/* Share Article */}
               <div className="pt-4 border-t border-[#E8EBEF] space-y-2.5">
@@ -204,14 +253,14 @@ export default function BlogArticlePage() {
               </div>
             </div>
 
-            {/* Quick Practice Consultation Box */}
+            {/* Quick Consultation Box */}
             <div className="bg-[#023A51] text-white rounded-2xl p-6 shadow-sm space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#2CBC63]/20 rounded-full blur-xl pointer-events-none" />
-              <h4 className="text-sm font-bold text-white relative z-10">
-                Facing an IRD Assessment?
+              <h4 className="text-sm font-bold !text-white text-white relative z-10">
+                Facing a Tax or Audit Inquery?
               </h4>
               <p className="text-xs text-slate-300 leading-relaxed relative z-10">
-                Speak directly with CA Narahari Adhikari to examine your books and clarify statutory liabilities.
+                Speak directly with CA Narahari Adhikari to review your statutory records and advisory requirements.
               </p>
               <div className="pt-1 relative z-10 flex flex-col gap-2">
                 <Link
@@ -231,216 +280,38 @@ export default function BlogArticlePage() {
             </div>
           </aside>
 
-          {/* Right Column: Full Narrative Editorial Content (~70%) */}
-          <main className="lg:col-span-8 space-y-10 text-[#33475B]">
-            {/* Lead Introductory Section */}
-            <section id="regulatory-landscape" className="space-y-4">
-              <p className="text-base sm:text-lg text-[#023A51] font-medium leading-relaxed">
-                Operating a commercial enterprise in Nepal requires a disciplined approach to statutory compliance. With the Inland Revenue Department (IRD) accelerating digital enforcement through the Central Billing Monitoring System (CBMS) and stringent e-TDS reconciliation, business leaders cannot afford compliance oversights.
-              </p>
-              <p className="text-sm sm:text-[15px] leading-[1.85]">
-                The corporate taxation framework in Nepal is governed primarily by the Income Tax Act 2058, the Value Added Tax Act 2052, and annual Finance Acts. Every registered corporate taxpayer is obligated to maintain verified books of account, adhere to statutory accounting standards (NAS/NFRS), and submit timely disclosures to regulatory authorities including the IRD, Office of the Company Registrar (OCR), and Nepal Rastra Bank (NRB).
-              </p>
-            </section>
+          {/* Right Column: Dynamic Narrative Editorial Content */}
+          <main className="lg:col-span-8 space-y-8 text-[#33475B]">
+            {/* Lead Excerpt */}
+            {post.excerpt && (
+              <div className="p-6 rounded-2xl bg-[#E8F4F8]/70 border border-[#CCD7DC] text-[#023A51] text-base sm:text-[17px] font-medium leading-relaxed shadow-2xs">
+                {post.excerpt}
+              </div>
+            )}
 
-            {/* Section 1: CBMS */}
-            <section id="cbms-invoicing" className="space-y-4 pt-6 border-t border-[#E8EBEF]">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center">
-                  01
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#023A51]">
-                  Electronic Billing (CBMS) and Invoice Compliance
-                </h2>
-              </div>
-              <p className="text-sm sm:text-[15px] leading-[1.85]">
-                Under updated directives from the Inland Revenue Department, entities crossing specific revenue thresholds must synchronize their point-of-sale and ERP billing software directly with the CBMS server. Key compliance mandates include:
-              </p>
-              <div className="space-y-3 pl-2 sm:pl-4">
-                <div className="p-4 rounded-xl bg-white border border-[#E8EBEF] space-y-1">
-                  <div className="font-bold text-xs sm:text-sm text-[#023A51] flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#2CBC63] shrink-0" />
-                    Software Certification
-                  </div>
-                  <p className="text-xs sm:text-[13.5px] text-[#4A5259] leading-relaxed pl-6">
-                    Billing software must be pre-approved by the IRD. Any unapproved modification of database invoices attracts severe penalties under Section 23 of the VAT Act.
-                  </p>
-                </div>
+            {/* Dynamic Article HTML/Text Content */}
+            <div
+              className="prose prose-slate max-w-none text-[15px] sm:text-base leading-[1.85] text-[#33475B] prose-headings:text-[#023A51] prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:my-4 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#2CBC63] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-[#023A51] prose-img:rounded-2xl prose-img:shadow-md prose-img:my-6 prose-a:text-[#1A8F4B] prose-a:underline"
+              dangerouslySetInnerHTML={{ __html: formattedHtml }}
+            />
 
-                <div className="p-4 rounded-xl bg-white border border-[#E8EBEF] space-y-1">
-                  <div className="font-bold text-xs sm:text-sm text-[#023A51] flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#2CBC63] shrink-0" />
-                    Real-Time Transmission
-                  </div>
-                  <p className="text-xs sm:text-[13.5px] text-[#4A5259] leading-relaxed pl-6">
-                    Invoices generated at counters or dispatched electronically must reflect instantaneously on the IRD portal with verifiable QR codes.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white border border-[#E8EBEF] space-y-1">
-                  <div className="font-bold text-xs sm:text-sm text-[#023A51] flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#2CBC63] shrink-0" />
-                    Credit Note Regularization
-                  </div>
-                  <p className="text-xs sm:text-[13.5px] text-[#4A5259] leading-relaxed pl-6">
-                    Any cancellation or revision of sales invoices must be formalized via statutory credit notes within 7 working days, accompanied by legitimate commercial explanations.
-                  </p>
-                </div>
+            {/* Tags footer */}
+            {post.tags && post.tags.length > 0 && (
+              <div className="pt-6 border-t border-[#E8EBEF] flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-[#023A51]">Tags:</span>
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 rounded-full bg-slate-100 hover:bg-[#E8F4F8] text-xs font-medium text-slate-700 transition-colors"
+                  >
+                    #{tag}
+                  </span>
+                ))}
               </div>
-            </section>
-
-            {/* Section 2: TDS Matrix */}
-            <section id="tds-matrix" className="space-y-4 pt-6 border-t border-[#E8EBEF]">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center">
-                  02
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#023A51]">
-                  Withholding Tax (TDS) Matrix and E-TDS Mandate
-                </h2>
-              </div>
-              <p className="text-sm sm:text-[15px] leading-[1.85]">
-                Withholding tax is an advance deduction at source that acts as a vital reconciliation bridge between vendor income and purchaser expenditure. For FY 2081/82, key statutory withholding rates include:
-              </p>
-
-              <div className="overflow-x-auto rounded-2xl border border-[#E8EBEF] bg-white shadow-xs">
-                <table className="w-full text-left text-xs sm:text-[13.5px]">
-                  <thead className="bg-[#F8FAFC] border-b border-[#E8EBEF] text-[#023A51] font-bold">
-                    <tr>
-                      <th className="py-3 px-4">Transaction Nature</th>
-                      <th className="py-3 px-4">Statutory Rate</th>
-                      <th className="py-3 px-4">Statutory Deadline</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E8EBEF]">
-                    <tr>
-                      <td className="py-3 px-4 font-medium text-[#023A51]">House & Property Rent</td>
-                      <td className="py-3 px-4 text-[#2CBC63] font-bold">10%</td>
-                      <td className="py-3 px-4 text-slate-500">25th of next Nepali month</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 px-4 font-medium text-[#023A51]">Contractor / Supply Work</td>
-                      <td className="py-3 px-4 text-[#2CBC63] font-bold">1.5%</td>
-                      <td className="py-3 px-4 text-slate-500">25th of next Nepali month</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 px-4 font-medium text-[#023A51]">Professional & Consultancy Fees</td>
-                      <td className="py-3 px-4 text-[#2CBC63] font-bold">15%</td>
-                      <td className="py-3 px-4 text-slate-500">25th of next Nepali month</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 px-4 font-medium text-[#023A51]">Fixed Deposit Interest (Individual)</td>
-                      <td className="py-3 px-4 text-[#2CBC63] font-bold">5% Final</td>
-                      <td className="py-3 px-4 text-slate-500">At time of credit</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] flex items-start gap-3 text-xs sm:text-[13.5px] text-[#023A51]">
-                <AlertCircle className="w-5 h-5 text-[#2CBC63] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block font-bold">E-TDS Deposit Requirement:</strong>
-                  All withheld tax must be deposited into the government treasury and reconciled via E-TDS vouchers no later than the 25th of the following Nepali month. Failure to deposit incurs monthly penal interest under Section 118.
-                </div>
-              </div>
-            </section>
-
-            {/* Section 3: Advance Corporate Tax */}
-            <section id="advance-tax" className="space-y-4 pt-6 border-t border-[#E8EBEF]">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center">
-                  03
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#023A51]">
-                  Advance Corporate Tax Installment Schedule
-                </h2>
-              </div>
-              <p className="text-sm sm:text-[15px] leading-[1.85]">
-                Corporate taxpayers must calculate estimated annual taxable income and pay income tax in three statutory installments:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-white border border-[#E8EBEF] text-center space-y-1">
-                  <span className="text-xs text-slate-400 font-bold uppercase">1st Installment</span>
-                  <div className="text-2xl font-extrabold text-[#023A51]">40%</div>
-                  <div className="text-xs font-semibold text-[#2CBC63]">End of Poush</div>
-                  <p className="text-[11px] text-slate-500 pt-1">Mid-January milestone</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-white border border-[#E8EBEF] text-center space-y-1">
-                  <span className="text-xs text-slate-400 font-bold uppercase">2nd Installment</span>
-                  <div className="text-2xl font-extrabold text-[#023A51]">70%</div>
-                  <div className="text-xs font-semibold text-[#2CBC63]">End of Chaitra</div>
-                  <p className="text-[11px] text-slate-500 pt-1">Mid-April cumulative</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-white border border-[#E8EBEF] text-center space-y-1">
-                  <span className="text-xs text-slate-400 font-bold uppercase">3rd Installment</span>
-                  <div className="text-2xl font-extrabold text-[#023A51]">100%</div>
-                  <div className="text-xs font-semibold text-[#2CBC63]">End of Ashadh</div>
-                  <p className="text-[11px] text-slate-500 pt-1">Fiscal year closure</p>
-                </div>
-              </div>
-              <p className="text-xs sm:text-[13.5px] text-[#4A5259] leading-relaxed">
-                Shortfall in advance installment payments triggers mandatory interest under Section 118 of the Income Tax Act at 15% per annum, calculated on the unpaid balance.
-              </p>
-            </section>
-
-            {/* Section 4: Statutory Audit */}
-            <section id="statutory-audit" className="space-y-4 pt-6 border-t border-[#E8EBEF]">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center">
-                  04
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#023A51]">
-                  Statutory Audit and Tax Return Submission
-                </h2>
-              </div>
-              <p className="text-sm sm:text-[15px] leading-[1.85]">
-                Every corporate entity in Nepal must appoint a qualified Chartered Accountant licensed by the Institute of Chartered Accountants of Nepal (ICAN) to conduct an independent annual statutory audit.
-              </p>
-              <ul className="space-y-2 text-xs sm:text-[14px] leading-relaxed">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#2CBC63] font-bold">•</span>
-                  <span><strong>Audit Timeline:</strong> Audited balance sheets and profit & loss statements must be approved by the Board and submitted within 6 months of the fiscal year closing (by end of Poush).</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#2CBC63] font-bold">•</span>
-                  <span><strong>Return Filing Forms:</strong> Entities submit online returns via the IRD portal (D-01 for simplified taxpayers, D-02 for medium taxpayers, D-03 for general corporate taxpayers).</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#2CBC63] font-bold">•</span>
-                  <span><strong>Extensions:</strong> Where justifiable delay occurs, applications for extension up to 3 additional months must be formally lodged with the relevant Inland Revenue Office (IRO) prior to the Poush deadline.</span>
-                </li>
-              </ul>
-            </section>
-
-            {/* Section 5: Recommendations */}
-            <section id="recommendations" className="space-y-4 pt-6 border-t border-[#E8EBEF]">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-[#2CBC63]/20 text-[#2CBC63] font-bold text-xs flex items-center justify-center">
-                  ✓
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#023A51]">
-                  Actionable Practice Recommendations
-                </h2>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-[#E8EBEF]">
-                  <span className="w-5 h-5 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <p className="text-xs sm:text-[13.5px]">Conduct monthly input VAT and E-TDS reconciliations before the 25th rather than deferring to year-end closing.</p>
-                </div>
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-[#E8EBEF]">
-                  <span className="w-5 h-5 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <p className="text-xs sm:text-[13.5px]">Review vendor PAN and VAT status on the IRD portal prior to disbursing payments above NPR 1,000.</p>
-                </div>
-                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-[#E8EBEF]">
-                  <span className="w-5 h-5 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <p className="text-xs sm:text-[13.5px]">Maintain auditable digital trails for all transactions exceeding NPR 50,000, ensuring payments flow strictly through banking channels.</p>
-                </div>
-              </div>
-            </section>
+            )}
 
             {/* Author Profile Block */}
-            <div className="mt-12 rounded-3xl border border-[#CCD7DC] bg-[#E8F4F8] p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div className="mt-12 rounded-3xl border border-[#CCD7DC] bg-[#E8F4F8] p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 shadow-2xs">
               <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-sm shrink-0 bg-white border border-[#CCD7DC]">
                 <Image
                   src="/profile-picture.png"
@@ -457,7 +328,7 @@ export default function BlogArticlePage() {
                   CA Narahari Adhikari, FCA
                 </h3>
                 <p className="text-xs sm:text-[13px] text-[#4A5259] leading-relaxed">
-                  Principal Chartered Accountant at Narahari Adhikari & Co. Advising Nepali enterprises, joint ventures, and multinational organisations on tax litigation, statutory audit, and NFRS financial reporting.
+                  Principal Chartered Accountant at Narahari Adhikari &amp; Co. Advising Nepali enterprises, joint ventures, and multinational organisations on tax litigation, statutory audit, and NFRS financial reporting.
                 </p>
                 <div className="pt-2">
                   <Link
@@ -472,6 +343,55 @@ export default function BlogArticlePage() {
             </div>
           </main>
         </div>
+
+        {/* 4. Related Articles Section */}
+        {relatedPosts.length > 0 && (
+          <section className="mt-20 pt-12 border-t border-[#E8EBEF]">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#2CBC63]">
+                  Knowledge Base
+                </span>
+                <h3 className="text-2xl font-bold text-[#023A51] mt-1">
+                  Related Practice Articles
+                </h3>
+              </div>
+              <Link
+                href="/blog"
+                className="text-xs font-bold text-[#023A51] hover:text-[#2CBC63] inline-flex items-center gap-1"
+              >
+                <span>View all articles</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#2CBC63]" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedPosts.map((rel) => (
+                <Link
+                  key={rel.id}
+                  href={`/blog/${rel.slug}`}
+                  className="group bg-white rounded-2xl border border-[#E8EBEF] p-5 hover:shadow-lg hover:border-[#CCD7DC] transition-all flex flex-col justify-between"
+                >
+                  <div className="space-y-2.5">
+                    <span className="text-[10px] font-bold uppercase text-[#2CBC63]">
+                      {rel.category}
+                    </span>
+                    <h4 className="font-bold text-[#023A51] text-base leading-snug group-hover:text-[#2CBC63] transition-colors line-clamp-2">
+                      {rel.title}
+                    </h4>
+                    <p className="text-xs text-[#59667D] leading-relaxed line-clamp-2">
+                      {rel.excerpt}
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#023A51] group-hover:text-[#2CBC63]">
+                    <span>Read Article</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#2CBC63] group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </article>
   );

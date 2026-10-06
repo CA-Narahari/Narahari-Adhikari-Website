@@ -1,9 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Landmark, Download, ExternalLink, Plus, Edit2, Trash2, X, Check, FileText } from 'lucide-react';
+import {
+  Landmark,
+  Download,
+  ExternalLink,
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  FileText,
+  Upload,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import { GovernmentLink, DownloadResource } from '@/types';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function AdminResourcesPage() {
   const {
@@ -36,8 +50,21 @@ export default function AdminResourcesPage() {
     category: 'Tax Form' as DownloadResource['category'],
     file_format: 'PDF',
     file_size: '1.2 MB',
-    download_url: '#',
+    download_url: '',
   });
+
+  // File upload state for downloadable resources
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [uploadFileError, setUploadFileError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const dlFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Deletion confirm modal state
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'gov' | 'dl';
+    id: string;
+    title: string;
+  } | null>(null);
 
   // Open Gov Link Modal for Add or Edit
   const openGovModal = (link?: GovernmentLink) => {
@@ -77,6 +104,8 @@ export default function AdminResourcesPage() {
 
   // Open Download Modal for Add or Edit
   const openDlModal = (res?: DownloadResource) => {
+    setUploadFileError(null);
+    setUploadSuccess(false);
     if (res) {
       setEditingDl(res);
       setDlForm({
@@ -93,10 +122,57 @@ export default function AdminResourcesPage() {
         category: 'Tax Form',
         file_format: 'PDF',
         file_size: '1.5 MB',
-        download_url: '#',
+        download_url: '',
       });
     }
     setIsDlModalOpen(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingFile(true);
+    setUploadFileError(null);
+    setUploadSuccess(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'download-resources');
+      formData.append('folder', 'documents');
+
+      const res = await fetch('/api/admin/storage/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload document');
+      }
+
+      // Format file size
+      const sizeInMB = file.size / (1024 * 1024);
+      const sizeStr = sizeInMB >= 1 ? `${sizeInMB.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`;
+
+      // Extract format extension
+      const ext = file.name.split('.').pop()?.toUpperCase() || 'PDF';
+
+      setDlForm((prev) => ({
+        ...prev,
+        title: prev.title || file.name.replace(/\.[^/.]+$/, ''),
+        download_url: data.publicUrl,
+        file_format: ext,
+        file_size: sizeStr,
+      }));
+      setUploadSuccess(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      setUploadFileError(msg);
+    } finally {
+      setIsUploadingFile(false);
+    }
   };
 
   const handleDlSubmit = (e: React.FormEvent) => {
@@ -111,12 +187,34 @@ export default function AdminResourcesPage() {
     setIsDlModalOpen(false);
   };
 
+  const confirmDeleteTarget = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'gov') {
+      deleteGovernmentLink(deleteTarget.id);
+    } else {
+      deleteDownload(deleteTarget.id);
+    }
+    setDeleteTarget(null);
+  };
+
   return (
     <div className="space-y-10 max-w-7xl mx-auto pb-16">
+      {/* Reusable Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title={deleteTarget?.type === 'gov' ? 'Delete Regulatory Authority' : 'Delete Resource'}
+        message={`Are you sure you want to remove "${deleteTarget?.title}"? This item will no longer appear in the public portal.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        onConfirm={confirmDeleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">
-          Resources & Regulatory Directories CMS
+          Resources &amp; Regulatory Directories CMS
         </h1>
         <p className="text-xs text-slate-500 mt-1">
           Manage official government portal redirection links and downloadable client resources in real-time.
@@ -164,11 +262,13 @@ export default function AdminResourcesPage() {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm(`Remove "${g.name}" from public resources?`)) {
-                          deleteGovernmentLink(g.id);
-                        }
-                      }}
+                      onClick={() =>
+                        setDeleteTarget({
+                          type: 'gov',
+                          id: g.id,
+                          title: g.name,
+                        })
+                      }
                       title="Delete Portal"
                       className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
                     >
@@ -207,10 +307,10 @@ export default function AdminResourcesPage() {
           <div>
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Download className="w-4 h-4 text-[#023A51]" />
-              <span>Downloadable Forms, Checklists & Guides ({downloads.length})</span>
+              <span>Downloadable Forms, Checklists &amp; Guides ({downloads.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Statutory PDF checklists and Excel financial templates for clients and business officials.
+              Statutory PDF checklists and Excel financial templates with instant file upload or external links.
             </p>
           </div>
           <button
@@ -254,15 +354,17 @@ export default function AdminResourcesPage() {
                   onClick={() => openDlModal(d)}
                   className="px-2.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <Edit2 className="w-3 h-3" />
+                  <Edit2 className="w-3.5 h-3.5" />
                   <span>Edit</span>
                 </button>
                 <button
-                  onClick={() => {
-                    if (confirm(`Delete file "${d.title}"?`)) {
-                      deleteDownload(d.id);
-                    }
-                  }}
+                  onClick={() =>
+                    setDeleteTarget({
+                      type: 'dl',
+                      id: d.id,
+                      title: d.title,
+                    })
+                  }
                   className="p-1.5 rounded hover:bg-red-100 text-red-600 transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -298,52 +400,52 @@ export default function AdminResourcesPage() {
                   value={govForm.name}
                   onChange={(e) => setGovForm({ ...govForm, name: e.target.value })}
                   placeholder="e.g. Inland Revenue Department (IRD)"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Short Label / Acronym</label>
+                <label className="font-bold text-slate-700 block mb-1">Short Code / Acronym</label>
                 <input
                   type="text"
                   value={govForm.short_name}
                   onChange={(e) => setGovForm({ ...govForm, short_name: e.target.value })}
                   placeholder="e.g. IRD Nepal"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Category / Domain</label>
+                <label className="font-bold text-slate-700 block mb-1">Category</label>
                 <input
                   type="text"
                   value={govForm.category}
                   onChange={(e) => setGovForm({ ...govForm, category: e.target.value })}
-                  placeholder="e.g. Taxation & Revenue Administration"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                  placeholder="e.g. Tax & Revenue Authority"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Official Redirection URL *</label>
+                <label className="font-bold text-slate-700 block mb-1">Official Portal URL *</label>
                 <input
                   type="url"
                   required
                   value={govForm.url}
                   onChange={(e) => setGovForm({ ...govForm, url: e.target.value })}
-                  placeholder="https://ird.gov.np/"
-                  className="w-full px-3 py-2 border rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                  placeholder="https://ird.gov.np"
+                  className="w-full px-3 py-2 border rounded-lg font-mono focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Summary Description</label>
+                <label className="font-bold text-slate-700 block mb-1">Description</label>
                 <textarea
                   rows={2}
                   value={govForm.description}
                   onChange={(e) => setGovForm({ ...govForm, description: e.target.value })}
-                  placeholder="Brief note on what services this government agency handles."
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                  placeholder="Official services provided by this authority..."
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                 />
               </div>
 
@@ -367,7 +469,7 @@ export default function AdminResourcesPage() {
         </div>
       )}
 
-      {/* Download Resource Modal */}
+      {/* Download Resource Modal with Integrated File Upload */}
       {isDlModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
@@ -383,6 +485,53 @@ export default function AdminResourcesPage() {
               </button>
             </div>
 
+            {/* Direct File Attachment Upload Card */}
+            <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#0D3B3E] flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5 text-[#1A8F4B]" />
+                  <span>Attach Document File (PDF, DOCX, XLSX)</span>
+                </span>
+                {uploadSuccess && (
+                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Uploaded to Storage</span>
+                  </span>
+                )}
+              </div>
+
+              <input
+                ref={dlFileInputRef}
+                type="file"
+                accept=".pdf,.docx,.doc,.xlsx,.xls,.zip"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+
+              <div
+                onClick={() => dlFileInputRef.current?.click()}
+                className="border border-dashed border-emerald-300 hover:border-emerald-500 bg-white rounded-xl p-3 text-center cursor-pointer transition-colors"
+              >
+                {isUploadingFile ? (
+                  <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#0D3B3E] py-1">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#1A8F4B]" />
+                    <span>Uploading file to Supabase storage...</span>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-slate-600">
+                    <span className="font-bold text-[#1A8F4B]">Click to browse file</span> or drop file here (Auto-sets URL, format &amp; file size)
+                  </div>
+                )}
+              </div>
+
+              {uploadFileError && (
+                <div className="text-[11px] text-rose-600 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{uploadFileError}</span>
+                </div>
+              )}
+            </div>
+
             <form onSubmit={handleDlSubmit} className="space-y-3 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Document Title *</label>
@@ -392,7 +541,7 @@ export default function AdminResourcesPage() {
                   value={dlForm.title}
                   onChange={(e) => setDlForm({ ...dlForm, title: e.target.value })}
                   placeholder="e.g. Income Tax Return Schedule 1 to 5 Forms"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                 />
               </div>
 
@@ -407,7 +556,7 @@ export default function AdminResourcesPage() {
                         category: e.target.value as DownloadResource['category'],
                       })
                     }
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                   >
                     <option value="Tax Form">Tax Form</option>
                     <option value="Checklist">Checklist</option>
@@ -423,7 +572,7 @@ export default function AdminResourcesPage() {
                     value={dlForm.file_format}
                     onChange={(e) => setDlForm({ ...dlForm, file_format: e.target.value })}
                     placeholder="PDF, DOCX, XLSX"
-                    className="w-full px-3 py-2 border rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                    className="w-full px-3 py-2 border rounded-lg font-mono focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                   />
                 </div>
               </div>
@@ -436,18 +585,18 @@ export default function AdminResourcesPage() {
                     value={dlForm.file_size}
                     onChange={(e) => setDlForm({ ...dlForm, file_size: e.target.value })}
                     placeholder="e.g. 1.8 MB"
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                   />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">File URL / Source</label>
+                  <label className="font-bold text-slate-700 block mb-1">File URL / Download Link</label>
                   <input
                     type="text"
                     value={dlForm.download_url}
                     onChange={(e) => setDlForm({ ...dlForm, download_url: e.target.value })}
-                    placeholder="#"
-                    className="w-full px-3 py-2 border rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#2CBC63]"
+                    placeholder="https://... or auto-filled on upload"
+                    className="w-full px-3 py-2 border rounded-lg font-mono focus:outline-hidden focus:ring-1 focus:ring-[#2CBC63]"
                   />
                 </div>
               </div>

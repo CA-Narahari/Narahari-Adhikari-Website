@@ -213,7 +213,7 @@ export default function AboutPage() {
           <div className="lg:col-span-6">
             <div className="relative rounded-3xl overflow-hidden shadow-lg border border-[#E8EBEF] aspect-[16/11]">
               <Image
-                src="/team-consultation.jpg"
+                src="/profile-picture.png"
                 alt="Professional consultation session"
                 fill
                 className="object-cover"

@@ -18,6 +18,7 @@ import {
   User,
   Mail,
   Phone,
+  FileText,
 } from 'lucide-react';
 import { Vacancy } from '@/types';
 
@@ -228,7 +229,7 @@ export default function CareersPage() {
 
               {/* Card Footer: Metadata & Apply Button */}
               <div className="pt-5 border-t border-[#E8EBEF] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4 text-xs text-[#59667D]">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-[#59667D]">
                   <span className="flex items-center gap-1 font-medium">
                     <MapPin className="w-3.5 h-3.5 text-[#2CBC63]" />
                     {vac.location}
@@ -237,6 +238,17 @@ export default function CareersPage() {
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
                     Due: {vac.deadline}
                   </span>
+                  {vac.attachment_url && (
+                    <a
+                      href={vac.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[#2CBC63] hover:underline font-bold"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>JD Document (PDF)</span>
+                    </a>
+                  )}
                 </div>
 
                 <button

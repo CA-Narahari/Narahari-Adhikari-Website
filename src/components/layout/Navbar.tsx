@@ -67,7 +67,7 @@ export default function Navbar() {
   const navItems = [
     { name: 'Home', href: '/' },
     { name: 'Services', href: '/services', hasDropdown: true },
-    { name: 'Updates', href: '/tax-updates' },
+    { name: 'Updates', href: '/updates' },
     { name: 'Resources', href: '/resources', hasDropdown: true },
     { name: 'About Us', href: '/about' },
     { name: 'Blog', href: '/blog' },
@@ -119,7 +119,7 @@ export default function Navbar() {
               {/* Left: Quick links */}
               <div className="flex items-center gap-7 font-semibold tracking-[0.12em] uppercase text-[11px]">
                 <Link
-                  href="/tax-updates"
+                  href="/updates"
                   className="hover:text-[#2CBC63] transition-colors duration-150"
                 >
                   Updates
