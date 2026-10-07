@@ -143,7 +143,7 @@ export default function ResourcesToolsPage() {
 
   const calcCgt = () => {
     const cgt = configs['capital-gains']?.assumptions ?? {};
-    let rate = Number(cgt[cgtType] ?? 7.5);
+    const rate = Number(cgt[cgtType] ?? 7.5);
     const tax = (cgtGain * rate) / 100;
     return { gain: cgtGain, rate, tax: Math.round(tax), net: Math.round(cgtGain - tax) };
   };
@@ -176,10 +176,10 @@ export default function ResourcesToolsPage() {
     },
     {
       id: 'individual-tax',
-      name: 'Individual Salary Tax Estimate (FY 2081/82)',
+      name: 'Individual Salary Tax Estimate',
       category: 'Income Tax',
       icon: Calculator,
-      description: 'Estimate progressive tax and monthly withholding using the FY 2081/82 assumptions shown in the calculator.',
+      description: 'Estimate progressive tax and monthly withholding using the fiscal year selected in the CMS calculator settings.',
     },
     {
       id: 'tds',

@@ -76,7 +76,7 @@ export interface Vacancy {
   requirements: string[];
   deadline: string;
   is_active: boolean;
-  attachment_url?: string;
+  attachment_url?: string | null;
 }
 
 export interface JobApplication {

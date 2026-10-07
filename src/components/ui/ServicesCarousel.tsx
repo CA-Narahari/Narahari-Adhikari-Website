@@ -5,11 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { servicesData } from '@/lib/services-data';
 
 export default function ServicesCarousel() {
   const { services } = useApp();
-  const displayServices = services && services.length > 0 ? services : servicesData;
+  const displayServices = services;
+  const serviceCount = displayServices.length;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -45,10 +45,14 @@ export default function ServicesCarousel() {
 
   // Keep the service showcase moving at a calm two-second pace.
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || serviceCount === 0) return;
     const interval = setInterval(nextSlide, 2000);
     return () => clearInterval(interval);
-  }, [isPaused, nextSlide]);
+  }, [isPaused, nextSlide, serviceCount]);
+
+  if (serviceCount === 0) {
+    return <p className="py-10 text-center text-sm text-[#59667D]">No services have been published yet.</p>;
+  }
 
   return (
     <div

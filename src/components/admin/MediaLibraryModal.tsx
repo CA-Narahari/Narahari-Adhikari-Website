@@ -66,12 +66,6 @@ export default function MediaLibraryModal({
   const [copiedUrl, setCopiedUrl] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch files when modal opens
-  useEffect(() => {
-    if (!isOpen) return;
-    loadFiles();
-  }, [isOpen, activeFolder]);
-
   const loadFiles = async () => {
     setIsLoading(true);
     try {
@@ -91,6 +85,13 @@ export default function MediaLibraryModal({
       setIsLoading(false);
     }
   };
+
+  // Fetch files when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = window.setTimeout(() => { void loadFiles(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, activeFolder]);
 
   const handleFileUpload = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;

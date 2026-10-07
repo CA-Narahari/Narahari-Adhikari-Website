@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { ServiceItem } from '@/types';
 import ContentEditor, { ContentEditorData } from '@/components/admin/ContentEditor';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { sanitizeHtml } from '@/lib/sanitize-html';
+import { serviceArticleHtml } from '@/lib/article-content';
 import {
   Briefcase,
   Plus,
@@ -24,6 +27,7 @@ import {
   HeartHandshake,
   LineChart,
   GraduationCap,
+  Trash2,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -39,13 +43,14 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function AdminServicesPage() {
-  const { services, addService, updateService } = useApp();
+  const { services, addService, updateService, deleteService } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'featured'>('all');
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<ServiceItem | null>(null);
 
   const filteredServices = services.filter((srv) => {
     const matchesQuery =
@@ -55,13 +60,13 @@ export default function AdminServicesPage() {
     return matchesQuery && matchesFilter;
   });
 
-  const handleEditorSave = async (data: ContentEditorData) => {
+  const handleEditorSave = async (data: ContentEditorData): Promise<boolean> => {
     const payload = {
       title: data.title,
       slug: data.slug,
-      short_description: data.excerpt || data.content.slice(0, 160),
-      full_description: data.content,
-      deliverables: editingService?.deliverables || [],
+      short_description: data.excerpt || data.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 160),
+      full_description: sanitizeHtml(data.content),
+      deliverables: [],
       target_audience: editingService?.target_audience || '',
       icon: editingService?.icon || 'Briefcase',
       display_order: editingService?.display_order ?? services.length,
@@ -76,13 +81,26 @@ export default function AdminServicesPage() {
       : await addService(payload);
     if (!saved) {
       setToastMessage('Service could not be saved. Check your CMS session and try again.');
-      return;
+      return false;
     }
 
     setToastMessage(`Service "${data.title}" ${editingService ? 'updated' : 'created'} successfully`);
     setTimeout(() => setToastMessage(null), 3000);
     setEditingService(null);
     setIsCreatingService(false);
+    return true;
+  };
+
+  const handleDeleteService = async (service: ServiceItem) => {
+    const deleted = await deleteService(service.id);
+    if (!deleted) {
+      setToastMessage('Service could not be deleted. Check your CMS session and try again.');
+      return;
+    }
+    setToastMessage(`Service "${service.title}" deleted`);
+    setEditingService(null);
+    setServiceToDelete(null);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   // If in Editor Mode
@@ -90,11 +108,11 @@ export default function AdminServicesPage() {
     const editorInitialData: ContentEditorData = {
       title: editingService?.title || '',
       slug: editingService?.slug || '',
-      content: editingService?.full_description || '',
+      content: editingService ? serviceArticleHtml(editingService) : '',
       excerpt: editingService?.short_description || '',
       category: 'Practice Services',
       tags: ['Tax', 'Advisory', 'Compliance'],
-      featuredImage: editingService?.image || '/Logo.png',
+      featuredImage: editingService?.image,
       status: editingService?.is_featured ? 'published' : 'draft',
       metaTitle: editingService?.meta_title || '',
       metaDescription: editingService?.meta_description || '',
@@ -107,14 +125,26 @@ export default function AdminServicesPage() {
         storageFolder="services"
         initialData={editorInitialData}
         availableCategories={['Audit & Assurance', 'Tax Advisory', 'Corporate Law', 'Accounting']}
+        draftsEnabled={false}
         onSave={handleEditorSave}
         onCancel={() => { setEditingService(null); setIsCreatingService(false); }}
+        onDelete={editingService ? () => { void handleDeleteService(editingService); } : undefined}
       />
     );
   }
 
   return (
     <div className="space-y-7 max-w-[1400px] mx-auto pb-14 text-slate-800 font-sans">
+      <ConfirmModal
+        isOpen={!!serviceToDelete}
+        title="Delete Service Article"
+        message={`Are you sure you want to delete "${serviceToDelete?.title}"? This removes the service from the public site.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDanger
+        onConfirm={() => { if (serviceToDelete) void handleDeleteService(serviceToDelete); }}
+        onCancel={() => setServiceToDelete(null)}
+      />
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#053243] text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 border border-emerald-400/30">
@@ -260,6 +290,10 @@ export default function AdminServicesPage() {
                     <span>Edit</span>
                   </button>
 
+                  <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setServiceToDelete(service)} title="Delete service article" className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                   <Link
                     href={`/services/${service.slug}`}
                     target="_blank"
@@ -269,6 +303,7 @@ export default function AdminServicesPage() {
                     <span>Preview page</span>
                     <ArrowRight className="w-3.5 h-3.5 text-[#2CBC63]" />
                   </Link>
+                  </div>
                 </div>
               </div>
             </div>

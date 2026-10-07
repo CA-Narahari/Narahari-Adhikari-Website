@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import MagicRings from '@/components/ui/MagicRings';
 import ServicesCarousel from '@/components/ui/ServicesCarousel';
-import { servicesData } from '@/lib/services-data';
 
 export default function HomePage() {
   const { settings, services, addAppointment } = useApp();

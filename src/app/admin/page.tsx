@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
       <section className="flex flex-col gap-6 rounded-2xl border border-[#E2ECE6] bg-white px-6 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-9 sm:py-8">
         <div className="max-w-2xl">
           <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#168A4A]">
-            <span className="size-2 rounded-full bg-[#2CBC63]" /> ICAN Reg. No. 1024/2078
+            <span className="size-2 rounded-full bg-[#2CBC63]" /> {settings.ca_reg_number}
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-[#073E43] sm:text-3xl">{greeting}, CA Narahari Adhikari</h2>
           <p className="mt-2 text-sm leading-6 text-[#56686A]">Your central workspace for consultations, practice updates, and website content.</p>

@@ -117,7 +117,7 @@ export default function ResourcesDownloadsPage() {
               Downloads and templates<span className="text-[#2CBC63]">.</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-              Files appear here when they are ready to download.
+              These links open the issuing authority’s current document or rates page.
             </p>
           </div>
 
@@ -145,10 +145,11 @@ export default function ResourcesDownloadsPage() {
                 <Button asChild size="sm" variant="secondary" className="w-full rounded-[8px] text-xs">
                   <a
                   href={dl.download_url}
-                  download
+                  target={dl.download_url.toLowerCase().endsWith('.pdf') ? undefined : '_blank'}
+                  rel={dl.download_url.toLowerCase().endsWith('.pdf') ? undefined : 'noopener noreferrer'}
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download file</span>
+                    {dl.download_url.toLowerCase().endsWith('.pdf') ? <Download className="w-3.5 h-3.5" /> : <ExternalLink className="w-3.5 h-3.5" />}
+                    <span>{dl.download_url.toLowerCase().endsWith('.pdf') ? 'Download PDF' : 'Open official source'}</span>
                   </a>
                 </Button>
               </div>

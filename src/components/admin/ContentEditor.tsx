@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import {
   Bold,
@@ -15,19 +15,19 @@ import {
   Image as ImageIcon,
   Upload,
   Trash2,
-  AlertCircle,
   Plus,
   X,
   Search,
   Globe,
-  Loader2,
   Heading1,
   Heading2,
   Code,
   FolderOpen,
+  LoaderCircle,
 } from 'lucide-react';
 import MediaLibraryModal from './MediaLibraryModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 export interface ContentEditorData {
   title: string;
@@ -48,13 +48,23 @@ interface ContentEditorProps {
   initialData: ContentEditorData;
   availableCategories: string[];
   storageFolder: 'blog' | 'services';
-  onSave: (data: ContentEditorData) => void;
+  onSave: (data: ContentEditorData) => Promise<boolean> | boolean;
   onCancel: () => void;
   onDelete?: () => void;
   itemTypeLabel?: string;
+  draftsEnabled?: boolean;
+}
+
+function decodeEditorHtml(content: string): string {
+  if (typeof document === 'undefined' || !/&lt;\/?(?:p|h[1-6]|div|ul|ol|li|blockquote|table|section|article|style)\b/i.test(content)) return content;
+  const decoder = document.createElement('textarea');
+  decoder.innerHTML = content;
+  const decoded = decoder.value.trim();
+  return /^<(?:p|h[1-6]|div|ul|ol|li|blockquote|table|section|article|style)\b/i.test(decoded) ? decoded : content;
 }
 
 function normalizeHtmlContent(content: string): string {
+  content = decodeEditorHtml(content);
   if (!content || !content.trim()) {
     return '<p>Write your article content here...</p>';
   }
@@ -82,6 +92,7 @@ export default function ContentEditor({
   onCancel,
   onDelete,
   itemTypeLabel = 'Item',
+  draftsEnabled = true,
 }: ContentEditorProps) {
   const [title, setTitle] = useState(initialData.title);
   const [slug, setSlug] = useState(initialData.slug);
@@ -95,6 +106,8 @@ export default function ContentEditor({
   const [newTagInput, setNewTagInput] = useState('');
   const [featuredImage, setFeaturedImage] = useState<string | undefined>(initialData.featuredImage);
   const [status, setStatus] = useState<'draft' | 'published'>(initialData.status);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // SEO fields
   const [metaTitle, setMetaTitle] = useState(initialData.metaTitle || initialData.title || '');
@@ -114,13 +127,6 @@ export default function ContentEditor({
 
   const visualEditorRef = useRef<HTMLDivElement>(null);
 
-  // Initialize visual editor on mount
-  useEffect(() => {
-    if (visualEditorRef.current) {
-      visualEditorRef.current.innerHTML = contentHtml;
-    }
-  }, []);
-
   const handleTitleChange = (val: string) => {
     setTitle(val);
     if (!initialData.title) {
@@ -139,7 +145,7 @@ export default function ContentEditor({
       const updated = visualEditorRef.current.innerHTML;
       setContentHtml(updated);
     } else if (editorMode === 'code' && visualEditorRef.current) {
-      visualEditorRef.current.innerHTML = contentHtml;
+      visualEditorRef.current.innerHTML = sanitizeHtml(contentHtml);
     }
 
     if (newMode === 'visual' && visualEditorRef.current) {
@@ -246,26 +252,54 @@ export default function ContentEditor({
     setNewTagInput('');
   };
 
-  const handleSave = (forcedStatus?: 'draft' | 'published') => {
+  const handleSave = async (forcedStatus?: 'draft' | 'published') => {
+    if (isSaving) return;
     const currentHtml =
       visualEditorRef.current && editorMode === 'visual'
-        ? visualEditorRef.current.innerHTML
+      ? decodeEditorHtml(visualEditorRef.current.innerHTML)
         : contentHtml;
+    const nextStatus = forcedStatus || status;
+    const plainText = currentHtml.replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').replace(/\s+/g, ' ').trim();
+    const isEditorPlaceholder = plainText === 'Write your article content here...';
+    const cleanTitle = title.trim();
+    const cleanSlug = (slug || cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/(^-|-$)+/g, '');
 
-    onSave({
-      title,
-      slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      content: currentHtml,
+    if (!cleanTitle) {
+      setSaveError(`Add a title before saving this ${itemTypeLabel.toLowerCase()}.`);
+      return;
+    }
+    if (!cleanSlug) {
+      setSaveError('Add a valid URL slug before saving.');
+      return;
+    }
+    if (nextStatus === 'published' && (!plainText || isEditorPlaceholder)) {
+      setSaveError('Add some article content before publishing.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      const saved = await onSave({
+      title: cleanTitle,
+      slug: cleanSlug,
+      content: isEditorPlaceholder ? '' : currentHtml,
       excerpt,
       category,
       categoriesList,
       tags,
       featuredImage,
-      status: forcedStatus || status,
+      status: nextStatus,
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || excerpt,
       focusKeyword,
-    });
+      });
+      if (!saved) setSaveError(`Could not save this ${itemTypeLabel.toLowerCase()}. Check your connection and CMS access, then try again.`);
+    } catch {
+      setSaveError(`Could not save this ${itemTypeLabel.toLowerCase()}. Check your connection and try again.`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -306,6 +340,7 @@ export default function ContentEditor({
         </div>
 
         <div className="flex items-center gap-2.5">
+          {saveError && <p role="alert" className="max-w-xs text-xs font-medium text-rose-700">{saveError}</p>}
           <button
             type="button"
             onClick={onCancel}
@@ -313,19 +348,23 @@ export default function ContentEditor({
           >
             Cancel
           </button>
+          {draftsEnabled && <button
+            type="button"
+            onClick={() => void handleSave('draft')}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-[#DCE5E2] rounded-xl text-xs font-bold bg-white text-[#0D3B3E] hover:bg-[#F6FAF8] disabled:cursor-wait disabled:opacity-60 transition-colors cursor-pointer"
+          >
+            {isSaving ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}
+            {isSaving ? 'Saving…' : 'Save Draft'}
+          </button>}
           <button
             type="button"
-            onClick={() => handleSave('draft')}
-            className="px-4 py-2 border border-[#DCE5E2] rounded-xl text-xs font-bold bg-white text-[#0D3B3E] hover:bg-[#F6FAF8] transition-colors cursor-pointer"
+            onClick={() => void handleSave(draftsEnabled ? 'published' : undefined)}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 px-5 py-2 bg-[#0C4A4E] hover:bg-[#083639] disabled:cursor-wait disabled:opacity-60 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
           >
-            Save Draft
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSave('published')}
-            className="px-5 py-2 bg-[#0C4A4E] hover:bg-[#083639] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
-          >
-            {status === 'published' ? 'Update' : 'Publish'}
+            {isSaving ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}
+            {isSaving ? 'Saving…' : draftsEnabled ? (status === 'published' ? 'Update' : 'Publish') : 'Save Service'}
           </button>
         </div>
       </div>
@@ -410,7 +449,7 @@ export default function ContentEditor({
           <div className={editorMode === 'visual' ? 'block' : 'hidden'}>
             <div className="bg-white border border-[#E6EFEA] rounded-b-2xl shadow-xs overflow-hidden">
               {/* Formatting Toolbar */}
-              <div className="flex flex-wrap items-center gap-1 p-2.5 bg-[#FAFDFB] border-b border-[#EEF4F0] text-[#33475B]">
+              <div onMouseDown={(event) => event.preventDefault()} className="flex flex-wrap items-center gap-1 p-2.5 bg-[#FAFDFB] border-b border-[#EEF4F0] text-[#33475B]">
                 <button
                   type="button"
                   onClick={() => executeCommand('bold')}
@@ -516,10 +555,16 @@ export default function ContentEditor({
 
               {/* Visual ContentEditable Area with rich typography */}
               <div
-                ref={visualEditorRef}
+                ref={(element) => {
+                  visualEditorRef.current = element;
+                  if (element && element.dataset.editorInitialized !== 'true') {
+                    element.innerHTML = sanitizeHtml(contentHtml);
+                    element.dataset.editorInitialized = 'true';
+                  }
+                }}
                 contentEditable
                 onInput={handleVisualInput}
-                className="w-full p-6 min-h-[420px] focus:outline-hidden prose prose-slate max-w-none text-sm text-[#33475B] leading-relaxed [&>p]:mb-4 [&>p]:leading-relaxed [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-[#0D3B3E] [&>h2]:mt-6 [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-[#0D3B3E] [&>h3]:mt-5 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-4 [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A8F4B] [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:my-4 [&>img]:rounded-xl [&>img]:my-4 [&>img]:max-w-full"
+                className="cms-article-content w-full p-6 min-h-[420px] focus:outline-hidden prose prose-slate max-w-none text-sm text-[#33475B] leading-relaxed [&>p]:mb-4 [&>p]:leading-relaxed [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-[#0D3B3E] [&>h2]:mt-6 [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-[#0D3B3E] [&>h3]:mt-5 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-4 [&>blockquote]:border-l-4 [&>blockquote]:border-[#1A8F4B] [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:my-4 [&>img]:rounded-xl [&>img]:my-4 [&>img]:max-w-full"
                 style={{ minHeight: '420px' }}
               />
 
@@ -533,13 +578,14 @@ export default function ContentEditor({
           {/* HTML Code Mode */}
           <div className={editorMode === 'code' ? 'block' : 'hidden'}>
             <div className="bg-white border border-[#E6EFEA] rounded-b-2xl p-4 shadow-xs">
+              <p className="mb-3 text-xs leading-5 text-[#627A7D]">Custom HTML is sanitized for safety. Inline styles are supported; CSS in a <code>&lt;style&gt;</code> block is scoped to this article on the public page.</p>
               <textarea
                 rows={18}
                 value={contentHtml}
                 onChange={(e) => {
                   setContentHtml(e.target.value);
                   if (visualEditorRef.current) {
-                    visualEditorRef.current.innerHTML = e.target.value;
+                    visualEditorRef.current.innerHTML = sanitizeHtml(e.target.value);
                   }
                 }}
                 className="w-full font-mono text-xs p-3.5 border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#1A8F4B] bg-slate-50 leading-relaxed text-slate-800"
@@ -655,14 +701,14 @@ export default function ContentEditor({
             </span>
 
             <div className="flex items-center justify-between">
-              <span className="text-[#556E70]">Status:</span>
+              <span className="text-[#556E70]">{draftsEnabled ? 'Status:' : 'Homepage placement:'}</span>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}
                 className="font-bold text-[#0D3B3E] bg-[#F9FCFA] border border-[#DCE5E2] rounded-xl px-3 py-1.5 text-xs cursor-pointer"
               >
-                <option value="published">Published Live</option>
-                <option value="draft">Draft Review</option>
+                <option value="published">{draftsEnabled ? 'Published Live' : 'Featured service'}</option>
+                <option value="draft">{draftsEnabled ? 'Draft Review' : 'Standard service'}</option>
               </select>
             </div>
 
@@ -681,10 +727,12 @@ export default function ContentEditor({
               )}
               <button
                 type="button"
-                onClick={() => handleSave()}
-                className="px-4 py-2 bg-[#0C4A4E] hover:bg-[#083639] text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                onClick={() => void handleSave()}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#0C4A4E] hover:bg-[#083639] disabled:cursor-wait disabled:opacity-60 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
               >
-                {status === 'published' ? 'Update' : 'Publish'}
+                {isSaving ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}
+                {isSaving ? 'Saving…' : draftsEnabled ? (status === 'published' ? 'Update' : 'Publish') : 'Save Service'}
               </button>
             </div>
           </div>
@@ -748,6 +796,7 @@ export default function ContentEditor({
             )}
           </div>
 
+          {storageFolder === 'blog' && <>
           {/* Categories Box */}
           <div className="bg-white border border-[#E6EFEA] rounded-2xl p-5 shadow-xs space-y-3 text-xs">
             <span className="font-extrabold text-[#0D3B3E] block pb-2 border-b border-slate-100">
@@ -859,6 +908,7 @@ export default function ContentEditor({
               ))}
             </div>
           </div>
+          </>}
         </div>
       </div>
     </div>

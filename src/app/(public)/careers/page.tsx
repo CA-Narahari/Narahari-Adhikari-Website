@@ -23,7 +23,7 @@ import {
 import { Vacancy } from '@/types';
 
 export default function CareersPage() {
-  const { settings, vacancies } = useApp();
+  const { settings, vacancies, vacanciesLoaded } = useApp();
 
   const [activeFilter, setActiveFilter] = useState<string>('All');
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
@@ -179,7 +179,9 @@ export default function CareersPage() {
         </div>
 
         {/* Vacancy Cards Grid */}
-        {filteredVacancies.length === 0 ? (
+        {!vacanciesLoaded ? (
+          <div role="status" className="border-y border-[#E8EBEF] bg-white px-6 py-12 text-center text-sm text-[#59667D]">Loading current vacancies…</div>
+        ) : filteredVacancies.length === 0 ? (
           <div className="border-y border-[#E8EBEF] bg-white px-6 py-12 text-center">
             <h3 className="text-lg font-bold text-[#023A51]">
               {activeVacancies.length === 0 ? 'There are no open positions right now.' : 'No openings match this filter.'}

@@ -54,8 +54,8 @@ export default function AdminLoginPage() {
       {/* Background Graphic: Serene Misty Mountains */}
       <div className="absolute inset-0 pointer-events-none">
         <Image
-          src="/login-bg.jpg"
-          alt="Serene landscape background"
+          src="/login-bg.png"
+          alt="Consultation meeting background"
           fill
           priority
           className="object-cover object-center opacity-85"

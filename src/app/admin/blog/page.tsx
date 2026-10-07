@@ -50,7 +50,7 @@ export default function AdminBlogPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleEditorSave = async (data: ContentEditorData) => {
+  const handleEditorSave = async (data: ContentEditorData): Promise<boolean> => {
     const today = new Date().toISOString().split('T')[0];
 
     if (editingPost) {
@@ -69,8 +69,8 @@ export default function AdminBlogPage() {
         meta_description: data.metaDescription,
         focus_keyword: data.focusKeyword,
       });
-      if (!saved) { setToastMessage('Article could not be saved. Check your CMS session and try again.'); return; }
-      setToastMessage(`Article "${data.title}" updated successfully`);
+      if (!saved) return false;
+      setToastMessage(data.status === 'draft' ? `Draft "${data.title}" saved` : `Article "${data.title}" published`);
     } else {
       const saved = await addBlogPost({
         title: data.title,
@@ -88,22 +88,40 @@ export default function AdminBlogPage() {
         meta_description: data.metaDescription,
         focus_keyword: data.focusKeyword,
       });
-      if (!saved) { setToastMessage('Article could not be saved. Check your CMS session and try again.'); return; }
-      setToastMessage('New article published successfully');
+      if (!saved) return false;
+      setToastMessage(data.status === 'draft' ? `Draft "${data.title}" saved` : `New article "${data.title}" published`);
     }
 
     setTimeout(() => setToastMessage(null), 3000);
     setEditingPost(null);
     setIsCreatingNew(false);
+    return true;
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!postToDelete) return;
-    deleteBlogPost(postToDelete.id);
+    const deleted = await deleteBlogPost(postToDelete.id);
+    if (!deleted) {
+      setToastMessage('Article could not be deleted. Check your CMS session and try again.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
     setToastMessage(`Article "${postToDelete.title}" deleted`);
     setTimeout(() => setToastMessage(null), 3000);
     setPostToDelete(null);
     setEditingPost(null);
+  };
+
+  const deleteFromEditor = async (post: BlogPost) => {
+    const deleted = await deleteBlogPost(post.id);
+    if (!deleted) {
+      setToastMessage('Article could not be deleted. Check your CMS session and try again.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    setToastMessage(`Article "${post.title}" deleted`);
+    setEditingPost(null);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   // If in Editor Mode
@@ -147,7 +165,7 @@ export default function AdminBlogPage() {
           setEditingPost(null);
           setIsCreatingNew(false);
         }}
-        onDelete={editingPost ? () => setPostToDelete({ id: editingPost.id, title: editingPost.title }) : undefined}
+        onDelete={editingPost ? () => { void deleteFromEditor(editingPost); } : undefined}
       />
     );
   }
@@ -372,10 +390,11 @@ export default function AdminBlogPage() {
                     <button
                       type="button"
                       onClick={() => setPostToDelete({ id: post.id, title: post.title })}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer text-xs font-semibold"
                       title="Delete Article"
                     >
                       <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>

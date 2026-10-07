@@ -16,7 +16,7 @@ const officialSources = [
 ];
 
 export default function UpdatesPage() {
-  const { taxUpdates } = useApp();
+  const { taxUpdates, taxUpdatesLoaded } = useApp();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All topics');
 
@@ -93,7 +93,9 @@ export default function UpdatesPage() {
             </div>
           )}
 
-          {updates.length ? (
+          {!taxUpdatesLoaded ? (
+            <div role="status" className="rounded-2xl border border-[#E8EBEF] bg-white px-6 py-12 text-center text-sm text-[#59667D]">Loading the latest updates…</div>
+          ) : updates.length ? (
             <div className="divide-y divide-[#E8EBEF] border-y border-[#E8EBEF] bg-white">
               {updates.map((item) => (
                 <article key={item.id} className="px-5 py-7 sm:px-7">

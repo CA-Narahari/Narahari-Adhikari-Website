@@ -8,7 +8,8 @@ export default function WhatsAppButton() {
   const { settings } = useApp();
 
   // Clean phone number for WhatsApp wa.me link
-  const rawPhone = settings?.phone ? settings.phone.replace(/[^0-9]/g, '') : '9779851122334';
+  const configuredNumber = settings?.whatsapp_number || settings?.phone || '9779851122334';
+  const rawPhone = configuredNumber.replace(/[^0-9]/g, '');
   const whatsappNumber = rawPhone.startsWith('977') ? rawPhone : `977${rawPhone}`;
   const message = encodeURIComponent(
     'Hello Narahari Adhikari, I would like to inquire about your accounting and tax consultation services.'

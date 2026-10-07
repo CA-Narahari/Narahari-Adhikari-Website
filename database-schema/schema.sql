@@ -86,6 +86,9 @@ create table if not exists public.services (
   short_description text not null default '',
   full_description text not null default '',
   deliverables text[] not null default '{}',
+  article_section_title text not null default 'Key Scope Deliverables',
+  article_guarantee_title text not null default 'Statutory Independence & Working Papers Guarantee',
+  article_guarantee_body text not null default 'All engagements are performed under the direct oversight of licensed Chartered Accountants registered with ICAN. Client working papers, trial balances, and strategic financial records are maintained under statutory confidentiality and strict professional privilege.',
   target_audience text not null default '',
   icon text not null default 'Briefcase',
   display_order integer not null default 0,
@@ -108,6 +111,7 @@ create table if not exists public.vacancies (
   requirements text[] not null default '{}',
   deadline date,
   is_active boolean not null default true,
+  attachment_url text,
   created_at timestamptz not null default now()
 );
 
@@ -191,6 +195,19 @@ create table if not exists public.download_resources (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  phone text not null default '',
+  organization text not null default '',
+  message text not null,
+  privacy_consent boolean not null default false,
+  status text not null default 'new' check (status in ('new', 'reviewed', 'closed')),
+  created_at timestamptz not null default now(),
+  constraint contact_messages_privacy_consent_check check (privacy_consent = true)
+);
+
 alter table public.applications add column if not exists privacy_consent boolean not null default false;
 alter table public.appointments add column if not exists privacy_consent boolean not null default false;
 
@@ -199,10 +216,31 @@ insert into storage.buckets (id, name, public)
 values ('application-cvs', 'application-cvs', false)
 on conflict (id) do nothing;
 
+-- Public CMS media and downloadable files support every format accepted by the upload route.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('website-media', 'website-media', true, 10485760, array[
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ]),
+  ('download-resources', 'download-resources', true, 10485760, array[
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip', 'application/x-zip-compressed'
+  ])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
 create index if not exists tax_updates_published_idx on public.tax_updates (status, published_at desc);
 create index if not exists posts_published_idx on public.posts (status, published_at desc);
 create index if not exists vacancies_active_idx on public.vacancies (is_active, deadline);
 create index if not exists appointments_status_idx on public.appointments (status, requested_date);
+create index if not exists contact_messages_status_created_idx on public.contact_messages (status, created_at desc);
 
 alter table public.profiles enable row level security;
 alter table public.site_settings enable row level security;
@@ -216,6 +254,7 @@ alter table public.availability_slots enable row level security;
 alter table public.announcements enable row level security;
 alter table public.government_links enable row level security;
 alter table public.download_resources enable row level security;
+alter table public.contact_messages enable row level security;
 
 create or replace function public.is_admin_or_staff()
 returns boolean language sql stable security definer set search_path = public
@@ -254,6 +293,7 @@ create policy "staff view applications" on public.applications for select using 
 create policy "staff manage applications" on public.applications for update using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff view appointments" on public.appointments for select using (public.is_admin_or_staff());
 create policy "staff manage appointments" on public.appointments for update using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
+create policy "staff manage contact messages" on public.contact_messages for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage links" on public.government_links for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage downloads" on public.download_resources for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage settings" on public.site_settings for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());

@@ -15,6 +15,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Search,
 } from 'lucide-react';
 import { GovernmentLink, DownloadResource } from '@/types';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -58,6 +59,9 @@ export default function AdminResourcesPage() {
   const [uploadFileError, setUploadFileError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const dlFileInputRef = useRef<HTMLInputElement>(null);
+  const [search, setSearch] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
   // Deletion confirm modal state
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -90,16 +94,20 @@ export default function AdminResourcesPage() {
     setIsGovModalOpen(true);
   };
 
-  const handleGovSubmit = (e: React.FormEvent) => {
+  const handleGovSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!govForm.name || !govForm.url) return;
+    if (!govForm.name.trim() || !govForm.url.trim()) return;
 
-    if (editingGovLink) {
-      updateGovernmentLink(editingGovLink.id, govForm);
-    } else {
-      addGovernmentLink(govForm);
-    }
+    setIsSaving(true);
+    let saved = false;
+    try {
+      if (editingGovLink) saved = await updateGovernmentLink(editingGovLink.id, govForm);
+      else saved = await addGovernmentLink(govForm);
+    } catch { saved = false; }
+    setIsSaving(false);
+    if (!saved) { setFeedback({ kind: 'error', message: 'The portal link could not be saved. Check your CMS access and try again.' }); return; }
     setIsGovModalOpen(false);
+    setFeedback({ kind: 'success', message: editingGovLink ? 'Portal link updated.' : 'Portal link added.' });
   };
 
   // Open Download Modal for Add or Edit
@@ -175,30 +183,45 @@ export default function AdminResourcesPage() {
     }
   };
 
-  const handleDlSubmit = (e: React.FormEvent) => {
+  const handleDlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dlForm.title) return;
-
-    if (editingDl) {
-      updateDownload(editingDl.id, dlForm);
-    } else {
-      addDownload(dlForm);
+    if (!dlForm.title.trim() || !dlForm.download_url.trim()) {
+      setFeedback({ kind: 'error', message: 'Add a title and file URL before saving the resource.' });
+      return;
     }
+
+    setIsSaving(true);
+    let saved = false;
+    try {
+      if (editingDl) saved = await updateDownload(editingDl.id, dlForm);
+      else saved = await addDownload(dlForm);
+    } catch { saved = false; }
+    setIsSaving(false);
+    if (!saved) { setFeedback({ kind: 'error', message: 'The download could not be saved. Check your CMS access and try again.' }); return; }
     setIsDlModalOpen(false);
+    setFeedback({ kind: 'success', message: editingDl ? 'Download details updated.' : 'Download added to the public resources page.' });
   };
 
-  const confirmDeleteTarget = () => {
+  const confirmDeleteTarget = async () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === 'gov') {
-      deleteGovernmentLink(deleteTarget.id);
-    } else {
-      deleteDownload(deleteTarget.id);
-    }
+    setIsSaving(true);
+    let deleted = false;
+    try {
+      if (deleteTarget.type === 'gov') deleted = await deleteGovernmentLink(deleteTarget.id);
+      else deleted = await deleteDownload(deleteTarget.id);
+    } catch { deleted = false; }
+    setIsSaving(false);
+    if (!deleted) { setFeedback({ kind: 'error', message: 'This item could not be removed. Check your CMS access and try again.' }); return; }
+    setFeedback({ kind: 'success', message: 'Item removed from the public resources page.' });
     setDeleteTarget(null);
   };
 
+  const normalizedSearch = search.trim().toLowerCase();
+  const visibleGovernmentLinks = governmentLinks.filter((item) => [item.name, item.short_name, item.category, item.description].some((value) => value?.toLowerCase().includes(normalizedSearch)));
+  const visibleDownloads = downloads.filter((item) => [item.title, item.category, item.file_format].some((value) => value?.toLowerCase().includes(normalizedSearch)));
+
   return (
-    <div className="space-y-10 max-w-7xl mx-auto pb-16">
+    <div className="mx-auto max-w-[1400px] space-y-6 pb-12">
       {/* Reusable Confirm Modal */}
       <ConfirmModal
         isOpen={!!deleteTarget}
@@ -207,46 +230,49 @@ export default function AdminResourcesPage() {
         confirmText="Yes, Delete"
         cancelText="Cancel"
         isDanger={true}
-        onConfirm={confirmDeleteTarget}
+        onConfirm={() => { void confirmDeleteTarget(); }}
         onCancel={() => setDeleteTarget(null)}
       />
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">
-          Resources &amp; Regulatory Directories CMS
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Manage official government portal redirection links and downloadable client resources in real-time.
-        </p>
-      </div>
+      <header className="flex flex-col gap-5 rounded-3xl border border-[#E2ECE6] bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#168A4A]">Public website content</p><h1 className="mt-2 text-2xl font-bold tracking-tight text-[#073E43] sm:text-3xl">Resources &amp; links</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-[#66797A]">Manage downloadable forms and trusted government portals shown on the public Resources pages.</p></div>
+        <a href="/resources" target="_blank" rel="noreferrer" className="inline-flex min-h-10 w-fit items-center gap-2 rounded-xl border border-[#D8E4DE] px-4 text-sm font-semibold text-[#143F40] transition hover:bg-[#F5FAF7]">Preview public page <ExternalLink className="size-4 text-[#168A4A]" /></a>
+      </header>
+
+      <section aria-label="Resource totals" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-[#E2ECE6] bg-white p-4"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#718181]">Authority links</p><p className="mt-1 text-2xl font-bold text-[#073E43]">{governmentLinks.length}</p></div>
+        <div className="rounded-2xl border border-[#E2ECE6] bg-white p-4"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#718181]">Download files</p><p className="mt-1 text-2xl font-bold text-[#073E43]">{downloads.length}</p></div>
+        <label className="col-span-2 flex min-h-16 items-center gap-2 rounded-2xl border border-[#E2ECE6] bg-white px-4 sm:col-span-1"><Search className="size-4 shrink-0 text-[#82918D]" /><input value={search} onChange={(event) => setSearch(event.target.value)} aria-label="Search resources and links" placeholder="Search resources and links" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#91A19C]" /></label>
+      </section>
+      {feedback && <p role={feedback.kind === 'error' ? 'alert' : 'status'} className={`rounded-xl border px-4 py-3 text-sm ${feedback.kind === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}>{feedback.message}</p>}
 
       {/* 1. Official Government Authority Links */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-6 space-y-5">
+      <div className="rounded-2xl border border-[#E2ECE6] bg-white p-5 shadow-xs sm:p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-[#023A51]" />
+            <h2 className="text-base font-bold text-[#103F40] flex items-center gap-2">
+              <Landmark className="w-4 h-4 text-[#168A4A]" />
               <span>Official Government Regulatory Portals ({governmentLinks.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              These external authority links are displayed directly on the public Resources page without redirection barriers.
+              Visitors open these official sites in a new browser tab.
             </p>
           </div>
           <button
+            type="button"
             onClick={() => openGovModal()}
-            className="px-4 py-2 bg-[#023A51] hover:bg-[#2CBC63] text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className="px-4 py-2 bg-[#0B4B4C] hover:bg-[#083D3F] text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Regulatory Portal</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {governmentLinks.map((g) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {visibleGovernmentLinks.length === 0 ? <p className="col-span-full rounded-xl border border-dashed border-[#D9E5DF] p-8 text-center text-sm text-[#718181]">{governmentLinks.length ? 'No authority links match this search.' : 'No authority links have been added yet.'}</p> : visibleGovernmentLinks.map((g) => (
             <div
               key={g.id}
-              className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between space-y-3 hover:border-slate-300 transition-colors"
+              className="p-4 bg-[#FAFCFB] border border-[#E5ECE8] rounded-2xl flex flex-col justify-between space-y-3 hover:border-[#B9D8C7] transition-colors"
             >
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -255,6 +281,8 @@ export default function AdminResourcesPage() {
                   </span>
                   <div className="flex items-center gap-1">
                     <button
+                      type="button"
+                      aria-label={`Edit ${g.name}`}
                       onClick={() => openGovModal(g)}
                       title="Edit Portal"
                       className="p-1 rounded hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
@@ -262,6 +290,8 @@ export default function AdminResourcesPage() {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
+                      aria-label={`Delete ${g.name}`}
                       onClick={() =>
                         setDeleteTarget({
                           type: 'gov',
@@ -277,10 +307,10 @@ export default function AdminResourcesPage() {
                   </div>
                 </div>
 
-                <div className="font-bold text-slate-900 text-xs sm:text-[13px] leading-snug">
+                <div className="font-bold text-[#143F40] text-xs sm:text-[13px] leading-snug">
                   {g.name}
                 </div>
-                <p className="text-[11.5px] text-slate-500 leading-relaxed line-clamp-2">
+                <p className="text-[11.5px] text-[#66797A] leading-relaxed line-clamp-2">
                   {g.description}
                 </p>
               </div>
@@ -302,31 +332,32 @@ export default function AdminResourcesPage() {
       </div>
 
       {/* 2. Downloadable Statutory Resources & Files */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-6 space-y-5">
+      <div className="rounded-2xl border border-[#E2ECE6] bg-white p-5 shadow-xs sm:p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Download className="w-4 h-4 text-[#023A51]" />
+            <h2 className="text-base font-bold text-[#103F40] flex items-center gap-2">
+              <Download className="w-4 h-4 text-[#168A4A]" />
               <span>Downloadable Forms, Checklists &amp; Guides ({downloads.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Statutory PDF checklists and Excel financial templates with instant file upload or external links.
+              Upload a file to Supabase Storage or link a direct file URL. These records appear on the public downloads page.
             </p>
           </div>
           <button
+            type="button"
             onClick={() => openDlModal()}
-            className="px-4 py-2 bg-[#023A51] hover:bg-[#2CBC63] text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className="px-4 py-2 bg-[#0B4B4C] hover:bg-[#083D3F] text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Download File</span>
           </button>
         </div>
 
-        <div className="divide-y divide-slate-100">
-          {downloads.map((d) => (
+        <div className="divide-y divide-[#EDF2EF]">
+          {visibleDownloads.length === 0 ? <p className="rounded-xl border border-dashed border-[#D9E5DF] p-8 text-center text-sm text-[#718181]">{downloads.length ? 'No download files match this search.' : 'No download files have been added yet.'}</p> : visibleDownloads.map((d) => (
             <div
               key={d.id}
-              className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
             >
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-[#023A51] mt-0.5">
@@ -384,6 +415,7 @@ export default function AdminResourcesPage() {
                 {editingGovLink ? 'Edit Regulatory Portal Link' : 'Add Official Regulatory Portal'}
               </h3>
               <button
+                type="button"
                 onClick={() => setIsGovModalOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
@@ -391,12 +423,15 @@ export default function AdminResourcesPage() {
               </button>
             </div>
 
+            {feedback?.kind === 'error' && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{feedback.message}</p>}
+
             <form onSubmit={handleGovSubmit} className="space-y-3 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Authority Name *</label>
                 <input
                   type="text"
                   required
+                  disabled={isSaving}
                   value={govForm.name}
                   onChange={(e) => setGovForm({ ...govForm, name: e.target.value })}
                   placeholder="e.g. Inland Revenue Department (IRD)"
@@ -408,6 +443,7 @@ export default function AdminResourcesPage() {
                 <label className="font-bold text-slate-700 block mb-1">Short Code / Acronym</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={govForm.short_name}
                   onChange={(e) => setGovForm({ ...govForm, short_name: e.target.value })}
                   placeholder="e.g. IRD Nepal"
@@ -419,6 +455,7 @@ export default function AdminResourcesPage() {
                 <label className="font-bold text-slate-700 block mb-1">Category</label>
                 <input
                   type="text"
+                  disabled={isSaving}
                   value={govForm.category}
                   onChange={(e) => setGovForm({ ...govForm, category: e.target.value })}
                   placeholder="e.g. Tax & Revenue Authority"
@@ -431,6 +468,7 @@ export default function AdminResourcesPage() {
                 <input
                   type="url"
                   required
+                  disabled={isSaving}
                   value={govForm.url}
                   onChange={(e) => setGovForm({ ...govForm, url: e.target.value })}
                   placeholder="https://ird.gov.np"
@@ -442,6 +480,7 @@ export default function AdminResourcesPage() {
                 <label className="font-bold text-slate-700 block mb-1">Description</label>
                 <textarea
                   rows={2}
+                  disabled={isSaving}
                   value={govForm.description}
                   onChange={(e) => setGovForm({ ...govForm, description: e.target.value })}
                   placeholder="Official services provided by this authority..."
@@ -452,6 +491,7 @@ export default function AdminResourcesPage() {
               <div className="pt-3 border-t flex justify-end gap-2">
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => setIsGovModalOpen(false)}
                   className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
@@ -459,9 +499,10 @@ export default function AdminResourcesPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSaving}
                   className="px-4 py-2 bg-[#023A51] hover:bg-[#2CBC63] text-white rounded-lg font-bold transition-colors cursor-pointer"
                 >
-                  {editingGovLink ? 'Save Changes' : 'Add Authority'}
+                  {isSaving ? 'Saving…' : editingGovLink ? 'Save Changes' : 'Add Authority'}
                 </button>
               </div>
             </form>
@@ -478,12 +519,15 @@ export default function AdminResourcesPage() {
                 {editingDl ? 'Edit Downloadable Resource' : 'Add Downloadable Resource'}
               </h3>
               <button
+                type="button"
                 onClick={() => setIsDlModalOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {feedback?.kind === 'error' && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{feedback.message}</p>}
 
             {/* Direct File Attachment Upload Card */}
             <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-xl p-3.5 space-y-2">
@@ -508,10 +552,7 @@ export default function AdminResourcesPage() {
                 className="hidden"
               />
 
-              <div
-                onClick={() => dlFileInputRef.current?.click()}
-                className="border border-dashed border-emerald-300 hover:border-emerald-500 bg-white rounded-xl p-3 text-center cursor-pointer transition-colors"
-              >
+              <button type="button" onClick={() => dlFileInputRef.current?.click()} disabled={isUploadingFile || isSaving} className="w-full border border-dashed border-emerald-300 hover:border-emerald-500 bg-white rounded-xl p-3 text-center cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-60">
                 {isUploadingFile ? (
                   <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#0D3B3E] py-1">
                     <Loader2 className="w-4 h-4 animate-spin text-[#1A8F4B]" />
@@ -522,7 +563,7 @@ export default function AdminResourcesPage() {
                     <span className="font-bold text-[#1A8F4B]">Click to browse file</span> or drop file here (Auto-sets URL, format &amp; file size)
                   </div>
                 )}
-              </div>
+              </button>
 
               {uploadFileError && (
                 <div className="text-[11px] text-rose-600 flex items-center gap-1">
@@ -538,6 +579,7 @@ export default function AdminResourcesPage() {
                 <input
                   type="text"
                   required
+                  disabled={isSaving}
                   value={dlForm.title}
                   onChange={(e) => setDlForm({ ...dlForm, title: e.target.value })}
                   placeholder="e.g. Income Tax Return Schedule 1 to 5 Forms"
@@ -550,6 +592,7 @@ export default function AdminResourcesPage() {
                   <label className="font-bold text-slate-700 block mb-1">Category</label>
                   <select
                     value={dlForm.category}
+                    disabled={isSaving}
                     onChange={(e) =>
                       setDlForm({
                         ...dlForm,
@@ -569,6 +612,7 @@ export default function AdminResourcesPage() {
                   <label className="font-bold text-slate-700 block mb-1">File Format</label>
                   <input
                     type="text"
+                    disabled={isSaving}
                     value={dlForm.file_format}
                     onChange={(e) => setDlForm({ ...dlForm, file_format: e.target.value })}
                     placeholder="PDF, DOCX, XLSX"
@@ -582,6 +626,7 @@ export default function AdminResourcesPage() {
                   <label className="font-bold text-slate-700 block mb-1">File Size</label>
                   <input
                     type="text"
+                    disabled={isSaving}
                     value={dlForm.file_size}
                     onChange={(e) => setDlForm({ ...dlForm, file_size: e.target.value })}
                     placeholder="e.g. 1.8 MB"
@@ -592,7 +637,9 @@ export default function AdminResourcesPage() {
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">File URL / Download Link</label>
                   <input
-                    type="text"
+                    type="url"
+                    required
+                    disabled={isSaving}
                     value={dlForm.download_url}
                     onChange={(e) => setDlForm({ ...dlForm, download_url: e.target.value })}
                     placeholder="https://... or auto-filled on upload"
@@ -604,6 +651,7 @@ export default function AdminResourcesPage() {
               <div className="pt-3 border-t flex justify-end gap-2">
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => setIsDlModalOpen(false)}
                   className="px-4 py-2 border rounded-lg text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
@@ -611,9 +659,10 @@ export default function AdminResourcesPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSaving || isUploadingFile}
                   className="px-4 py-2 bg-[#023A51] hover:bg-[#2CBC63] text-white rounded-lg font-bold transition-colors cursor-pointer"
                 >
-                  {editingDl ? 'Save Changes' : 'Add File'}
+                  {isSaving ? 'Saving…' : editingDl ? 'Save Changes' : 'Add File'}
                 </button>
               </div>
             </form>

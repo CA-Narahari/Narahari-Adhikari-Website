@@ -16,6 +16,7 @@ import {
   Briefcase,
   Sliders,
   Users,
+  Mail,
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -68,6 +69,7 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
       title: 'PRACTICE',
       items: [
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar, count: pendingAppointments },
+        { name: 'Website enquiries', href: '/admin/messages', icon: Mail },
         { name: 'Job applications', href: '/admin/applications', icon: UserSearch, count: newApplications },
         { name: 'Careers', href: '/admin/careers', icon: Briefcase },
       ],
@@ -94,6 +96,7 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
         />
       )}
       <aside
+        data-role={role ?? undefined}
         className={`fixed inset-y-0 left-0 z-50 flex h-screen w-[260px] shrink-0 flex-col border-r border-[#E6EFEA] bg-white text-[#1E293B] shadow-xl md:shadow-none transition-transform duration-200 md:sticky md:top-0 md:z-20 md:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}

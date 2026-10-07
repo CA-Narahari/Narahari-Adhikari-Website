@@ -3,7 +3,28 @@ import { requireStaff } from '@/lib/supabase/authorization';
 
 const BUCKETS = new Set(['website-media', 'download-resources']);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']);
+const MIME_TYPES_BY_BUCKET: Record<string, Set<string>> = {
+  'website-media': new Set([
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ]),
+  'download-resources': new Set([
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip', 'application/x-zip-compressed',
+  ]),
+};
+const MIME_TYPE_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+  pdf: 'application/pdf', doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  zip: 'application/zip',
+};
 const FOLDER_PATTERN = /^(?:[a-z0-9]+(?:[a-z0-9/_-]*[a-z0-9])?)?$/;
 
 export async function POST(request: Request) {
@@ -23,8 +44,11 @@ export async function POST(request: Request) {
     if (!BUCKETS.has(bucket) || !FOLDER_PATTERN.test(folder)) {
       return NextResponse.json({ error: 'The requested storage location is not allowed.' }, { status: 400 });
     }
-    if (file.size <= 0 || file.size > MAX_FILE_SIZE || !MIME_TYPES.has(file.type)) {
-      return NextResponse.json({ error: 'Choose an image or PDF no larger than 10 MB.' }, { status: 400 });
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const contentType = file.type || MIME_TYPE_BY_EXTENSION[extension] || '';
+    if (file.size <= 0 || file.size > MAX_FILE_SIZE || !MIME_TYPES_BY_BUCKET[bucket].has(contentType)) {
+      const formats = bucket === 'download-resources' ? 'PDF, Word, Excel, or ZIP' : 'an image, PDF, or Word document';
+      return NextResponse.json({ error: `Choose ${formats} no larger than 10 MB.` }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -39,7 +63,7 @@ export async function POST(request: Request) {
     const { error: uploadError } = await adminClient.storage
       .from(bucket)
       .upload(storagePath, buffer, {
-        contentType: file.type || 'image/jpeg',
+        contentType,
         upsert: false,
       });
 

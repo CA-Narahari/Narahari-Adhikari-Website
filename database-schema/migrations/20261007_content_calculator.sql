@@ -22,7 +22,7 @@ create policy "staff manage calculator configs" on public.calculator_configs for
 insert into public.calculator_configs (calculator_key, fiscal_year, assumptions, source_name, source_url, effective_from, reviewed_by, reviewed_at)
 values
   ('vat', 'Current', '{"rate": 0.13}'::jsonb, 'Inland Revenue Department (IRD)', 'https://ird.gov.np/category/taxrateincentives/', current_date, '', null),
-  ('individual-tax', 'FY 2081/82', '{"unmarried_slabs":[500000,700000,1000000,2000000],"married_slabs":[600000,800000,1100000,2000000],"rates":[0.01,0.10,0.20,0.30,0.39]}'::jsonb, 'Inland Revenue Department (IRD)', 'https://ird.gov.np/category/taxrateincentives/', '2024-07-16', '', null),
+  ('individual-tax', 'Needs official review', '{"unmarried_slabs":[500000,700000,1000000,2000000],"married_slabs":[600000,800000,1100000,2000000],"rates":[0.01,0.10,0.20,0.30,0.39]}'::jsonb, 'Inland Revenue Department (IRD)', 'https://ird.gov.np/category/taxrateincentives/', null, '', null),
   ('ssf', 'Current', '{"employee_rate":0.11,"employer_rate":0.20}'::jsonb, 'Social Security Fund Nepal', 'https://ssf.gov.np/', current_date, '', null),
   ('capital-gains', 'Current', '{"equity_short":7.5,"equity_long":5,"property_short":7.5,"property_long":5}'::jsonb, 'Inland Revenue Department (IRD)', 'https://ird.gov.np/category/taxrateincentives/', current_date, '', null)
 on conflict (calculator_key) do nothing;

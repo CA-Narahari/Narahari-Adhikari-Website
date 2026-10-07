@@ -77,22 +77,8 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    fetchPracticeUsers()
-      .then((practiceUsers) => {
-        if (active) setUsers(practiceUsers);
-      })
-      .catch((error: unknown) => {
-        if (active) setLoadError(error instanceof Error ? error.message : 'We could not load staff accounts.');
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    void loadUsers();
+  }, [loadUsers]);
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -193,10 +179,10 @@ export default function AdminUsersPage() {
             <span>Staff Management & Security</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#023A51]">
-            Staff & Access Control
+            Staff access
           </h1>
           <p className="mt-1 text-sm text-[#59667D] max-w-2xl">
-            Create staff accounts, manage role access levels, and securely update user passwords.
+            Add administrator or staff accounts and reset account passwords when needed.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -225,10 +211,10 @@ export default function AdminUsersPage() {
           <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
               <h2 id="staff-accounts-heading" className="text-base font-bold text-[#023A51]">
-                Active Staff Accounts
+                CMS accounts
               </h2>
               <p className="text-xs text-[#74838A]">
-                Authorized team members with access to the CMS portal.
+                Team members who can sign in to the CMS.
               </p>
             </div>
           </div>
@@ -322,13 +308,13 @@ export default function AdminUsersPage() {
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2.5 mb-1 text-[#2CBC63]">
                 <UserPlus className="h-5 w-5" />
-                <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]">Staff Management</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]">Access setup</span>
               </div>
               <CardTitle className="text-xl font-extrabold text-[#023A51]">
                 Add Staff Account
               </CardTitle>
               <CardDescription className="text-xs text-[#59667D]">
-                Enter information below to create a new team account with CMS access.
+                Choose the account role and set a temporary password. The account is created in Supabase Auth.
               </CardDescription>
             </CardHeader>
 
