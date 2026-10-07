@@ -295,8 +295,9 @@ export default function ContentEditor({
       focusKeyword,
       });
       if (!saved) setSaveError(`Could not save this ${itemTypeLabel.toLowerCase()}. Check your connection and CMS access, then try again.`);
-    } catch {
-      setSaveError(`Could not save this ${itemTypeLabel.toLowerCase()}. Check your connection and try again.`);
+    } catch (cause) {
+      const reason = cause instanceof Error && cause.message ? cause.message : `Could not save this ${itemTypeLabel.toLowerCase()}. Check your connection and try again.`;
+      setSaveError(reason);
     } finally {
       setIsSaving(false);
     }

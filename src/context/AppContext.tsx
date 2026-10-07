@@ -206,67 +206,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addBlogPost = async (post: Omit<BlogPost, 'id'>) => {
-    const tempId = `blog-${Date.now()}`;
-    const newPost: BlogPost = {
-      ...post,
-      id: tempId,
-    };
-
-    const client = createSupabaseBrowserClient();
-    if (!client) return false;
-    try {
-      const { data, error } = await client
-        .from('posts')
-        .insert({
-          title: post.title,
-          slug: post.slug,
-          category: post.category,
-          excerpt: post.excerpt,
-          content: post.content,
-          author: post.author,
-          read_time: post.read_time,
-          featured_image: post.featured_image,
-          tags: post.tags,
-          status: post.status,
-          published_at: post.published_at || new Date().toISOString().split('T')[0],
-          meta_title: post.meta_title || '',
-          meta_description: post.meta_description || '',
-          focus_keyword: post.focus_keyword || '',
-        })
-        .select()
-        .single();
-
-      if (error || !data) return false;
-      newPost.id = data.id;
-    } catch { return false; }
+    const response = await fetch('/api/admin/blog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...post, published_at: post.published_at || new Date().toISOString().split('T')[0] }),
+    });
+    const result = await response.json() as { post?: BlogPost; error?: string };
+    if (!response.ok || !result.post) throw new Error(result.error || 'The article could not be saved.');
 
     setBlogPosts((prev) => {
-      const updated = [newPost, ...prev.filter((p) => p.slug !== newPost.slug)];
+      const updated = [result.post!, ...prev.filter((p) => p.slug !== result.post!.slug)];
       return updated;
     });
     return true;
   };
 
   const updateBlogPost = async (id: string, post: Partial<BlogPost>) => {
-    const client = createSupabaseBrowserClient();
-    if (!client || id.startsWith('blog-')) return false;
-    const dbPayload: Record<string, unknown> = {};
-    const allowedCols = ['title', 'slug', 'category', 'excerpt', 'content', 'author', 'read_time', 'featured_image', 'tags', 'status', 'published_at', 'meta_title', 'meta_description', 'focus_keyword', 'image_alt'];
-    for (const key of allowedCols) if (key in post && post[key as keyof BlogPost] !== undefined) dbPayload[key] = post[key as keyof BlogPost];
-    const { data, error } = await client.from('posts').update(dbPayload).eq('id', id).select('id').maybeSingle();
-    if (error || !data) return false;
+    const response = await fetch('/api/admin/blog', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...post }),
+    });
+    const result = await response.json() as { post?: BlogPost; error?: string };
+    if (!response.ok || !result.post) throw new Error(result.error || 'The article could not be updated.');
     setBlogPosts((prev) => {
-      return prev.map((p) => (p.id === id ? { ...p, ...post } : p));
+      return prev.map((p) => (p.id === id ? result.post! : p));
     });
 
     return true;
   };
 
   const deleteBlogPost = async (id: string) => {
-    const client = createSupabaseBrowserClient();
-    if (!client || id.startsWith('blog-')) return false;
-    const { data, error } = await client.from('posts').delete().eq('id', id).select('id').maybeSingle();
-    if (error || !data) return false;
+    const response = await fetch('/api/admin/blog', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    const result = await response.json() as { error?: string };
+    if (!response.ok) throw new Error(result.error || 'The article could not be deleted.');
     setBlogPosts((prev) => prev.filter((p) => p.id !== id));
     return true;
   };

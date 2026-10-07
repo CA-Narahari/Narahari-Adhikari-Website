@@ -100,9 +100,15 @@ export default function AdminBlogPage() {
 
   const confirmDelete = async () => {
     if (!postToDelete) return;
-    const deleted = await deleteBlogPost(postToDelete.id);
+    let deleted = false;
+    let failureMessage = 'Article could not be deleted. Check your CMS session and try again.';
+    try {
+      deleted = await deleteBlogPost(postToDelete.id);
+    } catch (cause) {
+      if (cause instanceof Error) failureMessage = cause.message;
+    }
     if (!deleted) {
-      setToastMessage('Article could not be deleted. Check your CMS session and try again.');
+      setToastMessage(failureMessage);
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
@@ -113,9 +119,15 @@ export default function AdminBlogPage() {
   };
 
   const deleteFromEditor = async (post: BlogPost) => {
-    const deleted = await deleteBlogPost(post.id);
+    let deleted = false;
+    let failureMessage = 'Article could not be deleted. Check your CMS session and try again.';
+    try {
+      deleted = await deleteBlogPost(post.id);
+    } catch (cause) {
+      if (cause instanceof Error) failureMessage = cause.message;
+    }
     if (!deleted) {
-      setToastMessage('Article could not be deleted. Check your CMS session and try again.');
+      setToastMessage(failureMessage);
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
