@@ -12,7 +12,7 @@ type ContactMessage = {
   phone: string;
   organization: string;
   message: string;
-  status: 'new' | 'reviewed' | 'closed';
+  status: 'new' | 'in_progress' | 'closed';
   created_at: string;
 };
 type StatusFilter = 'all' | ContactMessage['status'];
@@ -66,7 +66,7 @@ export default function ContactMessagesPage() {
   const counts = useMemo(() => ({
     all: messages.length,
     new: messages.filter((message) => message.status === 'new').length,
-    reviewed: messages.filter((message) => message.status === 'reviewed').length,
+    in_progress: messages.filter((message) => message.status === 'in_progress').length,
     closed: messages.filter((message) => message.status === 'closed').length,
   }), [messages]);
   const normalizedSearch = search.trim().toLowerCase();
@@ -78,7 +78,7 @@ export default function ContactMessagesPage() {
   const filters: { key: StatusFilter; label: string; count: number }[] = [
     { key: 'all', label: 'All enquiries', count: counts.all },
     { key: 'new', label: 'New', count: counts.new },
-    { key: 'reviewed', label: 'Reviewed', count: counts.reviewed },
+    { key: 'in_progress', label: 'In progress', count: counts.in_progress },
     { key: 'closed', label: 'Closed', count: counts.closed },
   ];
 
@@ -106,11 +106,11 @@ export default function ContactMessagesPage() {
         {error && <p role="alert" className="m-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
         {loading ? <div role="status" className="p-12 text-center text-sm text-[#718181]">Loading website enquiries…</div> : filtered.length === 0 ? <div className="p-12 text-center"><Mail className="mx-auto size-8 text-[#98B8A6]" /><h3 className="mt-3 font-bold text-[#123F40]">{messages.length ? 'No matching enquiries' : 'No enquiries yet'}</h3><p className="mx-auto mt-1 max-w-md text-sm leading-6 text-[#718181]">{messages.length ? 'Try another search or choose a different status.' : 'When someone sends a message through the public Contact form, it will appear here. Appointment bookings are managed on their own page.'}</p>{!messages.length && <Link href="/contact" target="_blank" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14864B] hover:underline">Open the public contact form <Send className="size-3.5" /></Link>}</div> : <ul className="divide-y divide-[#EDF2EF]">{filtered.map((message) => <li key={message.id} className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_190px] sm:p-6">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><span className="grid size-9 place-items-center rounded-full bg-[#EAF8F1] text-[#168A4A]"><UserRound className="size-4" /></span><h3 className="font-bold text-[#123F40]">{message.name}</h3><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold capitalize ${message.status === 'new' ? 'bg-[#FFF5DE] text-[#98610D]' : message.status === 'reviewed' ? 'bg-[#EAF3FF] text-[#2869A8]' : 'bg-slate-100 text-slate-600'}`}>{message.status}</span><time className="text-xs text-[#82918D]">{dateLabel(message.created_at)}</time></div>
+            <div className="flex flex-wrap items-center gap-2"><span className="grid size-9 place-items-center rounded-full bg-[#EAF8F1] text-[#168A4A]"><UserRound className="size-4" /></span><h3 className="font-bold text-[#123F40]">{message.name}</h3><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${message.status === 'new' ? 'bg-[#FFF5DE] text-[#98610D]' : message.status === 'in_progress' ? 'bg-[#EAF3FF] text-[#2869A8]' : 'bg-slate-100 text-slate-600'}`}>{message.status === 'in_progress' ? 'In progress · open' : message.status === 'closed' ? 'Closed' : 'New · open'}</span><time className="text-xs text-[#82918D]">{dateLabel(message.created_at)}</time></div>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#52706C]"><a className="inline-flex items-center gap-1.5 hover:text-[#168A4A]" href={`mailto:${message.email}`}><Mail className="size-3.5" />{message.email}</a>{message.phone && <a className="inline-flex items-center gap-1.5 hover:text-[#168A4A]" href={`tel:${message.phone}`}><Phone className="size-3.5" />{message.phone}</a>}{message.organization && <span className="inline-flex items-center gap-1.5"><Building2 className="size-3.5" />{message.organization}</span>}</div>
             <p className="mt-4 whitespace-pre-wrap rounded-xl bg-[#F7FAF8] p-4 text-sm leading-6 text-[#405A5B]">{message.message}</p>
           </div>
-          <label className="text-xs font-semibold text-[#66797A] sm:self-start">Enquiry status<select value={message.status} disabled={updatingId === message.id} onChange={(event) => void updateStatus(message.id, event.target.value as ContactMessage['status'])} className="mt-2 block h-10 w-full rounded-xl border border-[#D5E0DC] bg-white px-3 text-sm capitalize text-[#123F40] outline-none focus:border-[#168A4A] disabled:opacity-60"><option value="new">New</option><option value="reviewed">Reviewed</option><option value="closed">Closed</option></select>{updatingId === message.id && <span role="status" className="mt-1 block text-[11px] text-[#82918D]">Saving status…</span>}</label>
+          <label className="text-xs font-semibold text-[#66797A] sm:self-start">Enquiry status<select value={message.status} disabled={updatingId === message.id} onChange={(event) => void updateStatus(message.id, event.target.value as ContactMessage['status'])} className="mt-2 block h-10 w-full rounded-xl border border-[#D5E0DC] bg-white px-3 text-sm text-[#123F40] outline-none focus:border-[#168A4A] disabled:opacity-60"><option value="new">New · open</option><option value="in_progress">In progress · open</option><option value="closed">Closed</option></select>{updatingId === message.id && <span role="status" className="mt-1 block text-[11px] text-[#82918D]">Saving status…</span>}<span className="mt-1 block text-[11px] font-normal text-[#82918D]">Open means it still needs a response or follow-up.</span></label>
         </li>)}</ul>}
       </section>
     </div>

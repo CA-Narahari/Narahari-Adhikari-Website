@@ -12,11 +12,12 @@ import {
   Users,
   Upload,
   FileText,
-  Loader2,
   ExternalLink,
   CheckCircle2,
+  X,
 } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import MediaLibraryModal from '@/components/admin/MediaLibraryModal';
 import type { Vacancy } from '@/types';
 
 export default function AdminCareersPage() {
@@ -35,47 +36,12 @@ export default function AdminCareersPage() {
   const [vacancyFilter, setVacancyFilter] = useState<'all' | 'active' | 'archived'>('all');
   const [isSavingVacancy, setIsSavingVacancy] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
-
-  // Attachment upload state
-  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
-  const [attachmentError, setAttachmentError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLElement>(null);
 
   // Deletion confirm modal state
   const [vacancyToDelete, setVacancyToDelete] = useState<{ id: string; title: string } | null>(null);
-
-  const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingAttachment(true);
-    setAttachmentError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bucket', 'website-media');
-      formData.append('folder', 'careers');
-
-      const res = await fetch('/api/admin/storage/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to upload document');
-      }
-
-      setNewAttachmentUrl(data.publicUrl);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
-      setAttachmentError(msg);
-    } finally {
-      setIsUploadingAttachment(false);
-    }
-  };
 
   const openVacancyForm = (vacancy?: Vacancy) => {
     setFeedback(null);
@@ -88,12 +54,12 @@ export default function AdminCareersPage() {
     setNewReqs((vacancy?.requirements || []).join('\n'));
     setNewDeadline(vacancy?.deadline || '');
     setNewAttachmentUrl(vacancy?.attachment_url || '');
-    setAttachmentError(null);
     setShowAddModal(true);
+    window.setTimeout(() => editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const closeVacancyForm = () => {
-    if (isSavingVacancy || isUploadingAttachment) return;
+    if (isSavingVacancy) return;
     setShowAddModal(false);
     setEditingVacancy(null);
   };
@@ -335,11 +301,10 @@ export default function AdminCareersPage() {
         </div>
       </div>
 
-      {/* New Vacancy Modal */}
+      {/* Full-page vacancy editor */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#062F35]/45 p-4 backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" aria-labelledby="vacancy-dialog-title" className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#E2ECE6] bg-white p-5 shadow-2xl sm:p-7 space-y-4">
-            <div className="border-b border-[#EDF2EF] pb-4"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#168A4A]">Public careers page</p><h3 id="vacancy-dialog-title" className="mt-1 text-xl font-bold text-[#123F40]">{editingVacancy ? 'Edit vacancy' : 'Add a vacancy'}</h3><p className="mt-1 text-xs text-[#718181]">Changes save to the vacancy database and appear publicly while the role is active.</p></div>
+        <section ref={editorRef} aria-labelledby="vacancy-dialog-title" className="scroll-mt-6 rounded-3xl border border-[#E2ECE6] bg-white p-5 shadow-xs sm:p-8 space-y-5">
+            <div className="flex items-start justify-between gap-4 border-b border-[#EDF2EF] pb-5"><div><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#168A4A]">Public careers page</p><h3 id="vacancy-dialog-title" className="mt-1 text-xl font-bold text-[#123F40]">{editingVacancy ? 'Edit vacancy' : 'Add a vacancy'}</h3><p className="mt-1 text-sm leading-6 text-[#718181]">Changes save to Supabase and appear publicly while the role is active.</p></div><button type="button" onClick={closeVacancyForm} aria-label="Close editor" className="grid size-9 shrink-0 place-items-center rounded-xl border border-[#D8E4DE] text-[#66797A] hover:bg-[#F5FAF7]"><X className="size-4" /></button></div>
 
             {feedback?.kind === 'error' && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{feedback.message}</p>}
 
@@ -443,60 +408,31 @@ export default function AdminCareersPage() {
                   )}
                 </div>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,.doc"
-                  onChange={handleAttachmentUpload}
-                  className="hidden"
-                />
-
-                <button type="button" disabled={isUploadingAttachment || isSavingVacancy} onClick={() => fileInputRef.current?.click()} className="w-full border border-dashed border-slate-300 hover:border-[#1A8F4B] bg-white rounded-lg p-2.5 text-center cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-60">
-                  {isUploadingAttachment ? (
-                    <div className="flex items-center justify-center gap-2 text-xs font-semibold py-1">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#1A8F4B]" />
-                      <span>Uploading to Supabase storage...</span>
-                    </div>
-                  ) : newAttachmentUrl ? (
-                    <div className="flex flex-col items-center justify-center gap-2 text-[11px] font-semibold text-[#1A8F4B]">
-                      <FileText className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-xs">{newAttachmentUrl}</span>
-                    </div>
-                  ) : (
-                    <div className="text-[11px] text-slate-500">
-                      <span className="font-bold text-[#1A8F4B]">Click to browse</span> or drag a PDF/DOC/DOCX file here
-                    </div>
-                  )}
-                </button>
-
-                {newAttachmentUrl && <button type="button" disabled={isSavingVacancy || isUploadingAttachment} onClick={() => setNewAttachmentUrl('')} className="text-xs font-semibold text-rose-700 underline underline-offset-2 disabled:opacity-50">Remove attached document</button>}
-
-                {attachmentError && (
-                  <p className="text-[11px] text-rose-600">{attachmentError}</p>
-                )}
+                <button type="button" disabled={isSavingVacancy} onClick={() => setMediaLibraryOpen(true)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#B8D5C4] bg-white px-3 text-sm font-semibold text-[#168A4A] transition hover:border-[#168A4A] hover:bg-[#F7FBF8] disabled:opacity-60"><Upload className="size-4" />{newAttachmentUrl ? 'Replace document from Media Library' : 'Choose document from Media Library'}</button>
+                {newAttachmentUrl && <div className="mt-3 flex items-center gap-3 rounded-lg bg-white p-3 text-xs text-[#365555]"><FileText className="size-4 shrink-0 text-[#168A4A]" /><span className="min-w-0 flex-1 truncate">{newAttachmentUrl}</span><button type="button" disabled={isSavingVacancy} onClick={() => setNewAttachmentUrl('')} className="font-semibold text-rose-700 hover:underline">Remove</button></div>}
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t">
                 <button
                   type="button"
                   onClick={closeVacancyForm}
-                  disabled={isSavingVacancy || isUploadingAttachment}
+                  disabled={isSavingVacancy}
                   className="min-h-10 rounded-xl border border-[#D8E4DE] px-4 text-sm font-semibold text-[#365555] hover:bg-[#F5FAF7] disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSavingVacancy || isUploadingAttachment}
+                  disabled={isSavingVacancy}
                   className="min-h-10 rounded-xl bg-[#0B4B4C] px-5 text-sm font-semibold text-white transition hover:bg-[#083D3F] disabled:cursor-wait disabled:opacity-60"
                 >
                   {isSavingVacancy ? 'Saving…' : editingVacancy ? 'Save vacancy' : 'Publish vacancy'}
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </section>
       )}
+      <MediaLibraryModal isOpen={mediaLibraryOpen} mode="featured" storageFolder="careers" fileType="document" initialImageName={newAttachmentUrl.split('/').pop() || ''} onClose={() => setMediaLibraryOpen(false)} onSelect={(file) => { setNewAttachmentUrl(file.url); setMediaLibraryOpen(false); }} />
     </div>
   );
 }

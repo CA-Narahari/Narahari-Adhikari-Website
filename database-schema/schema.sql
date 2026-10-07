@@ -210,7 +210,7 @@ create table if not exists public.contact_messages (
   organization text not null default '',
   message text not null,
   privacy_consent boolean not null default false,
-  status text not null default 'new' check (status in ('new', 'reviewed', 'closed')),
+  status text not null default 'new' check (status in ('new', 'in_progress', 'closed')),
   created_at timestamptz not null default now(),
   constraint contact_messages_privacy_consent_check check (privacy_consent = true)
 );

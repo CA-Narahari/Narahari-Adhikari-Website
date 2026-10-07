@@ -62,6 +62,7 @@ export default function AdminUpdatesPage() {
       image_alt: item.image_alt || '',
     } : blankForm());
     setIsModalOpen(true);
+    window.setTimeout(() => document.getElementById('update-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const setField = <K extends keyof UpdateForm>(key: K, value: UpdateForm[K]) => {
@@ -176,8 +177,8 @@ export default function AdminUpdatesPage() {
         </div>
       </section>
 
-      {isModalOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#062F35]/45 p-4 backdrop-blur-sm">
-        <section role="dialog" aria-modal="true" aria-labelledby="update-dialog-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-[#E2ECE6] bg-white p-5 shadow-2xl sm:p-7">
+      {isModalOpen && <section id="update-editor" aria-labelledby="update-dialog-title" className="scroll-mt-6 rounded-3xl border border-[#E2ECE6] bg-white p-5 shadow-xs sm:p-8">
+        <div className="mx-auto max-w-5xl space-y-5">
           <header className="mb-5 flex items-start justify-between gap-4 border-b border-[#EDF2EF] pb-4"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#168A4A]">Public Updates page</p><h2 id="update-dialog-title" className="mt-1 text-xl font-bold text-[#123F40]">{editing ? 'Edit update' : 'Create update'}</h2><p className="mt-1 text-xs text-[#718181]">Use a clear title and include a link to the issuing authority.</p></div><button type="button" onClick={() => setIsModalOpen(false)} disabled={saving} aria-label="Close editor" className="grid size-9 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="size-4" /></button></header>
           {feedback?.kind === 'error' && <p role="alert" className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle className="mr-2 inline size-4" />{feedback.message}</p>}
           <form onSubmit={(event) => { void saveUpdate(event); }} className="space-y-5">
@@ -195,8 +196,8 @@ export default function AdminUpdatesPage() {
             </div>
             <footer className="flex flex-col gap-3 border-t border-[#EDF2EF] pt-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-[#718181]">{form.status === 'published' ? 'This update will appear on the public Updates page after saving.' : 'Drafts are only visible in the CMS.'}</p><div className="flex justify-end gap-2"><button type="button" onClick={() => setIsModalOpen(false)} disabled={saving} className="min-h-10 rounded-xl border border-[#D8E4DE] px-4 text-sm font-semibold text-[#365555] hover:bg-[#F5FAF7]">Cancel</button><button type="submit" disabled={saving} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#0B4B4C] px-4 text-sm font-semibold text-white hover:bg-[#083D3F] disabled:cursor-wait disabled:opacity-60">{saving ? <LoaderCircle className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}{saving ? 'Saving…' : editing ? 'Save changes' : form.status === 'draft' ? 'Save draft' : 'Publish update'}</button></div></footer>
           </form>
-        </section>
-      </div>}
+        </div>
+      </section>}
     </div>
   );
 }

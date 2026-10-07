@@ -1,4 +1,4 @@
-const allowedFolders = new Set(['blog', 'services', 'general', 'announcements']);
+const allowedFolders = new Set(['blog', 'services', 'general', 'announcements', 'careers']);
 
 async function proxyPublicMedia(
   request: Request,

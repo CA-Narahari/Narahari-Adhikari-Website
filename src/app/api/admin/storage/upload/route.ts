@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      publicUrl: bucket === 'website-media' && ['blog', 'services', 'general', 'announcements'].includes(folder)
+      publicUrl: bucket === 'website-media' && ['blog', 'services', 'general', 'announcements', 'careers'].includes(folder)
         ? `/media/${storagePath.split('/').map(encodeURIComponent).join('/')}`
         : urlData.publicUrl,
       path: storagePath,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import {
   Landmark,
@@ -12,13 +12,12 @@ import {
   X,
   FileText,
   Upload,
-  Loader2,
-  CheckCircle2,
   AlertCircle,
   Search,
 } from 'lucide-react';
 import { GovernmentLink, DownloadResource } from '@/types';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import MediaLibraryModal from '@/components/admin/MediaLibraryModal';
 
 type ResourceSection = 'all' | 'links' | 'downloads';
 
@@ -57,10 +56,7 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
   });
 
   // File upload state for downloadable resources
-  const [isUploadingFile, setIsUploadingFile] = useState(false);
-  const [uploadFileError, setUploadFileError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const dlFileInputRef = useRef<HTMLInputElement>(null);
+  const [documentLibraryOpen, setDocumentLibraryOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
@@ -74,6 +70,7 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
 
   // Open Gov Link Modal for Add or Edit
   const openGovModal = (link?: GovernmentLink) => {
+    setIsDlModalOpen(false);
     if (link) {
       setEditingGovLink(link);
       setGovForm({
@@ -94,6 +91,7 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
       });
     }
     setIsGovModalOpen(true);
+    window.setTimeout(() => document.getElementById('resource-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
   const handleGovSubmit = async (e: React.FormEvent) => {
@@ -114,8 +112,7 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
 
   // Open Download Modal for Add or Edit
   const openDlModal = (res?: DownloadResource) => {
-    setUploadFileError(null);
-    setUploadSuccess(false);
+    setIsGovModalOpen(false);
     if (res) {
       setEditingDl(res);
       setDlForm({
@@ -136,53 +133,15 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
       });
     }
     setIsDlModalOpen(true);
+    window.setTimeout(() => document.getElementById('resource-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingFile(true);
-    setUploadFileError(null);
-    setUploadSuccess(false);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bucket', 'download-resources');
-      formData.append('folder', 'documents');
-
-      const res = await fetch('/api/admin/storage/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to upload document');
-      }
-
-      // Format file size
-      const sizeInMB = file.size / (1024 * 1024);
-      const sizeStr = sizeInMB >= 1 ? `${sizeInMB.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`;
-
-      // Extract format extension
-      const ext = file.name.split('.').pop()?.toUpperCase() || 'PDF';
-
-      setDlForm((prev) => ({
-        ...prev,
-        title: prev.title || file.name.replace(/\.[^/.]+$/, ''),
-        download_url: data.publicUrl,
-        file_format: ext,
-        file_size: sizeStr,
-      }));
-      setUploadSuccess(true);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
-      setUploadFileError(msg);
-    } finally {
-      setIsUploadingFile(false);
-    }
+  const handleSelectDocument = (file: { url: string; imageName?: string; fileSize?: number }) => {
+    const size = file.fileSize ? file.fileSize / (1024 * 1024) : 0;
+    const sizeLabel = size >= 1 ? `${size.toFixed(1)} MB` : file.fileSize ? `${Math.max(1, Math.round(file.fileSize / 1024))} KB` : dlForm.file_size;
+    const extension = file.imageName?.split('.').pop()?.toUpperCase() || dlForm.file_format;
+    setDlForm((current) => ({ ...current, title: current.title || file.imageName?.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ') || '', download_url: file.url, file_format: extension, file_size: sizeLabel }));
+    setDocumentLibraryOpen(false);
   };
 
   const handleDlSubmit = async (e: React.FormEvent) => {
@@ -408,10 +367,10 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
         </div>
       </div>}
 
-      {/* Government Link Modal */}
+      {/* Full-page regulatory portal editor */}
       {isGovModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <section id="resource-editor" className="scroll-mt-6 rounded-3xl border border-[#E2ECE6] bg-white p-5 shadow-xs sm:p-8">
+          <div className="space-y-5">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="font-bold text-slate-900 text-base">
                 {editingGovLink ? 'Edit Regulatory Portal Link' : 'Add Official Regulatory Portal'}
@@ -509,13 +468,13 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
               </div>
             </form>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Download Resource Modal with Integrated File Upload */}
+      {/* Full-page downloadable resource editor */}
       {isDlModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <section id="resource-editor" className="scroll-mt-6 rounded-3xl border border-[#E2ECE6] bg-white p-5 shadow-xs sm:p-8">
+          <div className="space-y-5">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="font-bold text-slate-900 text-base">
                 {editingDl ? 'Edit Downloadable Resource' : 'Add Downloadable Resource'}
@@ -531,48 +490,9 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
 
             {feedback?.kind === 'error' && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">{feedback.message}</p>}
 
-            {/* Direct File Attachment Upload Card */}
-            <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-xl p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0D3B3E] flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5 text-[#1A8F4B]" />
-                  <span>Attach Document File (PDF, DOCX, XLSX)</span>
-                </span>
-                {uploadSuccess && (
-                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Uploaded to Storage</span>
-                  </span>
-                )}
-              </div>
-
-              <input
-                ref={dlFileInputRef}
-                type="file"
-                accept=".pdf,.docx,.doc,.xlsx,.xls,.zip"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-
-              <button type="button" onClick={() => dlFileInputRef.current?.click()} disabled={isUploadingFile || isSaving} className="w-full border border-dashed border-emerald-300 hover:border-emerald-500 bg-white rounded-xl p-3 text-center cursor-pointer transition-colors disabled:cursor-wait disabled:opacity-60">
-                {isUploadingFile ? (
-                  <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#0D3B3E] py-1">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#1A8F4B]" />
-                    <span>Uploading file to Supabase storage...</span>
-                  </div>
-                ) : (
-                  <div className="text-[11px] text-slate-600">
-                    <span className="font-bold text-[#1A8F4B]">Click to browse file</span> or drop file here (Auto-sets URL, format &amp; file size)
-                  </div>
-                )}
-              </button>
-
-              {uploadFileError && (
-                <div className="text-[11px] text-rose-600 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>{uploadFileError}</span>
-                </div>
-              )}
+            <div className="rounded-2xl border border-[#E2ECE6] bg-[#F7FAF8] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-[#123F40]">Resource file</p><p className="mt-1 text-xs text-[#718181]">Select an existing document or upload a new one. The title and file details can be adjusted below.</p></div><button type="button" onClick={() => setDocumentLibraryOpen(true)} disabled={isSaving} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0B4B4C] px-4 text-xs font-semibold text-white hover:bg-[#083D3F] disabled:opacity-60"><FileText className="size-4" />{dlForm.download_url ? 'Choose another file' : 'Open file library'}</button></div>
+              {dlForm.download_url && <p className="mt-3 break-all rounded-xl bg-white p-3 text-xs text-[#52706C]">{dlForm.download_url}</p>}
             </div>
 
             <form onSubmit={handleDlSubmit} className="space-y-3 text-xs">
@@ -661,7 +581,7 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving || isUploadingFile}
+                  disabled={isSaving}
                   className="px-4 py-2 bg-[#023A51] hover:bg-[#2CBC63] text-white rounded-lg font-bold transition-colors cursor-pointer"
                 >
                   {isSaving ? 'Saving…' : editingDl ? 'Save Changes' : 'Add File'}
@@ -669,8 +589,9 @@ export default function ResourcesManager({ section = 'all' }: { section?: Resour
               </div>
             </form>
           </div>
-        </div>
+        </section>
       )}
+      <MediaLibraryModal isOpen={documentLibraryOpen} mode="featured" storageBucket="download-resources" storageFolder="documents" initialImageName={dlForm.title} onClose={() => setDocumentLibraryOpen(false)} onSelect={handleSelectDocument} />
     </div>
   );
 }
