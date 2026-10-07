@@ -11,6 +11,7 @@ import {
   Appointment,
   GovernmentLink,
   DownloadResource,
+  Announcement,
 } from '@/types';
 import {
   initialSiteSettings,
@@ -30,7 +31,11 @@ interface AppContextType {
   settingsLoaded: boolean;
   updateSettings: (newSettings: Partial<SiteSettings>) => Promise<boolean>;
   toggleCareers: (forced?: boolean) => Promise<boolean>;
-  toggleAnnouncement: (active?: boolean) => Promise<boolean>;
+  announcements: Announcement[];
+  announcementsLoaded: boolean;
+  addAnnouncement: (item: Omit<Announcement, 'id' | 'created_at'>) => Promise<boolean>;
+  updateAnnouncement: (id: string, item: Partial<Announcement>) => Promise<boolean>;
+  deleteAnnouncement: (id: string) => Promise<boolean>;
 
   taxUpdates: TaxUpdate[];
   taxUpdatesLoaded: boolean;
@@ -89,6 +94,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [governmentLinks, setGovernmentLinks] = useState<GovernmentLink[]>(initialGovernmentLinks);
   const [downloads, setDownloads] = useState<DownloadResource[]>(initialDownloads);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcementsLoaded, setAnnouncementsLoaded] = useState(() => !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
   useEffect(() => {
     const client = createSupabaseBrowserClient();
@@ -96,6 +103,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSettingsLoaded(true);
       setTaxUpdatesLoaded(true);
       setVacanciesLoaded(true);
+      setAnnouncementsLoaded(true);
       return;
     }
     const supabase = client;
@@ -103,9 +111,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     async function loadPublishedContent() {
-      const [settingsResult, taxResult, postsResult, vacanciesResult, applicationsResult, appointmentsResult, linksResult, downloadsResult, servicesResult] = await Promise.all([
+      const [settingsResult, taxResult, postsResult, vacanciesResult, applicationsResult, appointmentsResult, linksResult, downloadsResult, servicesResult, announcementsResult] = await Promise.all([
         supabase.from('site_settings').select('key,value'),
-        supabase.from('tax_updates').select('*').eq('status', 'published').order('published_at', { ascending: false }),
+        supabase.from('tax_updates').select('*').order('published_at', { ascending: false }),
         supabase.from('posts').select('*').order('created_at', { ascending: false }),
         // The admin career workspace needs archived listings too; public pages filter active jobs at render time.
         supabase.from('vacancies').select('*').order('deadline', { ascending: true }),
@@ -114,11 +122,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         supabase.from('government_links').select('*').order('display_order', { ascending: true }),
         supabase.from('download_resources').select('*').order('created_at', { ascending: false }),
         supabase.from('services').select('*').order('display_order', { ascending: true }),
+        supabase.from('announcements').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (cancelled) return;
       setTaxUpdatesLoaded(true);
       setVacanciesLoaded(true);
+      setAnnouncementsLoaded(true);
       if (!settingsResult.error && settingsResult.data?.length) {
         const dbSettings = settingsResult.data.reduce((acc, row) => ({ ...acc, [row.key]: row.value }), {} as Partial<SiteSettings>);
         setSettings((previous) => ({ ...previous, ...dbSettings }));
@@ -147,6 +157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!linksResult.error && linksResult.data) setGovernmentLinks(linksResult.data as GovernmentLink[]);
       if (!downloadsResult.error && downloadsResult.data) setDownloads(downloadsResult.data as DownloadResource[]);
       if (!servicesResult.error && servicesResult.data) setServices(servicesResult.data as ServiceItem[]);
+      if (!announcementsResult.error && announcementsResult.data) setAnnouncements(announcementsResult.data as Announcement[]);
     }
 
     void loadPublishedContent().catch(() => undefined).finally(() => {
@@ -154,6 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setSettingsLoaded(true);
         setTaxUpdatesLoaded(true);
         setVacanciesLoaded(true);
+        setAnnouncementsLoaded(true);
       }
     });
     return () => {
@@ -176,7 +188,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleCareers = async (forced?: boolean) => updateSettings({ careers_enabled: forced ?? !settings.careers_enabled });
-  const toggleAnnouncement = async (active?: boolean) => updateSettings({ announcement_active: active ?? !settings.announcement_active });
+  const addAnnouncement = async (item: Omit<Announcement, 'id' | 'created_at'>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return false;
+    const { data, error } = await client.from('announcements').insert(item).select().single();
+    if (error || !data) return false;
+    setAnnouncements((current) => [data as Announcement, ...current]);
+    return true;
+  };
+
+  const updateAnnouncement = async (id: string, item: Partial<Announcement>) => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return false;
+    const { data, error } = await client.from('announcements').update(item).eq('id', id).select().maybeSingle();
+    if (error || !data) return false;
+    setAnnouncements((current) => current.map((announcement) => announcement.id === id ? { ...announcement, ...data } as Announcement : announcement));
+    return true;
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return false;
+    const { error } = await client.from('announcements').delete().eq('id', id);
+    if (error) return false;
+    setAnnouncements((current) => current.filter((announcement) => announcement.id !== id));
+    return true;
+  };
 
   const addTaxUpdate = async (item: Omit<TaxUpdate, 'id'>) => {
     const client = createSupabaseBrowserClient();
@@ -254,7 +291,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await client.from('services').insert({
       title: srv.title, slug: srv.slug, short_description: srv.short_description, full_description: srv.full_description,
       deliverables: srv.deliverables, target_audience: srv.target_audience, icon: srv.icon, display_order: srv.display_order,
-      is_featured: srv.is_featured, image: srv.image, meta_title: srv.meta_title, meta_description: srv.meta_description, focus_keyword: srv.focus_keyword,
+      is_featured: srv.is_featured, image: srv.image, image_name: srv.image_name || '', meta_title: srv.meta_title, meta_description: srv.meta_description, focus_keyword: srv.focus_keyword,
+      image_alt: srv.image_alt || '',
     }).select().single();
     if (error || !data) return false;
     setServices((prev) => [...prev, data as ServiceItem]);
@@ -414,7 +452,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         settingsLoaded,
         updateSettings,
         toggleCareers,
-        toggleAnnouncement,
+        announcements,
+        announcementsLoaded,
+        addAnnouncement,
+        updateAnnouncement,
+        deleteAnnouncement,
         taxUpdates,
         taxUpdatesLoaded,
         addTaxUpdate,

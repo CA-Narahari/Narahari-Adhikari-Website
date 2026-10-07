@@ -58,6 +58,7 @@ export default function AdminUsersPage() {
 
   // Password Changing modal / section state
   const [changingPasswordUser, setChangingPasswordUser] = useState<PracticeUser | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [pwError, setPwError] = useState('');
@@ -146,7 +147,7 @@ export default function AdminUsersPage() {
       const response = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: changingPasswordUser.id, password: newPassword }),
+        body: JSON.stringify({ userId: changingPasswordUser.id, currentPassword, password: newPassword }),
       });
       const result = (await response.json()) as { message?: string; error?: string };
 
@@ -158,6 +159,7 @@ export default function AdminUsersPage() {
       setPwSuccess(`Password for ${changingPasswordUser.displayName} was updated successfully!`);
       setNewPassword('');
       setConfirmNewPassword('');
+      setCurrentPassword('');
       setTimeout(() => {
         setChangingPasswordUser(null);
         setPwSuccess('');
@@ -167,6 +169,19 @@ export default function AdminUsersPage() {
     } finally {
       setIsUpdatingPw(false);
     }
+  };
+
+  const changeRole = async (user: PracticeUser, nextRole: PracticeRole) => {
+    if (user.role === nextRole) return;
+    if (!window.confirm(`Change ${user.displayName}'s access to ${nextRole === 'admin' ? 'Administrator' : 'Staff'}?`)) return;
+    setFormError(''); setSuccess('');
+    try {
+      const response = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, role: nextRole }) });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || 'The access role could not be changed.');
+      setUsers((current) => current.map((item) => item.id === user.id ? { ...item, role: nextRole } : item));
+      setSuccess(`${user.displayName}'s access is now ${nextRole === 'admin' ? 'Administrator' : 'Staff'}.`);
+    } catch (error) { setFormError(error instanceof Error ? error.message : 'The access role could not be changed.'); }
   };
 
   return (
@@ -261,14 +276,10 @@ export default function AdminUsersPage() {
                         <div className="text-xs text-[#74838A]">{user.email}</div>
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                          user.role === 'admin'
-                            ? 'bg-[#E8F4F8] text-[#023A51] border border-[#CCD7DC]'
-                            : 'bg-[#E7F6EC] text-[#16723B] border border-[#BFE5CB]'
-                        }`}>
-                          {user.role === 'admin' && <ShieldCheck className="h-3.5 w-3.5 text-[#2CBC63]" aria-hidden="true" />}
-                          {user.role === 'admin' ? 'Administrator' : 'Staff'}
-                        </span>
+                        <label className="sr-only" htmlFor={`role-${user.id}`}>Access role for {user.displayName}</label>
+                        <select id={`role-${user.id}`} value={user.role} onChange={(event) => { void changeRole(user, event.target.value as PracticeRole); }} className={`h-9 rounded-lg border px-2.5 text-xs font-semibold outline-none focus:border-[#168A4A] ${user.role === 'admin' ? 'border-[#CCD7DC] bg-[#E8F4F8] text-[#023A51]' : 'border-[#BFE5CB] bg-[#E7F6EC] text-[#16723B]'}`}>
+                          <option value="staff">Staff</option><option value="admin">Administrator</option>
+                        </select>
                       </td>
                       <td className="px-4 py-4 text-xs text-[#59667D]">
                         <span className="inline-flex items-center gap-1.5">
@@ -287,6 +298,7 @@ export default function AdminUsersPage() {
                             setPwSuccess('');
                             setNewPassword('');
                             setConfirmNewPassword('');
+                            setCurrentPassword('');
                           }}
                           className="h-8 gap-1.5 text-xs text-[#023A51] hover:text-[#2CBC63] hover:bg-[#E8F4F8] rounded-lg"
                         >
@@ -314,7 +326,7 @@ export default function AdminUsersPage() {
                 Add Staff Account
               </CardTitle>
               <CardDescription className="text-xs text-[#59667D]">
-                Choose the account role and set a temporary password. The account is created in Supabase Auth.
+                Choose the account role and set the password the account will use to sign in.
               </CardDescription>
             </CardHeader>
 
@@ -372,7 +384,7 @@ export default function AdminUsersPage() {
 
                   <Field>
                     <FieldLabel htmlFor="staff-password" className="text-xs font-bold text-[#023A51]">
-                      Temporary Password
+                      Account Password
                     </FieldLabel>
                     <Input
                       id="staff-password"
@@ -443,7 +455,7 @@ export default function AdminUsersPage() {
                   </Button>
 
                   <FieldDescription className="text-center text-[11px] text-[#7A889B] pt-1">
-                    New accounts can log in immediately with the assigned credentials.
+                    This is the account’s sign-in password. You can adjust its access role later.
                   </FieldDescription>
                 </FieldGroup>
               </form>
@@ -494,6 +506,11 @@ export default function AdminUsersPage() {
 
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <FieldGroup className="space-y-3.5">
+                    <Field>
+                      <FieldLabel htmlFor="current-admin-password" className="text-xs font-bold text-[#023A51]">Your current administrator password</FieldLabel>
+                      <Input id="current-admin-password" type="password" autoComplete="current-password" required value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} className="h-10 rounded-xl border-slate-200 text-sm font-mono focus-visible:border-[#2CBC63] focus-visible:ring-[#2CBC63]/25" />
+                      <FieldDescription className="text-[11px] text-[#7A889B]">Verify your identity before changing this account’s password.</FieldDescription>
+                    </Field>
                     <Field>
                       <FieldLabel htmlFor="new-pw" className="text-xs font-bold text-[#023A51]">
                         New Password

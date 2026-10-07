@@ -24,6 +24,7 @@ import {
   Code,
   FolderOpen,
   LoaderCircle,
+  Table2,
 } from 'lucide-react';
 import MediaLibraryModal from './MediaLibraryModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -38,6 +39,8 @@ export interface ContentEditorData {
   categoriesList?: string[];
   tags: string[];
   featuredImage?: string;
+  featuredImageName: string;
+  featuredImageAlt: string;
   status: 'draft' | 'published';
   metaTitle: string;
   metaDescription: string;
@@ -84,6 +87,41 @@ function normalizeHtmlContent(content: string): string {
     .join('');
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function imageNameFromUrl(url?: string): string {
+  if (!url) return '';
+  try {
+    const base = typeof window === 'undefined' ? 'https://example.invalid' : window.location.origin;
+    const segment = new URL(url, base).pathname.split('/').pop() || '';
+    return decodeURIComponent(segment);
+  } catch {
+    return url.split('/').pop()?.split(/[?#]/)[0] || '';
+  }
+}
+
+function normalizePublicMediaUrl(url: string): string {
+  try {
+    const path = new URL(url, window.location.origin).pathname;
+    const marker = '/storage/v1/object/public/website-media/';
+    const objectPath = path.includes(marker) ? path.split(marker)[1] : '';
+    if (objectPath) return `/media/${objectPath.split('/').map((part) => encodeURIComponent(decodeURIComponent(part))).join('/')}`;
+  } catch {
+    // Preserve custom URLs that are not Supabase Storage objects.
+  }
+  return url;
+}
+
+function imageUrlFromName(name: string, folder: 'blog' | 'services'): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  if (/^(?:https?:)?\/\//i.test(trimmed) || trimmed.startsWith('/')) return trimmed;
+  const encodedName = trimmed.split('/').map((part) => encodeURIComponent(part)).join('/');
+  return `/media/${folder}/${encodedName}`;
+}
+
 export default function ContentEditor({
   initialData,
   availableCategories,
@@ -104,7 +142,9 @@ export default function ContentEditor({
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [tags, setTags] = useState<string[]>(initialData.tags || []);
   const [newTagInput, setNewTagInput] = useState('');
-  const [featuredImage, setFeaturedImage] = useState<string | undefined>(initialData.featuredImage);
+  const [featuredImage, setFeaturedImage] = useState<string | undefined>(initialData.featuredImage ? normalizePublicMediaUrl(initialData.featuredImage) : undefined);
+  const [featuredImageName, setFeaturedImageName] = useState(initialData.featuredImageName || imageNameFromUrl(initialData.featuredImage));
+  const [featuredImageAlt, setFeaturedImageAlt] = useState(initialData.featuredImageAlt || '');
   const [status, setStatus] = useState<'draft' | 'published'>(initialData.status);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -126,6 +166,24 @@ export default function ContentEditor({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const visualEditorRef = useRef<HTMLDivElement>(null);
+  const savedSelectionRef = useRef<Range | null>(null);
+
+  const rememberEditorSelection = () => {
+    const selection = window.getSelection();
+    if (selection?.rangeCount && visualEditorRef.current?.contains(selection.anchorNode)) {
+      savedSelectionRef.current = selection.getRangeAt(0).cloneRange();
+    }
+  };
+
+  const restoreEditorSelection = () => {
+    const editor = visualEditorRef.current;
+    const range = savedSelectionRef.current;
+    if (!editor || !range || !editor.contains(range.commonAncestorContainer)) return;
+    editor.focus();
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  };
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -158,11 +216,27 @@ export default function ContentEditor({
   // WYSIWYG command execution
   const executeCommand = (command: string, value: string | undefined = undefined) => {
     if (editorMode !== 'visual') return;
+    restoreEditorSelection();
     visualEditorRef.current?.focus();
     document.execCommand(command, false, value);
     if (visualEditorRef.current) {
       setContentHtml(visualEditorRef.current.innerHTML);
     }
+  };
+
+  const applyFontSize = (size: '2' | '3' | '5') => {
+    restoreEditorSelection();
+    document.execCommand('styleWithCSS', false, 'true');
+    executeCommand('fontSize', size);
+  };
+
+  const insertTable = () => {
+    restoreEditorSelection();
+    const cellStyle = 'border:1px solid #CBD5D1; padding:0.65rem 0.75rem; text-align:left;';
+    const header = `<thead><tr>${Array.from({ length: 3 }, (_, index) => `<th scope="col" style="${cellStyle} background-color:#EAF6F0; font-weight:700;">Column ${index + 1}</th>`).join('')}</tr></thead>`;
+    const rows = Array.from({ length: 3 }, () => `<tr>${Array.from({ length: 3 }, () => `<td style="${cellStyle}">Cell</td>`).join('')}</tr>`).join('');
+    document.execCommand('insertHTML', false, `<table style="width:100%; margin:1rem 0; border:1px solid #CBD5D1; border-collapse:collapse;">${header}<tbody>${rows}</tbody></table><p><br></p>`);
+    handleVisualInput();
   };
 
   const handleVisualInput = () => {
@@ -183,8 +257,10 @@ export default function ContentEditor({
     altText?: string;
     caption?: string;
     alignment?: 'left' | 'center' | 'right';
+    width?: number;
+    imageName?: string;
   }) => {
-    const { url, altText = 'Article Illustration', caption, alignment = 'center' } = result;
+    const { url, altText = 'Article illustration', caption, alignment = 'center', width = 100, imageName = imageNameFromUrl(url) } = result;
     if (mediaModalMode === 'featured') {
       if (featuredImage && featuredImage !== url && featuredImage.includes('supabase.co')) {
         void fetch('/api/admin/storage/orphan', {
@@ -194,6 +270,8 @@ export default function ContentEditor({
         });
       }
       setFeaturedImage(url);
+      setFeaturedImageName(imageName);
+      setFeaturedImageAlt(altText);
     } else {
       // Insert inline image into content
       if (editorMode !== 'visual') {
@@ -207,9 +285,9 @@ export default function ContentEditor({
             : alignment === 'right'
             ? 'margin-left:auto; margin-right:0;'
             : 'margin-left:auto; margin-right:auto;';
-        const imgHtml = `<figure style="margin:1.5rem 0; text-align:${alignment};"><img src="${url}" alt="${altText}" style="max-width:100%; height:auto; border-radius:0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display:inline-block; ${alignStyle}" />${
-          caption
-            ? `<figcaption style="font-size:0.75rem; color:#64748B; margin-top:0.5rem; font-style:italic;">${caption}</figcaption>`
+        const imgHtml = `<figure style="display:block; width:${Math.min(100, Math.max(25, width))}%; max-width:100%; margin-top:1.5rem; margin-bottom:1.5rem; text-align:${alignment}; ${alignStyle}"><img src="${escapeHtml(url)}" alt="${escapeHtml(altText)}" title="${escapeHtml(imageName)}" style="display:block; width:100%; height:auto; border-radius:0.75rem; box-shadow:0 1px 3px rgba(0,0,0,0.1);" />${
+          caption?.trim()
+            ? `<figcaption style="font-size:0.75rem; color:#64748B; margin-top:0.5rem; font-style:italic;">${escapeHtml(caption.trim())}</figcaption>`
             : ''
         }</figure><p><br></p>`;
         document.execCommand('insertHTML', false, imgHtml);
@@ -230,6 +308,7 @@ export default function ContentEditor({
       }).catch(() => {});
     }
     setFeaturedImage(undefined);
+    setFeaturedImageName('');
   };
 
   const handleAddCategory = () => {
@@ -245,11 +324,20 @@ export default function ContentEditor({
 
   const handleAddTag = () => {
     if (!newTagInput.trim()) return;
-    const tag = newTagInput.trim();
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
-    }
+    const newTags = newTagInput.split(',').map((tag) => tag.trim()).filter(Boolean);
+    setTags((current) => [...current, ...newTags.filter((tag) => !current.some((existing) => existing.toLowerCase() === tag.toLowerCase()))]);
     setNewTagInput('');
+  };
+
+  const handleTagInput = (value: string) => {
+    if (!value.includes(',')) {
+      setNewTagInput(value);
+      return;
+    }
+    const parts = value.split(',');
+    const completedTags = parts.slice(0, -1).map((tag) => tag.trim()).filter(Boolean);
+    setTags((current) => [...current, ...completedTags.filter((tag) => !current.some((existing) => existing.toLowerCase() === tag.toLowerCase()))]);
+    setNewTagInput(parts.at(-1) || '');
   };
 
   const handleSave = async (forcedStatus?: 'draft' | 'published') => {
@@ -288,7 +376,9 @@ export default function ContentEditor({
       category,
       categoriesList,
       tags,
-      featuredImage,
+      featuredImage: featuredImage?.trim() ? normalizePublicMediaUrl(featuredImage.trim()) : imageUrlFromName(featuredImageName, storageFolder) || undefined,
+      featuredImageName,
+      featuredImageAlt,
       status: nextStatus,
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || excerpt,
@@ -312,6 +402,8 @@ export default function ContentEditor({
         onSelect={handleSelectMedia}
         folder={storageFolder}
         mode={mediaModalMode}
+        initialAltText={mediaModalMode === 'featured' ? featuredImageAlt : ''}
+        initialImageName={mediaModalMode === 'featured' ? featuredImageName : ''}
       />
 
       {/* Bespoke Confirm Modal for Delete */}
@@ -450,7 +542,7 @@ export default function ContentEditor({
           <div className={editorMode === 'visual' ? 'block' : 'hidden'}>
             <div className="bg-white border border-[#E6EFEA] rounded-b-2xl shadow-xs overflow-hidden">
               {/* Formatting Toolbar */}
-              <div onMouseDown={(event) => event.preventDefault()} className="flex flex-wrap items-center gap-1 p-2.5 bg-[#FAFDFB] border-b border-[#EEF4F0] text-[#33475B]">
+              <div onMouseDown={(event) => { rememberEditorSelection(); event.preventDefault(); }} className="flex flex-wrap items-center gap-1 p-2.5 bg-[#FAFDFB] border-b border-[#EEF4F0] text-[#33475B]">
                 <button
                   type="button"
                   onClick={() => executeCommand('bold')}
@@ -542,6 +634,11 @@ export default function ContentEditor({
                 >
                   <AlignRight className="w-4 h-4" />
                 </button>
+                <div className="w-px h-4 bg-slate-200 mx-1" />
+                <button type="button" onClick={() => applyFontSize('2')} className="rounded-lg px-1.5 py-1 text-[11px] font-bold hover:bg-[#EAF6F0] hover:text-[#1A8F4B]" title="Decrease text size">A−</button>
+                <button type="button" onClick={() => applyFontSize('3')} className="rounded-lg px-1.5 py-1 text-xs font-bold hover:bg-[#EAF6F0] hover:text-[#1A8F4B]" title="Use normal text size">A</button>
+                <button type="button" onClick={() => applyFontSize('5')} className="rounded-lg px-1.5 py-1 text-sm font-bold hover:bg-[#EAF6F0] hover:text-[#1A8F4B]" title="Increase text size">A+</button>
+                <button type="button" onClick={() => insertTable()} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold hover:bg-[#EAF6F0] hover:text-[#1A8F4B]" title="Insert a 3 by 3 table"><Table2 className="size-4" /><span>Table</span></button>
                 <div className="w-px h-4 bg-slate-200 mx-1" />
                 <button
                   type="button"
@@ -752,13 +849,14 @@ export default function ContentEditor({
               </button>
             </div>
 
-            {featuredImage ? (
+            {(featuredImage || imageUrlFromName(featuredImageName, storageFolder)) ? (
               <div className="space-y-3">
                 <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                   <Image
-                    src={featuredImage}
+                    src={featuredImage || imageUrlFromName(featuredImageName, storageFolder)}
                     alt="Featured Image Preview"
                     fill
+                    sizes="(max-width: 768px) 100vw, 320px"
                     className="object-cover"
                   />
                 </div>
@@ -795,6 +893,19 @@ export default function ContentEditor({
                 </div>
               </div>
             )}
+            <div className="space-y-3">
+              <label className="block text-[11px] font-bold text-slate-700">Image URL
+                <input type="text" value={featuredImage || imageUrlFromName(featuredImageName, storageFolder)} onChange={(event) => setFeaturedImage(event.target.value || undefined)} maxLength={2048} placeholder="/media/blog/image-name.webp or https://…" className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-normal focus:outline-none focus:border-[#1A8F4B]" />
+              </label>
+              <label className="block text-[11px] font-bold text-slate-700">Image name
+                <input type="text" value={featuredImageName} onChange={(event) => setFeaturedImageName(event.target.value)} maxLength={250} placeholder="e.g. vat-registration-nepal.webp" className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-normal focus:outline-none focus:border-[#1A8F4B]" />
+                <span className="mt-1 block text-[10px] font-normal text-slate-500">If URL is blank, this name becomes the public image path in the {storageFolder} bucket.</span>
+              </label>
+              <label className="block text-[11px] font-bold text-slate-700">Featured image alt text
+                <input type="text" value={featuredImageAlt} onChange={(event) => setFeaturedImageAlt(event.target.value)} maxLength={250} placeholder="Describe what this image shows" className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-normal focus:outline-none focus:border-[#1A8F4B]" />
+                <span className="mt-1 block text-[10px] font-normal text-slate-500">Describe the image clearly for accessibility and search engines.</span>
+              </label>
+            </div>
           </div>
 
           {storageFolder === 'blog' && <>
@@ -872,7 +983,7 @@ export default function ContentEditor({
               <input
                 type="text"
                 value={newTagInput}
-                onChange={(e) => setNewTagInput(e.target.value)}
+                onChange={(e) => handleTagInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -891,6 +1002,10 @@ export default function ContentEditor({
               </button>
             </div>
 
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-[10px] text-[#718181]">Type a comma to add each tag.</span>
+              {tags.length > 0 && <button type="button" onClick={() => setTags([])} className="text-[10px] font-semibold text-rose-700 hover:underline">Clear all tags</button>}
+            </div>
             <div className="flex flex-wrap gap-1.5 pt-1">
               {tags.map((tag) => (
                 <span

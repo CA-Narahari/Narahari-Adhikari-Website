@@ -107,7 +107,7 @@ export default function ServicesCarousel() {
                     <div className="relative h-[210px] sm:h-[220px] w-full overflow-hidden bg-slate-200 shrink-0">
                       <Image
                         src={imageSrc}
-                        alt={service.title}
+                        alt={service.image_alt || service.title}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
-import { Clock3, Mail, MapPin, Phone, Send } from 'lucide-react';
+import { Mail, MapPin, Phone, Send } from 'lucide-react';
 
 export default function ContactPage() {
   const { settings } = useApp();
@@ -68,7 +68,6 @@ export default function ContactPage() {
               <div className="flex gap-3"><MapPin className="mt-0.5 size-4 shrink-0 text-[#14864B]" /><dd>{settings.address}</dd></div>
               <div className="flex gap-3"><Phone className="mt-0.5 size-4 shrink-0 text-[#14864B]" /><dd><a href={`tel:${settings.phone}`} className="underline underline-offset-4">{settings.phone}</a></dd></div>
               <div className="flex gap-3"><Mail className="mt-0.5 size-4 shrink-0 text-[#14864B]" /><dd><a href={`mailto:${settings.email}`} className="underline underline-offset-4">{settings.email}</a></dd></div>
-              {settings.office_hours_summary && <div className="flex gap-3"><Clock3 className="mt-0.5 size-4 shrink-0 text-[#14864B]" /><dd>{settings.office_hours_summary}</dd></div>}
             </dl>
           </div>
           <div className="rounded-3xl bg-[#073F43] p-6 text-white">

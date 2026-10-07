@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { addArticleHeadingIds, escapeArticleText, getArticleHeadings, toArticleHtml } from '@/lib/article-content';
+import { normalizeMediaHtml, publicMediaUrl } from '@/lib/media-url';
 import type { BlogPost } from '@/types';
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Clock3, Copy, FileText, List, UserRound } from 'lucide-react';
 
@@ -129,7 +130,7 @@ export default function BlogArticlePage() {
     description: post.meta_description || post.excerpt,
     datePublished: post.published_at,
     author: { '@type': 'Person', name: post.author || 'CA Narahari Adhikari' },
-    image: post.featured_image ? [post.featured_image] : undefined,
+    image: publicMediaUrl(post.featured_image) ? [publicMediaUrl(post.featured_image)!] : undefined,
   };
   const formattedDate = formatDate(post.published_at);
   const copyLink = async () => {
@@ -171,14 +172,14 @@ export default function BlogArticlePage() {
           </div>
 
           {post.featured_image && <figure className="relative mt-6 aspect-[4/3] overflow-hidden rounded-lg border border-[#E2EAED] bg-slate-100 sm:aspect-[8/3]">
-            <Image src={post.featured_image} alt={post.title} fill priority sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
+            <Image src={publicMediaUrl(post.featured_image) || post.featured_image} alt={post.image_alt || post.title} fill priority sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
           </figure>}
 
           {isHistoricalTaxArticle && <aside className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] leading-6 text-amber-950" aria-label="Historical tax information">
             <strong>Historical reference: FY 2081/82.</strong> Tax rates and filing dates change by fiscal year. Verify current requirements with the <a href="https://ird.gov.np/category/incometax-1/" target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">Inland Revenue Department</a> before relying on figures in this article.
           </aside>}
 
-          <div className="cms-article-content prose prose-slate mt-5 max-w-none text-[15px] leading-[1.85] text-[#5B7485] prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[#073F50] prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-[#E5ECEF] prose-h2:scroll-mt-28 prose-h2:pb-2 prose-h2:text-[21px] prose-h3:mb-2 prose-h3:mt-6 prose-h3:scroll-mt-28 prose-h3:text-lg prose-p:my-4 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#28B76A] prose-blockquote:pl-5 prose-blockquote:text-[#547083] prose-img:my-6 prose-img:rounded-lg prose-a:text-[#168A4A] prose-a:underline" dangerouslySetInnerHTML={{ __html: articleHtml || '<p>Article content will be published here.</p>' }} />
+          <div className="cms-article-content prose prose-slate mt-5 max-w-none text-[15px] leading-[1.85] text-[#5B7485] prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[#073F50] prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-[#E5ECEF] prose-h2:scroll-mt-28 prose-h2:pb-2 prose-h2:text-[21px] prose-h3:mb-2 prose-h3:mt-6 prose-h3:scroll-mt-28 prose-h3:text-lg prose-p:my-4 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#28B76A] prose-blockquote:pl-5 prose-blockquote:text-[#547083] prose-img:my-6 prose-img:rounded-lg prose-a:text-[#168A4A] prose-a:underline" dangerouslySetInnerHTML={{ __html: normalizeMediaHtml(articleHtml || '<p>Article content will be published here.</p>') }} />
 
           {post.tags?.length ? <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-[#E5ECEF] pt-5">
             <span className="mr-1 text-xs font-semibold text-[#688093]">Tags</span>
@@ -223,6 +224,6 @@ export default function BlogArticlePage() {
 
 function ArticleThumbnail({ src, alt }: { src?: string; alt: string }) {
   return <div className="relative h-[76px] w-[84px] shrink-0 overflow-hidden rounded-lg bg-[#EAF2F2]">
-    {src ? <Image src={src} alt={alt} fill sizes="84px" className="object-cover transition duration-300 group-hover:scale-105" /> : <FileText className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-[#8AA4A8]" />}
+    {src ? <Image src={publicMediaUrl(src) || src} alt={alt} fill sizes="84px" className="object-cover transition duration-300 group-hover:scale-105" /> : <FileText className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-[#8AA4A8]" />}
   </div>;
 }

@@ -10,6 +10,7 @@ const BLOG_COLUMNS = [
   'author',
   'read_time',
   'featured_image',
+  'image_name',
   'tags',
   'status',
   'published_at',
@@ -40,7 +41,7 @@ function getBlogPayload(input: Record<string, unknown>, partial = false) {
   if (payload.tags !== undefined && (!Array.isArray(payload.tags) || payload.tags.some((tag) => typeof tag !== 'string'))) {
     return { error: 'Tags must be a list of text values.' } as const;
   }
-  for (const column of ['title', 'slug', 'category', 'excerpt', 'content', 'author', 'read_time', 'meta_title', 'meta_description', 'focus_keyword', 'image_alt'] as const) {
+  for (const column of ['title', 'slug', 'category', 'excerpt', 'content', 'author', 'read_time', 'meta_title', 'meta_description', 'focus_keyword', 'image_name', 'image_alt'] as const) {
     if (payload[column] !== undefined && typeof payload[column] !== 'string') {
       return { error: `The ${column.replaceAll('_', ' ')} field must be text.` } as const;
     }

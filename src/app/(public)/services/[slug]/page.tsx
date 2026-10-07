@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { getArticleHeadings, serviceArticleHtml } from '@/lib/article-content';
+import { normalizeMediaHtml, publicMediaUrl } from '@/lib/media-url';
 import type { BlogPost, ServiceItem } from '@/types';
 import { ArrowLeft, ArrowRight, Building, FileText, List, UserRound } from 'lucide-react';
 
@@ -86,10 +87,10 @@ export default function ServiceDetailPage() {
           </div>
 
           {service.image && <figure className="relative mt-6 aspect-[4/3] overflow-hidden rounded-lg border border-[#E2EAED] bg-slate-100 sm:aspect-[8/3]">
-            <Image src={service.image} alt={service.title} fill priority sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
+            <Image src={publicMediaUrl(service.image) || service.image} alt={service.image_alt || service.title} fill priority sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
           </figure>}
 
-          <div className="cms-article-content prose prose-slate mt-5 max-w-none text-[15px] leading-[1.85] text-[#5B7485] prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[#073F50] prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-[#E5ECEF] prose-h2:scroll-mt-28 prose-h2:pb-2 prose-h2:text-[21px] prose-h3:mb-2 prose-h3:mt-6 prose-h3:scroll-mt-28 prose-h3:text-lg prose-p:my-4 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#28B76A] prose-blockquote:pl-5 prose-blockquote:text-[#547083] prose-img:my-6 prose-img:rounded-lg prose-a:text-[#168A4A] prose-a:underline" dangerouslySetInnerHTML={{ __html: articleHtml || '<p>Service details will be published here.</p>' }} />
+          <div className="cms-article-content prose prose-slate mt-5 max-w-none text-[15px] leading-[1.85] text-[#5B7485] prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[#073F50] prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-[#E5ECEF] prose-h2:scroll-mt-28 prose-h2:pb-2 prose-h2:text-[21px] prose-h3:mb-2 prose-h3:mt-6 prose-h3:scroll-mt-28 prose-h3:text-lg prose-p:my-4 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#28B76A] prose-blockquote:pl-5 prose-blockquote:text-[#547083] prose-img:my-6 prose-img:rounded-lg prose-a:text-[#168A4A] prose-a:underline" dangerouslySetInnerHTML={{ __html: normalizeMediaHtml(articleHtml || '<p>Service details will be published here.</p>') }} />
         </main>
 
         <aside className="space-y-6 lg:sticky lg:top-24">
@@ -137,6 +138,6 @@ export default function ServiceDetailPage() {
 
 function ArticleThumbnail({ src, alt }: { src?: string; alt: string }) {
   return <div className="relative h-[76px] w-[84px] shrink-0 overflow-hidden rounded-lg bg-[#EAF2F2]">
-    {src ? <Image src={src} alt={alt} fill sizes="84px" className="object-cover transition duration-300 group-hover:scale-105" /> : <FileText className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-[#8AA4A8]" />}
+    {src ? <Image src={publicMediaUrl(src) || src} alt={alt} fill sizes="84px" className="object-cover transition duration-300 group-hover:scale-105" /> : <FileText className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-[#8AA4A8]" />}
   </div>;
 }

@@ -1,16 +1,23 @@
 export interface SiteSettings {
   company_name: string;
-  tagline: string;
-  ca_reg_number: string;
   email: string;
   phone: string;
   whatsapp_number: string;
   address: string;
-  office_hours_summary: string;
   careers_enabled: boolean;
-  announcement_active: boolean;
-  announcement_text: string;
-  announcement_link: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  link_url?: string | null;
+  poster_url?: string | null;
+  is_active: boolean;
+  display_location: 'all_pages' | 'home_page' | 'specific_page';
+  target_path?: string | null;
+  expires_at?: string | null;
+  created_at?: string;
 }
 
 export interface TaxUpdate {
@@ -25,6 +32,10 @@ export interface TaxUpdate {
   is_urgent: boolean;
   status: 'draft' | 'published';
   published_at: string;
+  meta_title?: string;
+  meta_description?: string;
+  focus_keyword?: string;
+  image_alt?: string;
   update_type?: 'Update' | 'Deadline' | 'Guide' | 'Sector Note';
   effective_date?: string;
   topic?: string;
@@ -41,6 +52,8 @@ export interface BlogPost {
   author: string;
   read_time: string;
   featured_image?: string;
+  image_name?: string;
+  image_alt?: string;
   tags?: string[];
   status: 'draft' | 'published';
   published_at: string;
@@ -61,6 +74,8 @@ export interface ServiceItem {
   is_featured: boolean;
   display_order?: number;
   image?: string;
+  image_name?: string;
+  image_alt?: string;
   meta_title?: string;
   meta_description?: string;
   focus_keyword?: string;

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase/server';
 
 async function getAdminClient() {
@@ -167,14 +168,37 @@ export async function PATCH(request: Request) {
 
   const userId = typeof body.userId === 'string' ? body.userId.trim() : '';
   const password = typeof body.password === 'string' ? body.password : '';
+  const requestedRole = body.role;
 
   if (!userId) {
     return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
   }
 
-  if (password.length < 8 || password.length > 128) {
-    return NextResponse.json({ error: 'Password must be between 8 and 128 characters.' }, { status: 400 });
+  if (requestedRole === 'admin' || requestedRole === 'staff') {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user: actor } } = await authClient!.auth.getUser();
+    if (actor?.id === userId && requestedRole !== 'admin') {
+      return NextResponse.json({ error: 'You cannot remove your own administrator access.' }, { status: 400 });
+    }
+    const { data: changed, error: roleError } = await supabase.from('profiles').update({ role: requestedRole }).eq('id', userId).select('id').maybeSingle();
+    if (roleError || !changed) return NextResponse.json({ error: 'The account role could not be changed.' }, { status: 400 });
+    return NextResponse.json({ success: true, message: 'Account access updated.' });
   }
+
+  const currentPassword = typeof body.currentPassword === 'string' ? body.currentPassword : '';
+  if (password.length < 8 || password.length > 128 || currentPassword.length < 1) {
+    return NextResponse.json({ error: 'Enter your current password and a new password of at least 8 characters.' }, { status: 400 });
+  }
+
+  const authClient = await createSupabaseServerClient();
+  const { data: { user: actor } } = await authClient!.auth.getUser();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!actor?.email || !supabaseUrl || !publishableKey) return NextResponse.json({ error: 'We could not verify the administrator account.' }, { status: 401 });
+  const verifier = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const { error: verificationError } = await verifier.auth.signInWithPassword({ email: actor.email, password: currentPassword });
+  await verifier.auth.signOut();
+  if (verificationError) return NextResponse.json({ error: 'The current administrator password is incorrect.' }, { status: 403 });
 
   const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
     password,

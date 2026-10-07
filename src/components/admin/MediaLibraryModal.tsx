@@ -36,8 +36,40 @@ interface MediaLibraryModalProps {
     altText?: string;
     caption?: string;
     alignment?: 'center' | 'left' | 'right';
+    width?: number;
+    imageName?: string;
   }) => void;
   onClose: () => void;
+  initialAltText?: string;
+  initialImageName?: string;
+}
+
+function imageNameFromUrl(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split('/').pop() || '');
+  } catch {
+    return url.split('/').pop()?.split(/[?#]/)[0] || '';
+  }
+}
+
+function imageUrlFromName(name: string, folder: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  if (/^(?:https?:)?\/\//i.test(trimmed) || trimmed.startsWith('/')) return trimmed;
+  const encodedName = trimmed.split('/').map((part) => encodeURIComponent(part)).join('/');
+  return `/media/${folder}/${encodedName}`;
+}
+
+function useBrandedMediaPath(url: string): string {
+  try {
+    const pathname = new URL(url, window.location.origin).pathname;
+    const marker = '/storage/v1/object/public/website-media/';
+    const objectPath = pathname.includes(marker) ? pathname.split(marker)[1] : '';
+    if (objectPath) return `/media/${objectPath.split('/').map((part) => encodeURIComponent(decodeURIComponent(part))).join('/')}`;
+  } catch {
+    // Keep custom and relative image URLs unchanged.
+  }
+  return url;
 }
 
 export default function MediaLibraryModal({
@@ -47,6 +79,8 @@ export default function MediaLibraryModal({
   folder,
   onSelect,
   onClose,
+  initialAltText = '',
+  initialImageName = '',
 }: MediaLibraryModalProps) {
   const activeFolder = folder || storageFolder;
   const [activeTab, setActiveTab] = useState<'library' | 'upload'>('library');
@@ -54,11 +88,17 @@ export default function MediaLibraryModal({
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFile, setSelectedFile] = useState<MediaFileItem | null>(null);
+  const [pendingUpload, setPendingUpload] = useState<File | null>(null);
+  const [uploadName, setUploadName] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageName, setImageName] = useState(initialImageName);
+  const [selectionError, setSelectionError] = useState('');
 
   // Insert options
   const [altText, setAltText] = useState('');
   const [caption, setCaption] = useState('');
   const [alignment, setAlignment] = useState<'center' | 'left' | 'right'>('center');
+  const [imageWidth, setImageWidth] = useState(100);
 
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
@@ -89,13 +129,25 @@ export default function MediaLibraryModal({
   // Fetch files when modal opens
   useEffect(() => {
     if (!isOpen) return;
+    setAltText(initialAltText);
+    setImageName(initialImageName || selectedFile?.name || '');
+    setImageUrl(useBrandedMediaPath(selectedFile?.publicUrl || ''));
+    setSelectionError('');
     const timer = window.setTimeout(() => { void loadFiles(); }, 0);
     return () => window.clearTimeout(timer);
-  }, [isOpen, activeFolder]);
+  }, [isOpen, activeFolder, initialAltText, initialImageName]);
 
-  const handleFileUpload = async (fileList: FileList | null) => {
+  const prepareFileUpload = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
     const file = fileList[0];
+    setPendingUpload(file);
+    setUploadName(file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '));
+    setUploadError(null);
+  };
+
+  const handleFileUpload = async () => {
+    const file = pendingUpload;
+    if (!file) return;
 
     setIsUploading(true);
     setUploadError(null);
@@ -105,6 +157,7 @@ export default function MediaLibraryModal({
       formData.append('file', file);
       formData.append('bucket', 'website-media');
       formData.append('folder', activeFolder);
+      formData.append('filename', uploadName);
 
       const res = await fetch('/api/admin/storage/upload', {
         method: 'POST',
@@ -125,6 +178,10 @@ export default function MediaLibraryModal({
 
       setFiles((prev) => [newFileItem, ...prev]);
       setSelectedFile(newFileItem);
+      setImageUrl(useBrandedMediaPath(newFileItem.publicUrl));
+      setImageName(newFileItem.name);
+      setAltText(uploadName.trim() || file.name.replace(/\.[^.]+$/, ''));
+      setPendingUpload(null);
       setActiveTab('library');
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed');
@@ -153,20 +210,36 @@ export default function MediaLibraryModal({
     }
   };
 
+  const handleSelectFile = (file: MediaFileItem) => {
+    setSelectedFile(file);
+    setImageUrl(useBrandedMediaPath(file.publicUrl));
+    setImageName(file.name);
+    setAltText(file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '));
+    setSelectionError('');
+  };
+
   const handleConfirmSelect = () => {
-    if (!selectedFile) return;
+    const resolvedUrl = imageUrl.trim() || imageUrlFromName(imageName, activeFolder);
+    if (!resolvedUrl) {
+      setSelectionError('Enter an image URL or image name to continue.');
+      return;
+    }
     onSelect({
-      url: selectedFile.publicUrl,
-      altText: altText || selectedFile.name,
+      url: resolvedUrl,
+      imageName: imageName.trim() || imageNameFromUrl(resolvedUrl),
+      altText: altText.trim() || imageName.trim() || imageNameFromUrl(resolvedUrl).replace(/\.[^.]+$/, ''),
       caption,
       alignment,
+      width: imageWidth,
     });
+    setSelectionError('');
     onClose();
   };
 
   const handleCopyLink = () => {
-    if (!selectedFile) return;
-    navigator.clipboard.writeText(selectedFile.publicUrl);
+    const value = imageUrl.trim() || imageUrlFromName(imageName, activeFolder);
+    if (!value) return;
+    navigator.clipboard.writeText(value);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
   };
@@ -250,7 +323,7 @@ export default function MediaLibraryModal({
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
-                  handleFileUpload(e.dataTransfer.files);
+                  prepareFileUpload(e.dataTransfer.files);
                 }}
                 className="w-full max-w-lg p-10 border-2 border-dashed border-[#1A8F4B]/40 hover:border-[#1A8F4B] bg-white rounded-3xl flex flex-col items-center justify-center transition-all cursor-pointer group shadow-xs"
                 onClick={() => fileInputRef.current?.click()}
@@ -264,7 +337,7 @@ export default function MediaLibraryModal({
                 </div>
 
                 <h3 className="text-base font-bold text-slate-800">
-                  {isUploading ? 'Uploading to Supabase Storage...' : 'Upload Image to Storage'}
+                  {isUploading ? 'Uploading to Supabase Storage...' : pendingUpload ? pendingUpload.name : 'Upload Image to Storage'}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
                   Drag and drop files here, or click to browse. Supports JPG, PNG, WEBP up to 10MB.
@@ -275,7 +348,7 @@ export default function MediaLibraryModal({
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => handleFileUpload(e.target.files)}
+                  onChange={(e) => prepareFileUpload(e.target.files)}
                 />
 
                 <button
@@ -283,9 +356,23 @@ export default function MediaLibraryModal({
                   disabled={isUploading}
                   className="mt-6 px-6 py-2.5 rounded-xl bg-[#0C4A4E] hover:bg-[#083639] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                 >
-                  Browse File
+                  {pendingUpload ? 'Choose a different image' : 'Browse File'}
                 </button>
               </div>
+
+              {pendingUpload && <div className="w-full max-w-lg space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-left">
+                <label className="block text-xs font-bold text-slate-700">SEO-friendly image filename
+                  <div className="mt-1.5 flex h-10 items-center overflow-hidden rounded-lg border border-slate-200 focus-within:border-[#1A8F4B]">
+                    <input value={uploadName} onChange={(event) => setUploadName(event.target.value)} maxLength={90} disabled={isUploading} className="min-w-0 flex-1 px-3 text-xs font-normal outline-none" placeholder="e.g. vat-registration-nepal" />
+                    <span className="bg-slate-50 px-3 py-2 text-[11px] text-slate-500">.{pendingUpload.name.split('.').pop()?.toLowerCase()}</span>
+                  </div>
+                  <span className="mt-1 block text-[10px] font-normal text-slate-500">Use a short, descriptive name. Spaces are saved as hyphens.</span>
+                </label>
+                <button type="button" onClick={() => { void handleFileUpload(); }} disabled={isUploading || !uploadName.trim()} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#0C4A4E] px-4 text-xs font-bold text-white transition hover:bg-[#083639] disabled:cursor-wait disabled:opacity-60">
+                  {isUploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                  {isUploading ? 'Uploading…' : 'Upload to Media Library'}
+                </button>
+              </div>}
 
               {uploadError && (
                 <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 max-w-md">
@@ -344,10 +431,11 @@ export default function MediaLibraryModal({
                       {filteredFiles.map((file) => {
                         const isSelected = selectedFile?.path === file.path;
                         return (
-                          <div
+                      <button
+                            type="button"
                             key={file.path}
-                            onClick={() => setSelectedFile(file)}
-                            className={`group relative aspect-[4/3] rounded-2xl overflow-hidden border-2 transition-all cursor-pointer bg-slate-100 shadow-2xs ${
+                            onClick={() => handleSelectFile(file)}
+                            className={`group relative aspect-[4/3] w-full rounded-2xl overflow-hidden border-2 text-left transition-all cursor-pointer bg-slate-100 shadow-2xs ${
                               isSelected
                                 ? 'border-[#1A8F4B] ring-2 ring-[#1A8F4B]/30 scale-[0.98]'
                                 : 'border-transparent hover:border-slate-300'
@@ -370,7 +458,7 @@ export default function MediaLibraryModal({
                                 {file.name}
                               </p>
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -380,55 +468,49 @@ export default function MediaLibraryModal({
 
               {/* Right: Selected Image Details & Actions */}
               <div className="w-72 sm:w-80 border-l border-slate-100 bg-white flex flex-col overflow-y-auto p-5 space-y-5">
-                {selectedFile ? (
-                  <>
+                <>
                     <div className="space-y-2">
-                      <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
-                        <Image
-                          src={selectedFile.publicUrl}
-                          alt={selectedFile.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-slate-800 break-all leading-snug">
-                          {selectedFile.name}
-                        </p>
-                        <div className="flex items-center justify-between text-[10.5px] text-slate-400 font-mono">
-                          <span>
-                            {selectedFile.size
-                              ? `${(selectedFile.size / 1024).toFixed(1)} KB`
-                              : 'Uploaded Asset'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleCopyLink}
-                            className="inline-flex items-center gap-1 text-[#1A8F4B] hover:underline cursor-pointer"
-                          >
-                            {copiedUrl ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                            <span>{copiedUrl ? 'Copied' : 'Copy URL'}</span>
-                          </button>
+                      {imageUrl || imageUrlFromName(imageName, activeFolder) ? (
+                        <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
+                          <img src={imageUrl || imageUrlFromName(imageName, activeFolder)} alt={altText || imageName} className="absolute inset-0 h-full w-full object-cover" />
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-400">Choose an image or enter a URL below</div>
+                      )}
+                      {selectedFile && <div className="flex items-center justify-between text-[10.5px] text-slate-400 font-mono">
+                        <span>{selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Uploaded Asset'}</span>
+                        <button type="button" onClick={handleCopyLink} className="inline-flex items-center gap-1 text-[#1A8F4B] hover:underline cursor-pointer">
+                          {copiedUrl ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedUrl ? 'Copied' : 'Copy URL'}</span>
+                        </button>
+                      </div>}
                     </div>
 
                     {/* Mode specific options */}
-                    {mode === 'insert' && (
-                      <div className="space-y-3 pt-3 border-t border-slate-100 text-xs">
+                    <div className="space-y-3 pt-3 border-t border-slate-100 text-xs">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Image URL</label>
+                          <input type="text" placeholder="/media/blog/image.webp or https://…" value={imageUrl || imageUrlFromName(imageName, activeFolder)} onChange={(event) => setImageUrl(event.target.value)} className="w-full h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white text-xs" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Image name / filename</label>
+                          <input type="text" placeholder="e.g. vat-registration-nepal.webp" value={imageName} onChange={(event) => setImageName(event.target.value)} maxLength={250} className="w-full h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white text-xs" />
+                          <p className="mt-1 text-[10px] leading-4 text-slate-500">When URL is empty, this filename builds the public URL in website-media/{activeFolder}.</p>
+                        </div>
                         <div>
                           <label className="block text-[11px] font-bold text-slate-700 mb-1">
                             Alt Text (Image Description)
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. Audit documentation schedule"
+                            placeholder="Describe the image for search and accessibility"
                             value={altText}
                             onChange={(e) => setAltText(e.target.value)}
                             className="w-full h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white text-xs"
                           />
                         </div>
 
+                        {mode === 'insert' && <>
                         <div>
                           <label className="block text-[11px] font-bold text-slate-700 mb-1">
                             Caption (Optional)
@@ -463,8 +545,19 @@ export default function MediaLibraryModal({
                             ))}
                           </div>
                         </div>
-                      </div>
-                    )}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Image width</label>
+                          <select value={imageWidth} onChange={(event) => setImageWidth(Number(event.target.value))} className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs">
+                            <option value={25}>Small · 25%</option>
+                            <option value={50}>Medium · 50%</option>
+                            <option value={75}>Large · 75%</option>
+                            <option value={100}>Full width · 100%</option>
+                          </select>
+                        </div>
+                        </>}
+                    </div>
+
+                    {selectionError && <p role="alert" className="text-[11px] text-rose-700">{selectionError}</p>}
 
                     {/* Bottom Action Buttons */}
                     <div className="pt-4 border-t border-slate-100 space-y-2 mt-auto">
@@ -481,22 +574,16 @@ export default function MediaLibraryModal({
                         </span>
                       </button>
 
-                      <button
+                      {selectedFile && imageUrl === selectedFile.publicUrl && <button
                         type="button"
                         onClick={() => handleDeleteFile(selectedFile)}
                         className="w-full py-2 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete from Storage</span>
-                      </button>
+                      </button>}
                     </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-400 p-4">
-                    <ImageIcon className="w-8 h-8 stroke-1 mb-2" />
-                    <p className="text-xs">Select an image to preview details</p>
-                  </div>
-                )}
+                </>
               </div>
             </>
           )}

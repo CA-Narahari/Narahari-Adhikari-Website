@@ -16,7 +16,7 @@ const dateLabel = (value?: string) => {
 
 export default function AdminDashboardPage() {
   const {
-    settings, taxUpdates, blogPosts, applications, appointments, vacancies, services,
+    settings, taxUpdates, blogPosts, applications, appointments, vacancies, services, announcements,
     downloads, toggleCareers, updateAppointmentStatus,
   } = useApp();
 
@@ -53,9 +53,9 @@ export default function AdminDashboardPage() {
       <section className="flex flex-col gap-6 rounded-2xl border border-[#E2ECE6] bg-white px-6 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-9 sm:py-8">
         <div className="max-w-2xl">
           <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#168A4A]">
-            <span className="size-2 rounded-full bg-[#2CBC63]" /> {settings.ca_reg_number}
+            <span className="size-2 rounded-full bg-[#2CBC63]" /> Practice dashboard
           </p>
-          <h2 className="text-2xl font-bold tracking-tight text-[#073E43] sm:text-3xl">{greeting}, CA Narahari Adhikari</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-[#073E43] sm:text-3xl">{greeting}{settings.company_name ? `, ${settings.company_name}` : ''}</h2>
           <p className="mt-2 text-sm leading-6 text-[#56686A]">Your central workspace for consultations, practice updates, and website content.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-3">
@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
               ))}
               <Link href="/admin/announcements" className="flex items-center gap-3 border-t border-[#EEF2EF] py-3">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#FFF4E5] text-[#BF780D]"><Megaphone aria-hidden="true" className="size-4" /></span>
-                <span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-[#244647]">Announcement banner</span><span className="mt-0.5 block text-[10px] text-[#758584]">{settings.announcement_active ? 'Currently visible on the website' : 'Currently turned off'}</span></span>
+                <span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-[#244647]">Announcements</span><span className="mt-0.5 block text-[10px] text-[#758584]">{announcements.filter((notice) => notice.is_active).length} active notices</span></span>
                 <ArrowRight aria-hidden="true" className="size-4 text-[#91A39A]" />
               </Link>
             </div>

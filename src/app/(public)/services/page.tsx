@@ -17,6 +17,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { publicMediaUrl } from '@/lib/media-url';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ReceiptText: FileText,
@@ -58,7 +59,7 @@ export default function ServicesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {displayServices.map((service, index) => {
             const Icon = iconMap[service.icon] || Briefcase;
-            const serviceImage = service.image || '/Logo.png';
+            const serviceImage = publicMediaUrl(service.image) || '/Logo.png';
 
             return (
               <div
@@ -70,7 +71,7 @@ export default function ServicesPage() {
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
                     <Image
                       src={serviceImage}
-                      alt={service.title}
+                      alt={service.image_alt || service.title}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -68,6 +68,7 @@ create table if not exists public.posts (
   author text not null default '',
   read_time text not null default '',
   featured_image text,
+  image_name text not null default '',
   tags text[] not null default '{}',
   status public.content_status not null default 'draft',
   published_at date,
@@ -94,6 +95,8 @@ create table if not exists public.services (
   display_order integer not null default 0,
   is_featured boolean not null default false,
   image text,
+  image_name text not null default '',
+  image_alt text not null default '',
   meta_title text not null default '',
   meta_description text not null default '',
   focus_keyword text not null default '',
@@ -166,8 +169,10 @@ create table if not exists public.announcements (
   title text not null default '',
   message text not null,
   link_url text,
+  poster_url text,
   is_active boolean not null default false,
-  display_location text not null default 'top_banner',
+  display_location text not null default 'all_pages',
+  target_path text,
   expires_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -181,6 +186,8 @@ create table if not exists public.government_links (
   category text not null default 'Regulatory Authority',
   display_order integer not null default 0
 );
+alter table public.announcements add column if not exists poster_url text;
+alter table public.announcements add column if not exists target_path text;
 
 create unique index if not exists government_links_url_key on public.government_links (url);
 
@@ -294,6 +301,7 @@ create policy "staff manage applications" on public.applications for update usin
 create policy "staff view appointments" on public.appointments for select using (public.is_admin_or_staff());
 create policy "staff manage appointments" on public.appointments for update using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage contact messages" on public.contact_messages for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
+create policy "staff manage announcements" on public.announcements for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage links" on public.government_links for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage downloads" on public.download_resources for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());
 create policy "staff manage settings" on public.site_settings for all using (public.is_admin_or_staff()) with check (public.is_admin_or_staff());

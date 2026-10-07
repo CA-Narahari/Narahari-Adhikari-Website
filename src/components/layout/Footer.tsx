@@ -29,10 +29,6 @@ export default function Footer() {
               />
             </Link>
 
-            <p className="text-[14px] text-[#59667D] leading-relaxed pr-6">
-              Tax, audit, financial reporting, and business advisory support for organisations in Nepal.
-            </p>
-
           </div>
 
           {/* Col 2: Overview links (2 cols) */}
@@ -90,6 +86,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/contact" className="hover:text-[#2CBC63] transition-colors duration-200">
+                  Contact
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy" className="hover:text-[#2CBC63] transition-colors duration-200">
                   Privacy Policy
                 </Link>
@@ -137,8 +138,6 @@ export default function Footer() {
         <div className="pt-6 border-t border-[#E8EBEF] flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-[#93999F]">
           <div>
             <p>© {new Date().getFullYear()} {settings.company_name} • Chartered Accountants</p>
-            {settings.tagline && <p className="mt-1 text-[11px]">{settings.tagline}</p>}
-            {settings.ca_reg_number && <p className="mt-1 text-[11px]">{settings.ca_reg_number}</p>}
           </div>
 
           <div className="flex items-center gap-6">

@@ -25,6 +25,14 @@ const MIME_TYPE_BY_EXTENSION: Record<string, string> = {
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   zip: 'application/zip',
 };
+const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
+  'application/pdf': 'pdf', 'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/zip': 'zip',
+};
 const FOLDER_PATTERN = /^(?:[a-z0-9]+(?:[a-z0-9/_-]*[a-z0-9])?)?$/;
 
 export async function POST(request: Request) {
@@ -37,6 +45,7 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File | null;
     const bucket = (formData.get('bucket') as string) || 'website-media';
     const folder = ((formData.get('folder') as string) || 'uploads').trim().replace(/^\/+|\/+$/g, '');
+    const requestedFilename = formData.get('filename');
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
@@ -44,8 +53,9 @@ export async function POST(request: Request) {
     if (!BUCKETS.has(bucket) || !FOLDER_PATTERN.test(folder)) {
       return NextResponse.json({ error: 'The requested storage location is not allowed.' }, { status: 400 });
     }
-    const extension = file.name.split('.').pop()?.toLowerCase() || '';
-    const contentType = file.type || MIME_TYPE_BY_EXTENSION[extension] || '';
+    const originalExtension = file.name.split('.').pop()?.toLowerCase() || '';
+    const contentType = file.type || MIME_TYPE_BY_EXTENSION[originalExtension] || '';
+    const extension = EXTENSION_BY_MIME_TYPE[contentType] || originalExtension;
     if (file.size <= 0 || file.size > MAX_FILE_SIZE || !MIME_TYPES_BY_BUCKET[bucket].has(contentType)) {
       const formats = bucket === 'download-resources' ? 'PDF, Word, Excel, or ZIP' : 'an image, PDF, or Word document';
       return NextResponse.json({ error: `Choose ${formats} no larger than 10 MB.` }, { status: 400 });
@@ -54,18 +64,32 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Clean filename and make unique
-    const timestamp = Date.now();
-    const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `${folder}/${timestamp}_${cleanName}`;
+    // Keep the image name chosen in the CMS as the actual Storage object name.
+    // The extension always comes from the uploaded file/MIME type.
+    const cleanOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    let cleanName = cleanOriginalName;
+    if (typeof requestedFilename === 'string' && requestedFilename.trim()) {
+      const originalExtension = extension ? `.${extension}` : '';
+      const requestedBase = requestedFilename.trim().replace(/\.[^.]+$/, '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const seoBase = requestedBase.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90);
+      if (!seoBase) return NextResponse.json({ error: 'Enter a filename using letters or numbers.' }, { status: 400 });
+      cleanName = `${seoBase}${originalExtension}`;
+    }
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await adminClient.storage
-      .from(bucket)
-      .upload(storagePath, buffer, {
-        contentType,
-        upsert: false,
-      });
+    // Preserve the chosen clean name and add a numeric suffix only on collision.
+    let storagePath = `${folder}/${cleanName}`;
+    let uploadError: { message: string } | null = null;
+    for (let attempt = 1; attempt <= 20; attempt += 1) {
+      const result = await adminClient.storage.from(bucket).upload(storagePath, buffer, { contentType, upsert: false });
+      uploadError = result.error;
+      if (!uploadError) break;
+      if (!/already exists|duplicate|resource already exists/i.test(uploadError.message) || attempt === 20) break;
+      const dot = cleanName.lastIndexOf('.');
+      const stem = dot > 0 ? cleanName.slice(0, dot) : cleanName;
+      const suffix = dot > 0 ? cleanName.slice(dot) : '';
+      cleanName = `${stem}-${attempt + 1}${suffix}`;
+      storagePath = `${folder}/${cleanName}`;
+    }
 
     if (uploadError) {
       return NextResponse.json(
@@ -82,10 +106,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      publicUrl: urlData.publicUrl,
+      publicUrl: bucket === 'website-media' && ['blog', 'services', 'general', 'announcements'].includes(folder)
+        ? `/media/${storagePath.split('/').map(encodeURIComponent).join('/')}`
+        : urlData.publicUrl,
       path: storagePath,
       bucket,
-      filename: file.name,
+      filename: cleanName,
       size: file.size,
     });
   } catch (err: unknown) {

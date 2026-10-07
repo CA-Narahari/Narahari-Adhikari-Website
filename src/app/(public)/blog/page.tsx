@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Clock, BookOpen, ArrowUpRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { publicMediaUrl } from '@/lib/media-url';
 
 export default function BlogPage() {
   const { blogPosts } = useApp();
@@ -54,8 +55,8 @@ export default function BlogPage() {
                   {/* Article Top Image */}
                   <div className="relative h-[210px] sm:h-[220px] w-full overflow-hidden bg-slate-200 shrink-0">
                     <Image
-                      src={post.featured_image || '/Logo.png'}
-                      alt={post.title}
+                      src={publicMediaUrl(post.featured_image) || '/Logo.png'}
+                      alt={post.image_alt || post.title}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
