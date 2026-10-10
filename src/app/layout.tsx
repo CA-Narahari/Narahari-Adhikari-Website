@@ -28,12 +28,15 @@ export const metadata: Metadata = {
   applicationName: 'Narahari Adhikari',
   keywords: ['financial advisory Nepal', 'tax consulting Nepal', 'statutory audit Nepal', 'NFRS Nepal'],
   robots: { index: true, follow: true },
-  metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.narahariadhikari.com.np'),
   openGraph: {
     type: 'website',
     siteName: 'Narahari Adhikari',
     title: 'Narahari Adhikari',
     description: 'Professional advisory, statutory audit, tax consulting, and financial reporting support in Nepal.',
+  },
+  icons: {
+    icon: '/favicon.png',
   },
 };
 

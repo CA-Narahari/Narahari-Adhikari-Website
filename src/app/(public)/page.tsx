@@ -73,6 +73,17 @@ export default function HomePage() {
 
   return (
     <div className="space-y-20 lg:space-y-28 pb-20 overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Narahari Adhikari',
+            url: 'https://www.narahariadhikari.com.np/',
+          }),
+        }}
+      />
       {/* 1. Hero Section matching Ideas/LandingPage.png */}
       <section id="hero-section" className="relative bg-hero-gradient pt-8 pb-16 lg:pt-14 lg:pb-12 overflow-hidden">
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
