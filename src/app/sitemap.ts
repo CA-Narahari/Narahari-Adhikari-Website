@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://narahariadhikari.com.np';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.narahariadhikari.com.np';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = ['', '/about', '/contact', '/services', '/blog', '/updates', '/careers', '/resources', '/resources/downloads', '/resources/tools', '/privacy', '/terms', '/book-appointment'];
