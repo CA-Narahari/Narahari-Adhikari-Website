@@ -46,36 +46,33 @@ export default function ResourcesGatewayPage() {
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-[#2CBC63] uppercase tracking-wider">
-                  Work out an estimate
-                </span>
-                <h2 className="text-2xl font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors mt-1">
-                  Financial & Tax Calculators
+                <h2 className="text-2xl font-bold text-[#023A51] group-hover:text-[#14864B] transition-colors">
+                  Loan &amp; EMI Calculator
                 </h2>
                 <p className="text-xs sm:text-[13.5px] text-[#59667D] leading-relaxed mt-2">
-                  Check VAT, personal tax, TDS, loan repayments, payroll contributions, and other common figures without opening a spreadsheet.
+                  Calculate exact loan installments, periodic interest breakdowns, and full amortization schedules for corporate and personal borrowings.
                 </p>
               </div>
 
               {/* Pill feature highlights */}
               <div className="flex flex-wrap gap-2 pt-2">
                 <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-700">
-                  VAT 13% Model
+                  Monthly / Quarterly EMI
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-700">
-                  Income Tax Slabs
+                  Amortization Schedule
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-700">
-                  TDS Lookup
+                  Interest Breakdown
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-medium text-slate-700">
-                  SSF 31%
+                  Processing Fee
                 </span>
               </div>
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex items-center gap-2 text-sm font-bold text-[#023A51] group-hover:text-[#2CBC63]">
-              <span>Explore All 8 Calculators</span>
+              <span>Open EMI Calculator</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
@@ -91,11 +88,8 @@ export default function ResourcesGatewayPage() {
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-[#2CBC63] uppercase tracking-wider">
-                  Go to the source
-                </span>
-                <h2 className="text-2xl font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors mt-1">
-                  Regulatory Portals & Downloads
+                <h2 className="text-2xl font-bold text-[#023A51] group-hover:text-[#14864B] transition-colors">
+                  Regulatory Portals &amp; Downloads
                 </h2>
                 <p className="text-xs sm:text-[13.5px] text-[#59667D] leading-relaxed mt-2">
                   Find official portals and practical checklists for tax filing, company records, audit preparation, and regulatory work.

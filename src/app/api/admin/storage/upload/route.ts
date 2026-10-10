@@ -3,6 +3,7 @@ import { requireStaff } from '@/lib/supabase/authorization';
 
 const BUCKETS = new Set(['website-media', 'download-resources']);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_REQUEST_SIZE = MAX_FILE_SIZE + 1024 * 1024;
 const MIME_TYPES_BY_BUCKET: Record<string, Set<string>> = {
   'website-media': new Set([
     'image/jpeg', 'image/png', 'image/webp', 'image/gif',
@@ -35,11 +36,32 @@ const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
 };
 const FOLDER_PATTERN = /^(?:[a-z0-9]+(?:[a-z0-9/_-]*[a-z0-9])?)?$/;
 
+function matchesFileSignature(contentType: string, bytes: Uint8Array): boolean {
+  const startsWith = (...signature: number[]) => signature.every((value, index) => bytes[index] === value);
+  switch (contentType) {
+    case 'image/jpeg': return startsWith(0xff, 0xd8, 0xff);
+    case 'image/png': return startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    case 'image/webp': return startsWith(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+    case 'image/gif': return startsWith(0x47, 0x49, 0x46, 0x38) && (bytes[4] === 0x37 || bytes[4] === 0x39) && bytes[5] === 0x61;
+    case 'application/pdf': return startsWith(0x25, 0x50, 0x44, 0x46, 0x2d);
+    case 'application/msword': return startsWith(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    case 'application/zip':
+    case 'application/x-zip-compressed': return startsWith(0x50, 0x4b, 0x03, 0x04) || startsWith(0x50, 0x4b, 0x05, 0x06) || startsWith(0x50, 0x4b, 0x07, 0x08);
+    case 'application/vnd.ms-excel': return startsWith(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
+    default: return false;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const access = await requireStaff();
     if (access.response) return access.response;
     const { adminClient } = access;
+
+    const declaredLength = Number(request.headers.get('content-length'));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_SIZE) return NextResponse.json({ error: 'The upload must be under 11 MB.' }, { status: 413 });
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -62,6 +84,9 @@ export async function POST(request: Request) {
     }
 
     const bytes = await file.arrayBuffer();
+    if (!matchesFileSignature(contentType, new Uint8Array(bytes, 0, Math.min(bytes.byteLength, 16)))) {
+      return NextResponse.json({ error: 'The uploaded file content does not match its declared type.' }, { status: 400 });
+    }
     const buffer = Buffer.from(bytes);
 
     // Keep the image name chosen in the CMS as the actual Storage object name.
@@ -92,12 +117,8 @@ export async function POST(request: Request) {
     }
 
     if (uploadError) {
-      return NextResponse.json(
-        {
-          error: `Failed to upload to bucket "${bucket}": ${uploadError.message}. Make sure the bucket exists in your Supabase dashboard.`,
-        },
-        { status: 500 }
-      );
+      console.error('CMS storage upload failed', { bucket, code: 'storage_upload_error' });
+      return NextResponse.json({ error: 'The file could not be uploaded. Check the storage configuration and try again.' }, { status: 500 });
     }
 
     const { data: urlData } = bucket === 'website-media' || bucket === 'download-resources'
@@ -115,7 +136,7 @@ export async function POST(request: Request) {
       size: file.size,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown storage error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('CMS storage upload failed', err);
+    return NextResponse.json({ error: 'The file could not be uploaded. Please try again.' }, { status: 500 });
   }
 }

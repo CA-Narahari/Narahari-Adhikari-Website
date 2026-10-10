@@ -255,24 +255,27 @@ export default function BookAppointmentPage() {
                   </div>
                 </div>
 
-                {/* Practice Area and meeting location */}
+                {/* Advisory Service and meeting location */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Practice Area / Service
+                      Advisory Service Requirement
                     </label>
                     <select
+                      id="service-select"
                       value={serviceTitle}
                       onChange={(e) => setServiceTitle(e.target.value)}
                       className="w-full h-11 px-3.5 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] bg-[#F8FAFC] focus:bg-white focus:outline-none focus:border-[#2CBC63] cursor-pointer"
                     >
-                      <option value="Tax Advisory & IRD Compliance">Tax Advisory & IRD Compliance</option>
-                      <option value="Audit & Assurance Services">Audit & Assurance Services</option>
-                      <option value="Mergers & Acquisitions">Mergers & Acquisitions</option>
-                      <option value="Business Advisory & Strategy">Business Advisory & Strategy</option>
-                      <option value="Business Support & BPO">Business Support & BPO</option>
-                      <option value="NFRS/IFRS Implementation">NFRS/IFRS Implementation</option>
-                      <option value="Training & Professional Seminars">Training & Professional Seminars</option>
+                      {services.length > 0 ? (
+                        services.map((s) => (
+                          <option key={s.id || s.slug} value={s.title}>
+                            {s.title}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="General Advisory">General Advisory</option>
+                      )}
                     </select>
                   </div>
 
@@ -363,8 +366,8 @@ export default function BookAppointmentPage() {
                 <h2 className="text-xl font-bold text-[#023A51]">
                   Instant Video Consultation (30 Minutes)
                 </h2>
-              <p className="text-xs text-[#59667D] mt-0.5">
-                  Pick an available time on CA Narahari Adhikari&apos;s calendar for an online meeting.
+                <p className="text-xs text-[#59667D] mt-0.5">
+                  Pick an available time on Narahari Adhikari&apos;s calendar for an online meeting.
                 </p>
               </div>
               <a
@@ -384,7 +387,7 @@ export default function BookAppointmentPage() {
                 width="100%"
                 height="700"
                 frameBorder="0"
-                title="Calendly Scheduling - CA Narahari Adhikari"
+                title="Calendly Scheduling - Narahari Adhikari"
                 className="w-full min-h-[680px]"
               />
             </div>

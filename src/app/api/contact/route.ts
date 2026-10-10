@@ -5,11 +5,18 @@ type ContactRequest = { name?: unknown; email?: unknown; phone?: unknown; organi
 const clean = (value: unknown) => typeof value === 'string' ? value.trim() : '';
 
 export async function POST(request: Request) {
-  const rate = consumeRateLimit(requestKey(request, 'contact'), 5, 15 * 60 * 1000);
+  const declaredLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) return Response.json({ error: 'The message is too large. Shorten it and try again.' }, { status: 413 });
+  const rate = await consumeRateLimit(requestKey(request, 'contact'), 5, 15 * 60 * 1000);
+  if (rate.unavailable) return Response.json({ error: 'The form is temporarily unavailable. Please try again shortly.' }, { status: 503 });
   if (!rate.allowed) return Response.json({ error: 'Too many messages. Please try again later.' }, { status: 429 });
 
   let body: ContactRequest;
-  try { body = await request.json() as ContactRequest; }
+  try {
+    const parsed: unknown = await request.json();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return Response.json({ error: 'Please review the form and try again.' }, { status: 400 });
+    body = parsed as ContactRequest;
+  }
   catch { return Response.json({ error: 'Please review the form and try again.' }, { status: 400 }); }
 
   const name = clean(body.name);

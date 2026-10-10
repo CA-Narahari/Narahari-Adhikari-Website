@@ -60,8 +60,8 @@ export default function AdminBlogPage() {
         category: data.category,
         excerpt: data.excerpt,
         content: sanitizeHtml(data.content),
-        author: 'CA Narahari Adhikari, FCA',
-        read_time: `${Math.max(3, Math.ceil(data.content.split(/\s+/).length / 180))} min read`,
+        author: data.author?.trim() || 'Narahari Adhikari',
+        read_time: data.readTime?.trim() || '5 min read',
         featured_image: data.featuredImage,
         image_name: data.featuredImageName,
         image_alt: data.featuredImageAlt,
@@ -80,8 +80,8 @@ export default function AdminBlogPage() {
         category: data.category,
         excerpt: data.excerpt,
         content: sanitizeHtml(data.content),
-        author: 'CA Narahari Adhikari, FCA',
-        read_time: `${Math.max(3, Math.ceil(data.content.split(/\s+/).length / 180))} min read`,
+        author: data.author?.trim() || 'Narahari Adhikari',
+        read_time: data.readTime?.trim() || '5 min read',
         featured_image: data.featuredImage,
         image_name: data.featuredImageName,
         image_alt: data.featuredImageAlt,
@@ -157,6 +157,8 @@ export default function AdminBlogPage() {
           metaTitle: editingPost.meta_title || `${editingPost.title} | Narahari Adhikari & Co.`,
           metaDescription: editingPost.meta_description || editingPost.excerpt,
           focusKeyword: editingPost.focus_keyword || editingPost.category,
+          author: editingPost.author || 'Narahari Adhikari',
+          readTime: editingPost.read_time || '5 min read',
         }
       : {
           title: '',
@@ -172,6 +174,8 @@ export default function AdminBlogPage() {
           metaTitle: '',
           metaDescription: '',
           focusKeyword: '',
+          author: 'Narahari Adhikari',
+          readTime: '5 min read',
         };
 
     return (
@@ -365,8 +369,8 @@ export default function AdminBlogPage() {
                 </div>
               </div>
 
-              {/* Card Content matching Home Card Body */}
-              <div className="p-6 space-y-2.5 bg-[#E5F1F6] flex-1 flex flex-col justify-between">
+              {/* Card Content */}
+              <div className="p-6 space-y-2.5 bg-white flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between text-[11px] text-[#1D5367]/80 mb-2">
                     <span className="inline-flex items-center gap-1 font-semibold text-[#023A51]">

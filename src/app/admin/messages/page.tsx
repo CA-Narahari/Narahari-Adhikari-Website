@@ -29,6 +29,7 @@ export default function ContactMessagesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [decisionError, setDecisionError] = useState<{ id: string; message: string } | null>(null);
 
   const loadMessages = useCallback(async () => {
     const client = createSupabaseBrowserClient();
@@ -50,17 +51,25 @@ export default function ContactMessagesPage() {
   }, [loadMessages]);
 
   const updateStatus = async (id: string, status: ContactMessage['status']) => {
-    const client = createSupabaseBrowserClient();
-    if (!client) { setError('Database connection is not configured.'); return; }
+    const enquiry = messages.find((message) => message.id === id);
+    if (!enquiry || enquiry.status === status) return;
+    if (status === 'closed' && !window.confirm(`Close the enquiry from ${enquiry.name}? This only records the CMS decision; it does not send a reply.`)) return;
     setUpdatingId(id);
     setError('');
-    const { data, error: updateError } = await client.from('contact_messages').update({ status }).eq('id', id).select('id').maybeSingle();
-    if (updateError || !data) {
-      setError('The enquiry status could not be saved. Check your CMS access and try again.');
-    } else {
+    setDecisionError(null);
+    try {
+      const response = await fetch('/api/admin/records/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordType: 'contact_messages', id, status }),
+      });
+      if (!response.ok) throw new Error('save failed');
       setMessages((current) => current.map((message) => message.id === id ? { ...message, status } : message));
+    } catch {
+      setDecisionError({ id, message: 'The enquiry decision was not saved. Refresh the inbox and try again.' });
+    } finally {
+      setUpdatingId(null);
     }
-    setUpdatingId(null);
   };
 
   const counts = useMemo(() => ({
@@ -104,13 +113,13 @@ export default function ContactMessagesPage() {
         </div>
 
         {error && <p role="alert" className="m-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
-        {loading ? <div role="status" className="p-12 text-center text-sm text-[#718181]">Loading website enquiries…</div> : filtered.length === 0 ? <div className="p-12 text-center"><Mail className="mx-auto size-8 text-[#98B8A6]" /><h3 className="mt-3 font-bold text-[#123F40]">{messages.length ? 'No matching enquiries' : 'No enquiries yet'}</h3><p className="mx-auto mt-1 max-w-md text-sm leading-6 text-[#718181]">{messages.length ? 'Try another search or choose a different status.' : 'When someone sends a message through the public Contact form, it will appear here. Appointment bookings are managed on their own page.'}</p>{!messages.length && <Link href="/contact" target="_blank" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14864B] hover:underline">Open the public contact form <Send className="size-3.5" /></Link>}</div> : <ul className="divide-y divide-[#EDF2EF]">{filtered.map((message) => <li key={message.id} className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_190px] sm:p-6">
+        {loading ? <div role="status" className="p-12 text-center text-sm text-[#718181]">Loading website enquiries…</div> : filtered.length === 0 ? <div className="p-12 text-center"><Mail className="mx-auto size-8 text-[#98B8A6]" /><h3 className="mt-3 font-bold text-[#123F40]">{messages.length ? 'No matching enquiries' : 'No enquiries yet'}</h3><p className="mx-auto mt-1 max-w-md text-sm leading-6 text-[#718181]">{messages.length ? 'Try another search or choose a different status.' : 'When someone sends a message through the public Contact form, it will appear here. Appointment bookings are managed on their own page.'}</p>{!messages.length && <Link href="/contact" target="_blank" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14864B] hover:underline">Open the public contact form <Send className="size-3.5" /></Link>}</div> : <ul className="divide-y divide-[#EDF2EF]">{filtered.map((message) => <li key={message.id} className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_270px] sm:p-6">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2"><span className="grid size-9 place-items-center rounded-full bg-[#EAF8F1] text-[#168A4A]"><UserRound className="size-4" /></span><h3 className="font-bold text-[#123F40]">{message.name}</h3><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${message.status === 'new' ? 'bg-[#FFF5DE] text-[#98610D]' : message.status === 'in_progress' ? 'bg-[#EAF3FF] text-[#2869A8]' : 'bg-slate-100 text-slate-600'}`}>{message.status === 'in_progress' ? 'In progress · open' : message.status === 'closed' ? 'Closed' : 'New · open'}</span><time className="text-xs text-[#82918D]">{dateLabel(message.created_at)}</time></div>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#52706C]"><a className="inline-flex items-center gap-1.5 hover:text-[#168A4A]" href={`mailto:${message.email}`}><Mail className="size-3.5" />{message.email}</a>{message.phone && <a className="inline-flex items-center gap-1.5 hover:text-[#168A4A]" href={`tel:${message.phone}`}><Phone className="size-3.5" />{message.phone}</a>}{message.organization && <span className="inline-flex items-center gap-1.5"><Building2 className="size-3.5" />{message.organization}</span>}</div>
             <p className="mt-4 whitespace-pre-wrap rounded-xl bg-[#F7FAF8] p-4 text-sm leading-6 text-[#405A5B]">{message.message}</p>
           </div>
-          <label className="text-xs font-semibold text-[#66797A] sm:self-start">Enquiry status<select value={message.status} disabled={updatingId === message.id} onChange={(event) => void updateStatus(message.id, event.target.value as ContactMessage['status'])} className="mt-2 block h-10 w-full rounded-xl border border-[#D5E0DC] bg-white px-3 text-sm text-[#123F40] outline-none focus:border-[#168A4A] disabled:opacity-60"><option value="new">New · open</option><option value="in_progress">In progress · open</option><option value="closed">Closed</option></select>{updatingId === message.id && <span role="status" className="mt-1 block text-[11px] text-[#82918D]">Saving status…</span>}<span className="mt-1 block text-[11px] font-normal text-[#82918D]">Open means it still needs a response or follow-up.</span></label>
+            <aside className="rounded-2xl border border-[#E8E1CC] bg-[#FFFDF6] p-4 sm:self-start"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8C7441]">Enquiry handling</p><p className="mt-1 text-sm font-bold text-[#123F40]">{message.status === 'new' ? 'Needs a first response' : message.status === 'in_progress' ? 'Follow-up in progress' : 'Enquiry closed'}</p><p className="mt-1 text-[11px] leading-5 text-[#718181]">Use the contact details to reply or follow up. The status is an internal tracking note and does not send an email.</p><div className="mt-3 grid gap-2">{message.status === 'new' ? <span className="rounded-xl border border-[#E8D7A7] bg-white px-3 py-2 text-center text-[11px] font-semibold text-[#98610D]">New · awaiting action</span> : <button type="button" disabled={updatingId === message.id} onClick={() => void updateStatus(message.id, 'new')} className="min-h-9 rounded-xl border border-[#D5E0DC] bg-white px-3 text-xs font-semibold text-[#365555] disabled:opacity-50">Return to new</button>}{message.status === 'in_progress' ? <span className="rounded-xl border border-[#C7DDF0] bg-white px-3 py-2 text-center text-[11px] font-semibold text-[#2869A8]">In progress · current</span> : <button type="button" disabled={updatingId === message.id} onClick={() => void updateStatus(message.id, 'in_progress')} className="min-h-9 rounded-xl border border-[#C7DDF0] bg-white px-3 text-xs font-semibold text-[#2869A8] hover:bg-[#EDF5FC] disabled:opacity-50">Mark follow-up in progress</button>}{message.status === 'closed' ? <button type="button" disabled={updatingId === message.id} onClick={() => void updateStatus(message.id, 'in_progress')} className="min-h-9 rounded-xl border border-[#D5E0DC] bg-white px-3 text-xs font-semibold text-[#365555] disabled:opacity-50">Reopen follow-up</button> : <button type="button" disabled={updatingId === message.id} onClick={() => void updateStatus(message.id, 'closed')} className="min-h-9 rounded-xl border border-[#E7C7C7] bg-white px-3 text-xs font-semibold text-[#9D3D3D] hover:bg-rose-50 disabled:opacity-50">Close enquiry…</button>}</div>{updatingId === message.id && <span role="status" className="mt-2 block text-[11px] text-[#82918D]">Saving decision…</span>}{decisionError?.id === message.id && <span role="alert" className="mt-2 block text-[11px] leading-4 text-rose-700">{decisionError.message}</span>}</aside>
         </li>)}</ul>}
       </section>
     </div>

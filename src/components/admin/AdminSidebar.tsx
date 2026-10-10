@@ -65,9 +65,10 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
         { name: 'Updates', href: '/admin/updates', icon: FileText },
         { name: 'Articles', href: '/admin/blog', icon: BookOpen },
         { name: 'Services', href: '/admin/services', icon: Building2 },
+        { name: 'Careers', href: '/admin/careers', icon: Briefcase },
         { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
         {
-          name: 'Resources', href: '/admin/resources', icon: Landmark,
+          name: 'Resources', href: '/admin/resources/links', icon: Landmark,
           children: [
             { name: 'Reference links', href: '/admin/resources/links', icon: ExternalLink },
             { name: 'Downloads', href: '/admin/resources/downloads', icon: Download },
@@ -81,7 +82,6 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar, count: pendingAppointments },
         { name: 'Website enquiries', href: '/admin/messages', icon: Mail },
         { name: 'Job applications', href: '/admin/applications', icon: UserSearch, count: newApplications },
-        { name: 'Careers', href: '/admin/careers', icon: Briefcase },
       ],
     },
     {
@@ -112,26 +112,26 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
         }`}
         aria-label="CMS navigation"
       >
-        {/* Top Brand Header */}
-        <div className="flex h-[70px] items-center justify-between border-b border-[#EAF1ED] px-5 bg-white shrink-0">
+        {/* Top Brand Header - Centered Logo */}
+        <div className="relative flex h-[70px] items-center justify-center border-b border-[#EAF1ED] px-4 bg-white shrink-0">
           <Link
             href="/admin"
             onClick={onNavigate}
-            className="flex items-center gap-2.5 transition-transform hover:scale-[1.02] duration-150"
-            title="Narahari Adhikari Chartered Accountants"
+            className="flex items-center justify-center transition-transform hover:scale-[1.02] duration-150"
+            title="Narahari Adhikari"
           >
             <Image
               src="/Logo.png"
-              alt="Narahari Adhikari Chartered Accountants"
-              width={175}
-              height={42}
+              alt="Narahari Adhikari"
+              width={160}
+              height={38}
               priority
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto object-contain mx-auto"
             />
           </Link>
           <button
             type="button"
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 md:hidden cursor-pointer"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 md:hidden cursor-pointer"
             onClick={onNavigate}
             aria-label="Close navigation"
           >

@@ -100,11 +100,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const client = createSupabaseBrowserClient();
     if (!client) {
-      setSettingsLoaded(true);
-      setTaxUpdatesLoaded(true);
-      setVacanciesLoaded(true);
-      setAnnouncementsLoaded(true);
-      return;
+      const timer = window.setTimeout(() => {
+        setSettingsLoaded(true);
+        setTaxUpdatesLoaded(true);
+        setVacanciesLoaded(true);
+        setAnnouncementsLoaded(true);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
     const supabase = client;
 
@@ -356,10 +358,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateApplicationStatus = async (id: string, status: JobApplication['status']) => {
-    const client = createSupabaseBrowserClient();
-    if (!client || id.startsWith('app-')) return false;
-    const { error } = await client.from('applications').update({ status }).eq('id', id);
-    if (error) return false;
+    if (id.startsWith('app-')) return false;
+    const response = await fetch('/api/admin/records/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recordType: 'applications', id, status }),
+    });
+    if (!response.ok) return false;
     setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
     return true;
   };
@@ -383,37 +388,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateAppointmentStatus = async (id: string, status: Appointment['status']) => {
-    const client = createSupabaseBrowserClient();
-    if (!client || id.startsWith('apt-')) return false;
-    const { error } = await client.from('appointments').update({ status }).eq('id', id);
-    if (error) return false;
+    if (id.startsWith('apt-')) return false;
+    const response = await fetch('/api/admin/records/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recordType: 'appointments', id, status }),
+    });
+    if (!response.ok) return false;
     setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
     return true;
   };
 
   const addGovernmentLink = async (link: Omit<GovernmentLink, 'id'>) => {
-    const client = createSupabaseBrowserClient();
-    if (!client) return false;
-    const { data, error } = await client.from('government_links').insert(link).select().single();
-    if (error || !data) return false;
-    setGovernmentLinks((prev) => [...prev, data as GovernmentLink]);
+    const response = await fetch('/api/admin/government-links', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(link),
+    });
+    if (!response.ok) {
+      const result = await response.json() as { error?: string };
+      throw new Error(result.error || 'The portal could not be saved.');
+    }
+    const { link: saved } = await response.json() as { link: GovernmentLink };
+    setGovernmentLinks((prev) => [...prev, saved]);
     return true;
   };
 
   const updateGovernmentLink = async (id: string, link: Partial<GovernmentLink>) => {
-    const client = createSupabaseBrowserClient();
-    if (!client || id.startsWith('gov-')) return false;
-    const { data, error } = await client.from('government_links').update(link).eq('id', id).select('id').maybeSingle();
-    if (error || !data) return false;
-    setGovernmentLinks((prev) => prev.map((g) => (g.id === id ? { ...g, ...link } : g)));
+    if (id.startsWith('gov-')) return false;
+    const response = await fetch('/api/admin/government-links', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, changes: link }),
+    });
+    if (!response.ok) {
+      const result = await response.json() as { error?: string };
+      throw new Error(result.error || 'The portal changes could not be saved.');
+    }
+    const { link: saved } = await response.json() as { link: GovernmentLink };
+    setGovernmentLinks((prev) => prev.map((g) => (g.id === id ? saved : g)));
     return true;
   };
 
   const deleteGovernmentLink = async (id: string) => {
-    const client = createSupabaseBrowserClient();
-    if (!client || id.startsWith('gov-')) return false;
-    const { data, error } = await client.from('government_links').delete().eq('id', id).select('id').maybeSingle();
-    if (error || !data) return false;
+    if (id.startsWith('gov-')) return false;
+    const response = await fetch('/api/admin/government-links', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+    });
+    if (!response.ok) return false;
     setGovernmentLinks((prev) => prev.filter((g) => g.id !== id));
     return true;
   };

@@ -1,5 +1,5 @@
-import ResourcesManager from '@/components/admin/ResourcesManager';
+import { redirect } from 'next/navigation';
 
 export default function AdminResourcesOverviewPage() {
-  return <ResourcesManager section="all" />;
+  redirect('/admin/resources/links');
 }

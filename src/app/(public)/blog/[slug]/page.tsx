@@ -129,7 +129,7 @@ export default function BlogArticlePage() {
     headline: post.title,
     description: post.meta_description || post.excerpt,
     datePublished: post.published_at,
-    author: { '@type': 'Person', name: post.author || 'CA Narahari Adhikari' },
+    author: { '@type': 'Person', name: (post.author || 'Narahari Adhikari').replace(/^CA\s+/i, '') },
     image: publicMediaUrl(post.featured_image) ? [publicMediaUrl(post.featured_image)!] : undefined,
   };
   const formattedDate = formatDate(post.published_at);
@@ -144,79 +144,202 @@ export default function BlogArticlePage() {
   };
 
   return (
-    <article className="min-h-screen bg-[#F8FBFA] pb-20 text-[#073F50]">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <div className="mx-auto grid max-w-[1300px] grid-cols-1 items-start gap-8 px-5 pt-8 sm:px-8 sm:pt-10 lg:grid-cols-[minmax(0,1.9fr)_minmax(340px,1fr)] lg:gap-8">
-        <main className="min-w-0">
-          <Link href="/blog" className="inline-flex items-center gap-2 text-[13px] font-medium text-[#668092] transition hover:text-[#073F50]">
-            <ArrowLeft className="h-4 w-4" /> Back to Articles
-          </Link>
+    <article className="min-h-screen bg-[#FAFCFD] pb-24 text-[#023A51]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029') }} />
 
-          <header className="mt-7">
-            <span className="inline-flex rounded-md bg-[#E5F5EF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#078652]">{post.category || 'Article'}</span>
-            <h1 className="mt-3 max-w-3xl text-[32px] font-bold leading-[1.22] tracking-[-0.025em] text-[#073F50] sm:text-[36px]">{post.title}</h1>
-            {post.excerpt && <p className="mt-3.5 max-w-3xl text-[15px] leading-[1.7] text-[#668092]">{post.excerpt}</p>}
-          </header>
+      {/* Article Header matching reference design */}
+      <div className="max-w-[1240px] mx-auto px-6 pt-8 pb-4">
+        <Link
+          href="/blog"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#56686A] hover:text-[#023A51] transition mb-4"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to Articles
+        </Link>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-[#E1E9E9] pb-4 text-[11px] text-[#698393] sm:text-xs">
-            {formattedDate && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#168A73]" />{formattedDate}</span>}
-            {post.read_time && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-[#168A73]" />{post.read_time}</span>}
-            <span className="inline-flex items-center gap-2"><UserRound className="h-4 w-4 text-[#168A73]" />{post.author || 'CA Narahari Adhikari'}</span>
-            <span className="hidden h-5 w-px bg-[#DFE8E8] sm:block" />
-            <span className="font-medium">Share</span>
-            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window === 'undefined' ? '' : window.location.href)}`} target="_blank" rel="noreferrer" aria-label="Share on LinkedIn" className="font-bold text-[#073F50] hover:text-[#168A4A]">in</a>
-            <a href={`https://wa.me/?text=${encodeURIComponent(`${post.title} ${typeof window === 'undefined' ? '' : window.location.href}`)}`} target="_blank" rel="noreferrer" aria-label="Share on WhatsApp" className="font-bold text-[#073F50] hover:text-[#168A4A]">W</a>
-            <button type="button" onClick={copyLink} aria-label="Copy article link" className="inline-flex items-center gap-1 text-[#073F50] hover:text-[#168A4A]">
-              {copied ? <Check className="h-4 w-4 text-[#168A4A]" /> : <Copy className="h-4 w-4" />}{copied && <span>Copied</span>}
-            </button>
+        <div className="space-y-3 max-w-4xl">
+          <div>
+            <span className="inline-flex rounded-full bg-[#EAF7F0] border border-[#D5EFE1] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#14864B]">
+              {post.category || 'Article'}
+            </span>
           </div>
 
-          {post.featured_image && <figure className="relative mt-6 aspect-[4/3] overflow-hidden rounded-lg border border-[#E2EAED] bg-slate-100 sm:aspect-[8/3]">
-            <Image src={publicMediaUrl(post.featured_image) || post.featured_image} alt={post.image_alt || post.title} fill priority sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
-          </figure>}
+          <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#023A51] tracking-tight leading-tight">
+            {post.title}
+          </h1>
 
-          {isHistoricalTaxArticle && <aside className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] leading-6 text-amber-950" aria-label="Historical tax information">
-            <strong>Historical reference: FY 2081/82.</strong> Tax rates and filing dates change by fiscal year. Verify current requirements with the <a href="https://ird.gov.np/category/incometax-1/" target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">Inland Revenue Department</a> before relying on figures in this article.
-          </aside>}
+          {post.excerpt && (
+            <p className="text-base sm:text-[16px] text-[#56686A] leading-relaxed max-w-3xl">
+              {post.excerpt}
+            </p>
+          )}
 
-          <div className="cms-article-content prose prose-slate mt-5 max-w-none text-[15px] leading-[1.85] text-[#5B7485] prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-[#073F50] prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-[#E5ECEF] prose-h2:scroll-mt-28 prose-h2:pb-2 prose-h2:text-[21px] prose-h3:mb-2 prose-h3:mt-6 prose-h3:scroll-mt-28 prose-h3:text-lg prose-p:my-4 prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#28B76A] prose-blockquote:pl-5 prose-blockquote:text-[#547083] prose-img:my-6 prose-img:rounded-lg prose-a:text-[#168A4A] prose-a:underline" dangerouslySetInnerHTML={{ __html: normalizeMediaHtml(articleHtml || '<p>Article content will be published here.</p>') }} />
+          {/* Metadata Row matching Screenshot 1 */}
+          <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#59667D]">
+            {formattedDate && (
+              <span className="inline-flex items-center gap-1.5 font-medium text-[#56686A]">
+                <CalendarDays className="h-3.5 w-3.5 text-[#14864B]" /> {formattedDate}
+              </span>
+            )}
+            {post.read_time && (
+              <span className="inline-flex items-center gap-1.5 font-medium text-[#56686A]">
+                <Clock3 className="h-3.5 w-3.5 text-[#14864B]" /> {post.read_time}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#56686A]">
+              <UserRound className="h-3.5 w-3.5 text-[#14864B]" />
+              {(post.author || 'Narahari Adhikari').replace(/^CA\s+/i, '')}
+            </span>
 
-          {post.tags?.length ? <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-[#E5ECEF] pt-5">
-            <span className="mr-1 text-xs font-semibold text-[#688093]">Tags</span>
-            {post.tags.map((tag) => <span key={tag} className="rounded-full bg-[#EFF5F3] px-3 py-1 text-xs text-[#446574]">#{tag}</span>)}
-          </div> : null}
+            <span className="h-3.5 w-px bg-slate-300" />
+
+            <div className="flex items-center gap-2.5">
+              <span className="font-semibold text-[#56686A] text-xs">Share</span>
+              {/* LinkedIn */}
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window === 'undefined' ? '' : window.location.href)}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Share on LinkedIn"
+                className="font-bold text-[#0A66C2] hover:underline text-xs"
+              >
+                in
+              </a>
+              {/* WhatsApp */}
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`${post.title} ${typeof window === 'undefined' ? '' : window.location.href}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Share on WhatsApp"
+                className="font-bold text-[#128C7E] hover:underline text-xs"
+              >
+                w
+              </a>
+              {/* Copy */}
+              <button
+                type="button"
+                onClick={copyLink}
+                aria-label="Copy article link"
+                title={copied ? 'Link copied' : 'Copy link'}
+                className="text-slate-500 hover:text-[#023A51] transition cursor-pointer"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-[#14864B]" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Main Body Content */}
+      <div className="max-w-[1240px] mx-auto px-6 pt-10 sm:pt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.9fr)_minmax(320px,1fr)] gap-10 items-start">
+          <main className="min-w-0">
+
+          {post.featured_image && (
+            <figure className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-[#E8EBEF] bg-slate-100 shadow-sm mb-6">
+              <Image
+                src={publicMediaUrl(post.featured_image) || post.featured_image}
+                alt={post.image_alt || post.title}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 850px"
+                className="object-cover"
+              />
+            </figure>
+          )}
+
+          {isHistoricalTaxArticle && (
+            <aside
+              className="mt-4 mb-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-[13px] leading-relaxed text-amber-950"
+              aria-label="Historical tax information"
+            >
+              <strong>Historical reference: FY 2081/82.</strong> Tax rates and filing dates change by fiscal year. Verify current requirements with the{' '}
+              <a
+                href="https://ird.gov.np/category/incometax-1/"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold underline underline-offset-2 text-[#023A51]"
+              >
+                Inland Revenue Department
+              </a>{' '}
+              before relying on figures in this article.
+            </aside>
+          )}
+
+          <div
+            className="cms-article-content prose prose-slate max-w-none text-[16px] leading-[1.85] text-[#0F172A] prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-[#023A51] prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-[#E8EBEF] prose-h2:scroll-mt-28 prose-h2:pb-2 prose-h2:text-[22px] prose-h3:mb-2 prose-h3:mt-6 prose-h3:scroll-mt-28 prose-h3:text-lg prose-p:my-4 prose-p:text-[#0F172A] prose-ul:my-4 prose-ul:list-disc prose-ul:pl-6 prose-ol:my-4 prose-ol:list-decimal prose-ol:pl-6 prose-li:my-1.5 prose-blockquote:border-l-4 prose-blockquote:border-[#023A51] prose-blockquote:pl-5 prose-blockquote:text-[#334155] prose-img:my-6 prose-img:rounded-xl prose-a:text-[#023A51] prose-a:font-bold hover:prose-a:underline"
+            dangerouslySetInnerHTML={{
+              __html: normalizeMediaHtml(articleHtml || '<p>Article content will be published here.</p>'),
+            }}
+          />
+
+          {post.tags?.length ? (
+            <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-[#E5ECEF] pt-5">
+              <span className="mr-1 text-xs font-bold text-[#0F172A]">Tags:</span>
+              {post.tags.map((tag) => (
+                <span key={tag} className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-medium text-[#0F172A]">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </main>
 
         <aside className="space-y-6 lg:sticky lg:top-24">
-          {headings.length > 0 && <nav aria-label="Article table of contents" className="rounded-xl border border-[#E5ECEF] bg-white p-6 shadow-[0_8px_28px_rgba(7,63,80,0.04)]">
-            <h2 className="flex items-center gap-2 border-b border-[#EDF1F3] pb-4 text-[15px] font-semibold"><List className="h-4 w-4 text-[#168A73]" /> Table of Contents</h2>
-            <ol className="mt-2 space-y-0.5">
-              {headings.map((heading, index) => <li key={heading.id} className={heading.level === 3 ? 'pl-5' : ''}>
-                <a href={`#${heading.id}`} className="flex items-start gap-3 rounded-lg px-1.5 py-2.5 text-[12px] leading-5 text-[#3E5C6D] transition hover:bg-[#F0F8F5] hover:text-[#0B7358]">
-                  {heading.level === 2 && <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#DDF3EA] text-[10px] font-semibold text-[#168A73]">{headings.slice(0, index + 1).filter((item) => item.level === 2).length}</span>}
-                  <span>{heading.text}</span>
-                </a>
-              </li>)}
-            </ol>
-          </nav>}
+          {headings.length > 0 && (
+            <nav aria-label="Article table of contents" className="rounded-2xl border border-[#E5ECEF] bg-white p-6 shadow-xs">
+              <h2 className="flex items-center gap-2 border-b border-[#EDF1F3] pb-4 text-[15px] font-bold text-[#023A51]">
+                <List className="h-4 w-4 text-[#14864B]" /> Table of Contents
+              </h2>
+              <ol className="mt-3 space-y-1">
+                {headings.map((heading, index) => (
+                  <li key={heading.id} className={heading.level === 3 ? 'pl-5' : ''}>
+                    <a
+                      href={`#${heading.id}`}
+                      className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] leading-snug text-[#56686A] transition hover:bg-[#F5FAF7] hover:text-[#023A51]"
+                    >
+                      {heading.level === 2 && (
+                        <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-[#EAF7F0] text-[10px] font-bold text-[#14864B]">
+                          {headings.slice(0, index + 1).filter((item) => item.level === 2).length}
+                        </span>
+                      )}
+                      <span>{heading.text}</span>
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
 
-          {recentPosts.length > 0 && <section className="rounded-xl border border-[#E5ECEF] bg-white p-6 shadow-[0_8px_28px_rgba(7,63,80,0.04)]">
-            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#EDF1F3] pb-4">
-              <h2 className="flex items-center gap-2 text-[15px] font-semibold"><FileText className="h-4 w-4 text-[#168A73]" /> Recent Articles</h2>
-              <Link href="/blog" className="inline-flex items-center gap-1 text-[11px] font-medium text-[#608092] hover:text-[#168A4A]">View all <ArrowRight className="h-3.5 w-3.5" /></Link>
-            </div>
-            <div className="space-y-4">
-              {recentPosts.map((related) => <Link key={`post-${related.id}`} href={`/blog/${related.slug}`} className="group flex gap-3">
-                <ArticleThumbnail src={related.featured_image} alt="" />
-                <div className="min-w-0 py-1">
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[#7F9BAA]">{related.category || 'Article'}</span>
-                  <h3 className="mt-1 line-clamp-2 text-[12px] font-medium leading-[1.45] text-[#17495B] group-hover:text-[#168A4A]">{related.title}</h3>
-                  <p className="mt-1 text-[10px] text-[#8398A4]">{related.read_time || ''}</p>
-                </div>
-              </Link>)}
-            </div>
-          </section>}
+          {recentPosts.length > 0 && (
+            <section className="rounded-2xl border border-[#E5ECEF] bg-white p-6 shadow-xs">
+              <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#EDF1F3] pb-4">
+                <h2 className="flex items-center gap-2 text-[15px] font-bold text-[#023A51]">
+                  <FileText className="h-4 w-4 text-[#14864B]" /> Recent Articles
+                </h2>
+                <Link href="/blog" className="inline-flex items-center gap-1 text-xs font-semibold text-[#56686A] hover:text-[#023A51] transition">
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="space-y-4">
+                {recentPosts.map((related) => (
+                  <Link key={`post-${related.id}`} href={`/blog/${related.slug}`} className="group flex gap-3">
+                    <ArticleThumbnail src={related.featured_image} alt="" />
+                    <div className="min-w-0 py-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
+                        {related.category || 'Article'}
+                      </span>
+                      <h3 className="mt-1 line-clamp-2 text-[13px] font-bold leading-snug text-[#023A51] group-hover:text-[#14864B] transition-colors">
+                        {related.title}
+                      </h3>
+                      <p className="mt-1 text-[11px] text-[#64748B]">{related.read_time || ''}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </aside>
+        </div>
       </div>
     </article>
   );

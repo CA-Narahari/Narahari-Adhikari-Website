@@ -1,63 +1,58 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-heading: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-sans-main), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-serif-accent), Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-heading: var(--font-sans-main), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --color-primary: #023A51;
-  --color-accent: #2CBC63;
-  --color-accent-hover: #25A456;
+  --color-primary-dark: #012534;
   --color-surface-hero: #9ec2c0;
-  --color-border-subtle: #E8EBEF;
+  --color-border-subtle: #E2E8F0;
 }
 
 @layer base {
   :root {
-    /* Avada Accountant Design Tokens from DESIGN.md & SKILL.md */
-    --color-primary: #023A51;       /* color-1: Deep Petrol Blue / Text Primary */
-    --color-slate-blue: #33475B;     /* color-2: Slate Blue Body */
-    --color-charcoal: #4A5259;       /* color-3: Text */
-    --color-muted: #59667D;          /* color-5: Text Primary Muted */
-    --color-secondary: #93999F;      /* color-8: Text Secondary */
-    --color-accent: #2CBC63;         /* color-9: Brand Green (Buttons, Accents) */
-    --color-accent-hover: #25A456;
-    --color-accent-light: #65BC7B;   /* color-10: Soft Green */
-    --color-surface-hero: #9ec2c0;   /* Light Aqua Hero Surface */
-    --hero-gradient: linear-gradient(90deg, #9ec2c0 0%, rgb(191, 214, 212) 35%, rgb(179, 214, 198) 65%, rgb(143, 203, 169) 100%);
-    --color-surface-muted: #E3E3E3;  /* color-12: Surface */
-    --color-border-subtle: #E8EBEF;  /* color-14: Card Border */
-    --color-border-light: #DDDDDD;   /* color-11: Border */
+    --color-primary: #023A51;       /* Deep Prestige Petrol Navy */
+    --color-primary-dark: #012534;
+    --color-slate-blue: #0F172A;     /* Crisp, readable dark body text */
+    --color-charcoal: #1E293B;       /* High-contrast secondary text */
+    --color-muted: #334155;          /* Refined muted text */
+    --color-secondary: #475569;      /* Supporting text */
+    --color-surface-hero: #9ec2c0;
+    --hero-gradient: linear-gradient(90deg, #9ec2c0 0%, #bfd6d4 25%, #ecf6f4 48%, #c8e2d6 75%, #8fcba9 100%);
+    --color-surface-muted: #F1F5F9;
+    --color-border-subtle: #E2E8F0;
+    --color-border-light: #CBD5E1;
     --color-white: #FFFFFF;
 
     /* Semantic Mappings */
     --primary: #023A51;
     --primary-foreground: #FFFFFF;
-    --accent: #2CBC63;
-    --accent-hover: #25A456;
-    --accent-foreground: #FFFFFF;
     --background: #FFFFFF;
-    --foreground: #023A51;
+    --foreground: #0F172A;
     --card: #FFFFFF;
-    --card-foreground: #023A51;
-    --border: #E8EBEF;
+    --card-foreground: #0F172A;
+    --border: #E2E8F0;
   }
 
   h1, h2, h3, h4, h5, h6, .font-heading {
-    font-family: var(--font-manrope), var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--font-sans-main), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: -0.025em;
     font-weight: 700;
+    color: #0A2540;
   }
 }
 
 body {
-  background-color: #F8FBFA;
-  color: #33475B;
-  font-family: var(--font-manrope), var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #F8FAFC;
+  color: #1E293B;
+  font-family: var(--font-sans-main), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
 .public-main {
   background:
-    linear-gradient(180deg, rgba(248, 251, 250, 0.96) 0%, #FFFFFF 22rem),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, #FFFFFF 22rem),
     #FFFFFF;
 }
 
@@ -70,23 +65,24 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid rgba(44, 188, 99, 0.45);
-  outline-offset: 3px;
+  outline: 2px solid #023A51;
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba(44, 188, 99, 0.2);
+  background: rgba(2, 58, 81, 0.12);
   color: #023A51;
 }
 
-/* Green punctuation accent matching Avada Accountant design */
+/* Punctuation accent matching deep navy */
 .accent-dot {
-  color: #2CBC63;
+  color: #023A51;
 }
 
-/* Light aqua-mint gradient with luminous whitish center */
+/* Seamless horizontal executive gradient that aligns perfectly with navbar */
 .bg-hero-gradient {
-  background: linear-gradient(90deg, #9ec2c0 0%, rgb(191, 214, 212) 25%, rgb(236, 246, 244) 48%, rgb(200, 226, 214) 75%, rgb(143, 203, 169) 100%);
+  background: linear-gradient(90deg, #9ec2c0 0%, #bfd6d4 25%, #ecf6f4 48%, #c8e2d6 75%, #8fcba9 100%);
+  background-image: linear-gradient(90deg, rgb(158, 194, 192) 0%, rgb(191, 214, 212) 25%, rgb(236, 246, 244) 48%, rgb(200, 226, 214) 75%, rgb(143, 203, 169) 100%);
 }
 
 /* Micro-transitions */

@@ -24,7 +24,7 @@ export interface TaxUpdate {
   id: string;
   title: string;
   slug: string;
-  category: 'Income Tax' | 'VAT' | 'Customs' | 'Corporate Tax' | 'Finance Acts' | 'Circulars';
+  category: 'Income Tax' | 'VAT' | 'Customs' | 'Corporate Tax' | 'Finance Acts' | 'Circulars' | 'Notices';
   summary: string;
   content: string;
   source_name: string;
@@ -132,6 +132,8 @@ export interface GovernmentLink {
   description: string;
   url: string;
   category: string;
+  logo_url?: string;
+  logo_alt?: string;
 }
 
 export interface DownloadResource {

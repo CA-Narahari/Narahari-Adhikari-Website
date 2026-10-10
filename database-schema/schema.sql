@@ -184,8 +184,12 @@ create table if not exists public.government_links (
   description text not null default '',
   url text not null,
   category text not null default 'Regulatory Authority',
-  display_order integer not null default 0
+  display_order integer not null default 0,
+  logo_url text,
+  logo_alt text
 );
+alter table public.government_links add column if not exists logo_url text;
+alter table public.government_links add column if not exists logo_alt text;
 alter table public.announcements add column if not exists poster_url text;
 alter table public.announcements add column if not exists target_path text;
 
@@ -227,7 +231,7 @@ on conflict (id) do nothing;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
   ('website-media', 'website-media', true, 10485760, array[
-    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
     'application/pdf', 'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ]),

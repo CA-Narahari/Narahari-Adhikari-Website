@@ -6,8 +6,8 @@ import WhatsAppButton from '@/components/ui/WhatsAppButton';
 import NotFoundGlitch from '@/components/ui/NotFoundGlitch';
 
 export const metadata = {
-  title: '404 - Page Not Found | Narahari Adhikari Chartered Accountants',
-  description: 'The requested page or record could not be found on Narahari Adhikari Chartered Accountants.',
+  title: '404 - Page Not Found | Narahari Adhikari',
+  description: 'The requested page or record could not be found on Narahari Adhikari.',
 };
 
 export default function NotFoundPage() {
@@ -19,7 +19,7 @@ export default function NotFoundPage() {
         <NotFoundGlitch
           code="404"
           title="Page Not Found"
-          description="The page or record you are trying to reach does not exist or has been relocated. Please verify the URL or return to our practice areas."
+          description="The page or record you are trying to reach does not exist or has been relocated. Please verify the URL or return to our services."
           homeHref="/"
           homeLabel="Return to Home"
           browseHref="/services"

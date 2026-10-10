@@ -270,9 +270,6 @@ export default function AdminServicesPage() {
 
                 {/* Card Content matching public page */}
                 <div className="p-6 sm:p-7 space-y-3">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2CBC63]">
-                    Practice Area 0{index + 1}
-                  </span>
                   <h2 className="text-xl font-bold text-[#023A51] leading-snug group-hover:text-[#2CBC63] transition-colors">
                     {service.title}
                   </h2>

@@ -12,12 +12,13 @@ import {
   Phone,
   Mail,
   ChevronDown,
+  MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { settings } = useApp();
+  const { settings, services } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesDropdown, setServicesDropdown] = useState(false);
   const [resourcesDropdown, setResourcesDropdown] = useState(false);
@@ -92,7 +93,7 @@ export default function Navbar() {
       className={`sticky top-0 z-50 w-full ${
         scrolled
           ? 'bg-white/95 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(2,58,81,0.08)] border-b border-[#E8EBEF]'
-          : 'bg-hero-gradient border-b border-transparent'
+          : 'bg-hero-gradient border-b-0'
       }`}
     >
       <div className="max-w-[1280px] mx-auto px-6">
@@ -103,11 +104,11 @@ export default function Navbar() {
             <Link href="/" className="flex items-center group">
               <Image
                 src="/Logo.png"
-                alt="Narahari Adhikari Chartered Accountants"
+                alt="Narahari Adhikari"
                 width={280}
                 height={70}
                 priority
-                className="h-[56px] xl:h-[62px] w-auto object-contain transition-transform duration-200 group-hover:opacity-95"
+                className="h-[52px] xl:h-[58px] w-auto object-contain transition-transform duration-200 group-hover:opacity-95"
               />
             </Link>
           </div>
@@ -277,32 +278,24 @@ export default function Navbar() {
                             className="absolute top-full left-0 -translate-x-12 w-[600px] bg-white border border-[#E8EBEF] rounded-[16px] shadow-[0_18px_40px_rgba(2,58,81,0.12)] p-4 z-50 mt-1.5"
                           >
                             <div className="grid grid-cols-2 gap-2">
-                              {[
-                                { label: 'Audit & Assurance', sub: 'Clearer records and stronger controls', href: '/services/audit-and-assurance' },
-                                { label: 'Tax Advisory', sub: 'Practical advice for tax decisions', href: '/services/taxation-consultancy' },
-                                { label: 'Mergers & Acquisitions', sub: 'Guidance from review to closing', href: '/services/mergers-and-acquisitions' },
-                                { label: 'Business Advisory', sub: 'A steady hand for growth', href: '/services/advisory-services' },
-                                { label: 'Business Support', sub: 'Bookkeeping, payroll, and filings', href: '/services/business-support-outsourcing' },
-                                { label: 'NFRS/IFRS', sub: 'Reporting that meets the standard', href: '/services/nfrs-ifrs-implementation' },
-                                { label: 'Training', sub: 'Useful sessions for your team', href: '/services/training-and-seminar' },
-                              ].map((s) => (
+                              {services.map((srv) => (
                                 <Link
-                                  key={s.label}
-                                  href={s.href}
+                                  key={srv.id}
+                                  href={`/services/${srv.slug}`}
                                   onClick={() => setServicesDropdown(false)}
                                   className="group/item block p-3 rounded-[10px] text-[13px] text-[#33475B] hover:bg-[#E8F4F8] hover:text-[#023A51] transition-all duration-150"
                                 >
                                   <div className="font-bold text-[#023A51] group-hover/item:text-[#2CBC63] transition-colors flex items-center justify-between">
-                                    <span>{s.label}</span>
+                                    <span>{srv.title}</span>
                                     <span className="text-[11px] opacity-0 group-hover/item:opacity-100 transition-opacity text-[#2CBC63]">→</span>
                                   </div>
-                                  <div className="text-[11.5px] text-[#7A889B] mt-0.5 leading-snug line-clamp-1">{s.sub}</div>
+                                  <div className="text-[11.5px] text-[#7A889B] mt-0.5 leading-snug line-clamp-1">{srv.short_description}</div>
                                 </Link>
                               ))}
                             </div>
                             <div className="border-t border-[#E8EBEF] mt-3 pt-3 flex items-center justify-between px-2">
                               <span className="text-[12px] text-[#7A889B]">
-                                Explore all 7 services
+                                Explore all {services.length} services
                               </span>
                               <Link
                                 href="/services"
@@ -356,18 +349,7 @@ export default function Navbar() {
                               </Link>
                             </div>
 
-                            <div className="border-t border-[#E8EBEF] mt-3 pt-3 flex items-center justify-between px-2">
-                              <span className="text-[11.5px] text-[#7A889B]">
-                                Official links and tools
-                              </span>
-                              <Link
-                                href="/resources"
-                                onClick={() => setResourcesDropdown(false)}
-                                className="text-[12px] font-bold text-[#2CBC63] hover:text-[#25A456] transition-colors"
-                              >
-                                View all resources &rarr;
-                              </Link>
-                            </div>
+
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -394,7 +376,7 @@ export default function Navbar() {
           <Link href="/" className="flex items-center">
             <Image
               src="/Logo.png"
-              alt="Narahari Adhikari Chartered Accountants"
+              alt="Narahari Adhikari"
               width={200}
               height={50}
               priority

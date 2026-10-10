@@ -94,11 +94,11 @@ export default function AdminLoginPage() {
             <Link
               href="/"
               className="inline-block transition-transform hover:scale-[1.02] duration-200"
-              title="Return to Narahari Adhikari Chartered Accountants"
+              title="Return to Narahari Adhikari"
             >
               <Image
                 src="/Logo.png"
-                alt="Narahari Adhikari Chartered Accountants"
+                alt="Narahari Adhikari"
                 width={260}
                 height={64}
                 priority

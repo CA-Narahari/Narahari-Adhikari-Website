@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://narahariadhikari.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://narahariadhikari.com.np';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes = ['', '/about', '/contact', '/services', '/blog', '/updates', '/careers', '/resources', '/resources/downloads', '/resources/tools', '/privacy', '/terms', '/book-appointment'];
@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!url || !key) return entries;
   const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const [{ data: services }, { data: posts }, { data: updates }] = await Promise.all([
-    client.from('services').select('slug, updated_at').eq('is_featured', true),
+    client.from('services').select('slug, updated_at'),
     client.from('posts').select('slug, updated_at').eq('status', 'published'),
     client.from('tax_updates').select('slug, updated_at').eq('status', 'published'),
   ]);

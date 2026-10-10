@@ -1,250 +1,193 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Calculator,
-  Receipt,
-  PiggyBank,
-  Coins,
-  Clock,
-  Building,
-  TrendingUp,
-  Percent,
-  Layers,
-  AlertCircle,
-  HelpCircle,
-  X,
-  Copy,
-  Check,
   ArrowRight,
-  Sparkles,
+  TrendingDown,
+  Calendar,
+  Percent,
+  Coins,
+  FileSpreadsheet,
+  Check,
+  Copy,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
-type CalculatorConfig = { calculator_key: string; fiscal_year: string; assumptions: Record<string, unknown>; source_name: string; source_url: string };
+type TenureType = 'monthly' | 'quarterly' | 'half_yearly' | 'yearly';
 
-export default function ResourcesToolsPage() {
-  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [copied, setCopied] = useState(false);
-  const [configs, setConfigs] = useState<Record<string, CalculatorConfig>>({});
+interface AmortizationRow {
+  period: number;
+  label: string;
+  openingBalance: number;
+  installment: number;
+  principal: number;
+  interest: number;
+  closingBalance: number;
+}
 
-  useEffect(() => {
-    const client = createSupabaseBrowserClient();
-    if (!client) return;
-    void client.from('calculator_configs').select('calculator_key,fiscal_year,assumptions,source_name,source_url').then(({ data }) => {
-      if (data) setConfigs(Object.fromEntries((data as CalculatorConfig[]).map((item) => [item.calculator_key, item])));
-    });
-  }, []);
+export default function DedicatedEmiCalculatorPage() {
+  // 1. User Input States
+  const [principal, setPrincipal] = useState<number>(2500000);
+  const [interestRate, setInterestRate] = useState<number>(10.5);
+  const [tenureValue, setTenureValue] = useState<number>(5);
+  const [tenureType, setTenureType] = useState<TenureType>('yearly');
+  const [processingFeePercent, setProcessingFeePercent] = useState<number>(0.75);
+  const [viewMode, setViewMode] = useState<'yearly' | 'installment'>('yearly');
+  const [copied, setCopied] = useState<boolean>(false);
 
-  // 1. VAT Calculator
-  const [vatAmount, setVatAmount] = useState<number>(50000);
-  const [vatMode, setVatMode] = useState<'exclusive' | 'inclusive'>('exclusive');
-
-  // 2. Individual Tax Calculator
-  const [annualSalary, setAnnualSalary] = useState<number>(1200000);
-  const [taxMaritalStatus, setTaxMaritalStatus] = useState<'unmarried' | 'married'>('unmarried');
-
-  // 3. TDS Calculator
-  const [tdsBaseAmount, setTdsBaseAmount] = useState<number>(100000);
-  const [tdsRate, setTdsRate] = useState<number>(15);
-
-  // 4. Advance Corporate Tax Estimator
-  const [estimatedAnnualTax, setEstimatedAnnualTax] = useState<number>(600000);
-
-  // 5. Corporate Tax Estimator
-  const [taxableProfit, setTaxableProfit] = useState<number>(2500000);
-  const [corpTaxRate, setCorpTaxRate] = useState<number>(25);
-
-  // 6. Capital Gains Tax Calculator
-  const [cgtGain, setCgtGain] = useState<number>(400000);
-  const [cgtType, setCgtType] = useState<'equity_short' | 'equity_long' | 'property_short' | 'property_long'>('equity_short');
-
-  // 7. SSF Calculator
-  const [ssfBasic, setSsfBasic] = useState<number>(40000);
-
-  // 8. Loan EMI Calculator
-  const [loanPrincipal, setLoanPrincipal] = useState<number>(2500000);
-  const [loanRate, setLoanRate] = useState<number>(11.5);
-  const [loanYears, setLoanYears] = useState<number>(5);
-
-  // Computations
-  const calcVat = () => {
-    const rate = Number(configs.vat?.assumptions?.rate ?? 0.13);
-    if (vatMode === 'exclusive') {
-      const vat = vatAmount * rate;
-      return { base: vatAmount, vat: Math.round(vat), total: Math.round(vatAmount + vat) };
-    } else {
-      const base = vatAmount / (1 + rate);
-      const vat = vatAmount - base;
-      return { base: Math.round(base), vat: Math.round(vat), total: vatAmount };
-    }
-  };
-
-  const calcIndividualTax = () => {
-    let tax = 0;
-    const assumptions = configs['individual-tax']?.assumptions ?? {};
-    const slabs = (taxMaritalStatus === 'unmarried' ? assumptions.unmarried_slabs : assumptions.married_slabs) as number[] | undefined;
-    const rates = (assumptions.rates as number[] | undefined) ?? [0.01, 0.10, 0.20, 0.30, 0.39];
-    const [slab1, slab2, slab3, slab4] = slabs ?? [500000, 700000, 1000000, 2000000];
-
-    let rem = annualSalary;
-    if (rem <= slab1) {
-      tax += rem * rates[0];
-    } else {
-      tax += slab1 * rates[0];
-      rem -= slab1;
-      const band2 = slab2 - slab1;
-      if (rem <= band2) {
-        tax += rem * rates[1];
-      } else {
-        tax += band2 * rates[1];
-        rem -= band2;
-        const band3 = slab3 - slab2;
-        if (rem <= band3) {
-          tax += rem * rates[2];
-        } else {
-          tax += band3 * rates[2];
-          rem -= band3;
-          const band4 = slab4 - slab3;
-          if (rem <= band4) {
-            tax += rem * rates[3];
-          } else {
-            tax += band4 * rates[3];
-            rem -= band4;
-            tax += rem * rates[4];
-          }
-        }
-      }
-    }
-    const effectiveRate = annualSalary > 0 ? (tax / annualSalary) * 100 : 0;
-    return { tax: Math.round(tax), monthlyTax: Math.round(tax / 12), effectiveRate: effectiveRate.toFixed(1) };
-  };
-
-  const calcTds = () => {
-    const tds = (tdsBaseAmount * tdsRate) / 100;
-    return { base: tdsBaseAmount, tds: Math.round(tds), payable: Math.round(tdsBaseAmount - tds) };
-  };
-
-  const calcAdvanceTax = () => {
-    const poush = Math.round(estimatedAnnualTax * 0.40);
-    const chaitra = Math.round(estimatedAnnualTax * 0.30);
-    const ashadh = Math.round(estimatedAnnualTax * 0.30);
-    return { poush, chaitra, ashadh, total: estimatedAnnualTax };
-  };
-
-  const calcCorpTax = () => {
-    const tax = (taxableProfit * corpTaxRate) / 100;
-    return { profit: taxableProfit, tax: Math.round(tax), net: Math.round(taxableProfit - tax) };
-  };
-
-  const calcCgt = () => {
-    const cgt = configs['capital-gains']?.assumptions ?? {};
-    const rate = Number(cgt[cgtType] ?? 7.5);
-    const tax = (cgtGain * rate) / 100;
-    return { gain: cgtGain, rate, tax: Math.round(tax), net: Math.round(cgtGain - tax) };
-  };
-
-  const calcSsf = () => {
-    const ssf = configs.ssf?.assumptions ?? {};
-    const employee = Math.round(ssfBasic * Number(ssf.employee_rate ?? 0.11));
-    const employer = Math.round(ssfBasic * Number(ssf.employer_rate ?? 0.20));
-    const total = employee + employer;
-    return { basic: ssfBasic, employee, employer, total };
-  };
-
-  const calcEmi = () => {
-    const r = loanRate / 12 / 100;
-    const n = loanYears * 12;
-    if (r === 0) return { emi: Math.round(loanPrincipal / n), totalInterest: 0, totalPayment: loanPrincipal };
-    const emi = (loanPrincipal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-    const totalPayment = emi * n;
-    const totalInterest = totalPayment - loanPrincipal;
-    return { emi: Math.round(emi), totalInterest: Math.round(totalInterest), totalPayment: Math.round(totalPayment) };
-  };
-
-  const toolsList = [
-    {
-      id: 'vat',
-      name: 'Nepal VAT Calculator',
-      category: 'VAT & Indirect Tax',
-      icon: Receipt,
-      description: 'Compute 13% VAT for forward (exclusive) and reverse (inclusive) invoice calculations in Nepal.',
-    },
-    {
-      id: 'individual-tax',
-      name: 'Individual Salary Tax Estimate',
-      category: 'Income Tax',
-      icon: Calculator,
-      description: 'Estimate progressive tax and monthly withholding using the fiscal year selected in the CMS calculator settings.',
-    },
-    {
-      id: 'tds',
-      name: 'Withholding Tax (TDS) Calculator',
-      category: 'Compliance',
-      icon: Coins,
-      description: 'Estimate withholding from an amount and a rate you select. Check the applicable rate before making a deduction.',
-    },
-    {
-      id: 'advance-tax',
-      name: 'Advance Corporate Tax Schedule',
-      category: 'Corporate Tax',
-      icon: Clock,
-      description: 'Split an estimated annual payment into three editable planning amounts.',
-    },
-    {
-      id: 'corp-tax',
-      name: 'Corporate Income Tax Estimator',
-      category: 'Corporate Tax',
-      icon: Building,
-      description: 'Estimate company tax using the rate option you select. Confirm the rate for the entity and fiscal year.',
-    },
-    {
-      id: 'cgt',
-      name: 'Capital Gains Tax (CGT)',
-      category: 'Investments',
-      icon: Layers,
-      description: 'Calculate gains tax on listed securities (5% vs 7.5%) and real estate properties in Nepal.',
-    },
-    {
-      id: 'ssf',
-      name: 'Social Security Fund (SSF) Split',
-      category: 'Payroll & HR',
-      icon: PiggyBank,
-      description: 'Mandatory 31% split breakdown: 11% employee contribution and 20% employer contribution.',
-    },
-    {
-      id: 'emi',
-      name: 'Business Loan EMI Calculator',
-      category: 'Financial Advisory',
-      icon: TrendingUp,
-      description: 'Calculate monthly loan installments, total repayment amount, and cumulative interest burden.',
-    },
+  // Quick preset helpers
+  const principalPresets = [
+    { label: '10 Lakhs', value: 1000000 },
+    { label: '25 Lakhs', value: 2500000 },
+    { label: '50 Lakhs', value: 5000000 },
+    { label: '1 Crore', value: 10000000 },
+    { label: '2.5 Crore', value: 25000000 },
   ];
 
-  const categories = ['All', 'Income Tax', 'Corporate Tax', 'VAT & Indirect Tax', 'Payroll & HR', 'Investments'];
+  const ratePresets = [
+    { label: '8.75% Home Loan', value: 8.75 },
+    { label: '10.50% Auto/Hire', value: 10.5 },
+    { label: '11.75% Business', value: 11.75 },
+    { label: '13.25% Working Cap', value: 13.25 },
+  ];
 
-  const filteredTools = toolsList.filter((tool) => {
-    if (selectedCategory === 'All') return true;
-    return tool.category.toLowerCase().includes(selectedCategory.toLowerCase());
-  });
+  // 2. Calculations
+  const calculations = useMemo(() => {
+    const P = Math.max(0, principal);
+    const annualR = Math.max(0.01, interestRate) / 100;
 
-  const activeTool = toolsList.find((t) => t.id === selectedToolId);
+    // Determine periods per year
+    let periodsPerYear = 12;
+    let totalPeriods = 0;
 
-  const handleCopySummary = (text: string) => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(text);
+    switch (tenureType) {
+      case 'monthly':
+        periodsPerYear = 12;
+        totalPeriods = Math.max(1, Math.round(tenureValue));
+        break;
+      case 'quarterly':
+        periodsPerYear = 4;
+        totalPeriods = Math.max(1, Math.round(tenureValue));
+        break;
+      case 'half_yearly':
+        periodsPerYear = 2;
+        totalPeriods = Math.max(1, Math.round(tenureValue));
+        break;
+      case 'yearly':
+        periodsPerYear = 12; // Monthly EMI installments over Y years
+        totalPeriods = Math.max(1, Math.round(tenureValue * 12));
+        break;
+    }
+
+    // Rate per period
+    const ratePerPeriod = annualR / (tenureType === 'yearly' ? 12 : periodsPerYear);
+
+    // EMI formula: P * r * (1+r)^n / ((1+r)^n - 1)
+    const emi =
+      ratePerPeriod > 0
+        ? (P * ratePerPeriod * Math.pow(1 + ratePerPeriod, totalPeriods)) /
+          (Math.pow(1 + ratePerPeriod, totalPeriods) - 1)
+        : P / totalPeriods;
+
+    // Generate schedule
+    let currentBalance = P;
+    const schedule: AmortizationRow[] = [];
+    let totalInterest = 0;
+
+    for (let i = 1; i <= totalPeriods; i++) {
+      const interestForPeriod = currentBalance * ratePerPeriod;
+      const principalForPeriod = Math.min(currentBalance, emi - interestForPeriod);
+      const closing = Math.max(0, currentBalance - principalForPeriod);
+
+      schedule.push({
+        period: i,
+        label:
+          tenureType === 'yearly' || tenureType === 'monthly'
+            ? `Month ${i}`
+            : tenureType === 'quarterly'
+            ? `Quarter ${i}`
+            : `Half-Year ${i}`,
+        openingBalance: currentBalance,
+        installment: principalForPeriod + interestForPeriod,
+        principal: principalForPeriod,
+        interest: interestForPeriod,
+        closingBalance: closing,
+      });
+
+      totalInterest += interestForPeriod;
+      currentBalance = closing;
+      if (currentBalance <= 0) break;
+    }
+
+    const totalPrincipal = P;
+    const totalPayment = totalPrincipal + totalInterest;
+    const feeAmount = (P * (processingFeePercent || 0)) / 100;
+    const grandTotal = totalPayment + feeAmount;
+
+    // Yearly Aggregation for summary view
+    const yearlySummary: {
+      year: number;
+      principal: number;
+      interest: number;
+      total: number;
+      closingBalance: number;
+    }[] = [];
+
+    const periodsPerYearGroup = tenureType === 'quarterly' ? 4 : tenureType === 'half_yearly' ? 2 : 12;
+    for (let yr = 0; yr < Math.ceil(totalPeriods / periodsPerYearGroup); yr++) {
+      const slice = schedule.slice(yr * periodsPerYearGroup, (yr + 1) * periodsPerYearGroup);
+      if (slice.length === 0) break;
+      const yrPrincipal = slice.reduce((sum, r) => sum + r.principal, 0);
+      const yrInterest = slice.reduce((sum, r) => sum + r.interest, 0);
+      yearlySummary.push({
+        year: yr + 1,
+        principal: yrPrincipal,
+        interest: yrInterest,
+        total: yrPrincipal + yrInterest,
+        closingBalance: slice[slice.length - 1].closingBalance,
+      });
+    }
+
+    return {
+      emi: Math.round(emi),
+      totalPeriods,
+      totalPrincipal: Math.round(totalPrincipal),
+      totalInterest: Math.round(totalInterest),
+      totalPayment: Math.round(totalPayment),
+      feeAmount: Math.round(feeAmount),
+      grandTotal: Math.round(grandTotal),
+      principalPercent: totalPayment > 0 ? (totalPrincipal / totalPayment) * 100 : 100,
+      interestPercent: totalPayment > 0 ? (totalInterest / totalPayment) * 100 : 0,
+      schedule,
+      yearlySummary,
+    };
+  }, [principal, interestRate, tenureValue, tenureType, processingFeePercent]);
+
+  const formatNpr = (val: number) => {
+    return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(val);
+  };
+
+  const handleCopySummary = async () => {
+    const text = `Loan Summary - Narahari Adhikari
+Principal: NPR ${formatNpr(calculations.totalPrincipal)}
+Interest Rate: ${interestRate}% p.a.
+Tenure: ${tenureValue} ${tenureType}
+Installment (EMI): NPR ${formatNpr(calculations.emi)} / period
+Total Interest: NPR ${formatNpr(calculations.totalInterest)}
+Total Repayment: NPR ${formatNpr(calculations.totalPayment)}`;
+    try {
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }
+    } catch {}
   };
 
   return (
     <div className="pb-28 overflow-x-hidden bg-[#FAFCFD]">
-      {/* 1. Hero Header */}
+      {/* 1. Header Section */}
       <section
         id="hero-section"
         className="relative bg-hero-gradient pt-8 pb-14 sm:pt-12 sm:pb-16 overflow-hidden"
@@ -252,563 +195,372 @@ export default function ResourcesToolsPage() {
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-3xl space-y-3">
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
-              Accounting & Tax Calculators<span className="text-[#2CBC63]">.</span>
+              Dedicated Loan &amp; EMI Calculator<span className="text-[#2CBC63]">.</span>
             </h1>
             <p className="text-base sm:text-[17px] text-[#4A5259] leading-relaxed">
-              Use these calculators to work through an estimate. Tax rates can change by fiscal year and taxpayer, so confirm the applicable figures before filing or paying.
+              Calculate exact loan installments, periodic interest amortizations, and complete repayment schedules for corporate and personal borrowings.
             </p>
-            {Object.values(configs).some((config) => config.fiscal_year && config.fiscal_year !== 'Current') && (
-              <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
-                <strong>Some figures are tied to an older fiscal year.</strong> Check the source and effective date before relying on an estimate.
-              </div>
-            )}
-            <a href="https://ird.gov.np/category/taxrateincentives/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#023A51] underline decoration-[#2CBC63] underline-offset-4 hover:text-[#2CBC63] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#023A51]">
-              Check current IRD tax rates <ArrowRight aria-hidden="true" className="size-4" />
-            </a>
-          </div>
-
-          {/* Category Filter Pills */}
-          <div className="mt-8 flex items-center gap-2 overflow-x-auto no-scrollbar pt-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  selectedCategory === cat
-                    ? 'bg-[#023A51] text-white shadow-xs'
-                    : 'bg-[#F1F5F9] text-[#64748B] hover:text-[#023A51] hover:bg-slate-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* 2. Grid of Calculators */}
-      <div className="max-w-[1240px] mx-auto px-6 pt-12 sm:pt-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredTools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <div
-                key={tool.id}
-                onClick={() => setSelectedToolId(tool.id)}
-                className="bg-white rounded-3xl border border-[#E8EBEF] p-6 shadow-xs hover:shadow-xl hover:border-[#2CBC63]/60 transition-all duration-300 cursor-pointer flex flex-col justify-between group"
-              >
-                <div className="space-y-3">
-                  <div className="w-11 h-11 rounded-2xl bg-[#E8F4F8] text-[#023A51] group-hover:bg-[#2CBC63] group-hover:text-white transition-colors flex items-center justify-center shadow-xs">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    {tool.category}
-                  </span>
-                  <h3 className="text-lg font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors leading-snug">
-                    {tool.name}
-                  </h3>
-                  <p className="text-xs text-[#59667D] leading-relaxed line-clamp-3">
-                    {tool.description}
-                  </p>
-                </div>
+      {/* 2. Interactive Calculator Main Grid */}
+      <div className="max-w-[1240px] mx-auto px-6 pt-12 space-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT: Inputs Panel (7 Cols) */}
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-[#E8EBEF] p-6 sm:p-8 shadow-sm space-y-7">
+            <div className="border-b border-[#E8EBEF] pb-4">
+              <h2 className="text-xl font-bold text-[#023A51]">Loan Parameters</h2>
+              <p className="text-xs text-[#59667D] mt-1">
+                Customize loan size, interest rates, and installment payment frequencies.
+              </p>
+            </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#023A51] group-hover:text-[#2CBC63]">
-                  <span>Launch calculator</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            {/* Input 1: Principal Amount */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#023A51] uppercase tracking-wider">
+                  Loan Principal (NPR)
+                </label>
+                <div className="text-right">
+                  <span className="text-lg font-extrabold text-[#023A51]">
+                    NPR {formatNpr(principal)}
+                  </span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* 3. CENTER MORPH MODAL FOR ACTIVE CALCULATOR */}
-      {activeTool && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div
-            className="bg-white rounded-3xl border border-[#CCD7DC] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="p-6 sm:p-8 border-b border-[#E8EBEF] flex items-start justify-between gap-4 sticky top-0 bg-white z-10">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-[#2CBC63] uppercase tracking-wider">
-                  {activeTool.category}
+              <div className="relative">
+                <input
+                  type="number"
+                  min="50000"
+                  step="50000"
+                  value={principal}
+                  onChange={(e) => setPrincipal(Number(e.target.value) || 0)}
+                  className="w-full h-11 px-4 text-sm font-semibold rounded-xl border border-[#CCD7DC] bg-[#F8FAFC] focus:bg-white focus:outline-none focus:border-[#2CBC63]"
+                />
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {principalPresets.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPrincipal(p.value)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+                      principal === p.value
+                        ? 'bg-[#023A51] text-white shadow-xs'
+                        : 'bg-[#F4F6F8] text-[#59667D] hover:bg-[#E8EBEF] hover:text-[#023A51]'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input 2: Rate of Interest */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#023A51] uppercase tracking-wider">
+                  Annual Interest Rate (%)
+                </label>
+                <span className="text-base font-extrabold text-[#023A51]">
+                  {interestRate}% p.a.
                 </span>
-                <h2 className="text-2xl font-extrabold text-[#023A51]">
-                  {activeTool.name}
-                </h2>
-                <p className="text-xs text-[#59667D]">
-                  {activeTool.description}
+              </div>
+
+              <div className="relative">
+                <input
+                  type="number"
+                  min="1"
+                  max="35"
+                  step="0.05"
+                  value={interestRate}
+                  onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+                  className="w-full h-11 px-4 text-sm font-semibold rounded-xl border border-[#CCD7DC] bg-[#F8FAFC] focus:bg-white focus:outline-none focus:border-[#2CBC63]"
+                />
+              </div>
+
+              {/* Rate Presets */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {ratePresets.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => setInterestRate(r.value)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+                      interestRate === r.value
+                        ? 'bg-[#023A51] text-white shadow-xs'
+                        : 'bg-[#F4F6F8] text-[#59667D] hover:bg-[#E8EBEF] hover:text-[#023A51]'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input 3: Tenure Value and Type Selection */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#023A51] uppercase tracking-wider block">
+                  Tenure Duration
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="360"
+                  value={tenureValue}
+                  onChange={(e) => setTenureValue(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full h-11 px-4 text-sm font-semibold rounded-xl border border-[#CCD7DC] bg-[#F8FAFC] focus:bg-white focus:outline-none focus:border-[#2CBC63]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[#023A51] uppercase tracking-wider block">
+                  Tenure Type / Frequency
+                </label>
+                <select
+                  value={tenureType}
+                  onChange={(e) => setTenureType(e.target.value as TenureType)}
+                  className="w-full h-11 px-4 text-sm font-semibold rounded-xl border border-[#CCD7DC] bg-[#F8FAFC] focus:bg-white focus:outline-none focus:border-[#2CBC63] cursor-pointer"
+                >
+                  <option value="yearly">Years (Monthly Repayment)</option>
+                  <option value="monthly">Months (Monthly Repayment)</option>
+                  <option value="quarterly">Quarters (Quarterly Repayment)</option>
+                  <option value="half_yearly">Half-Years (Semi-Annual)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Input 4: Processing Fee (Optional Corporate Parameter) */}
+            <div className="space-y-2 pt-2 border-t border-[#E8EBEF]">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#59667D]">
+                  Estimated Bank Processing Fee (% of principal)
+                </label>
+                <span className="text-xs font-bold text-[#023A51]">
+                  NPR {formatNpr(calculations.feeAmount)} ({processingFeePercent}%)
+                </span>
+              </div>
+              <input
+                type="number"
+                min="0"
+                max="5"
+                step="0.05"
+                value={processingFeePercent}
+                onChange={(e) => setProcessingFeePercent(Number(e.target.value) || 0)}
+                className="w-full h-10 px-4 text-xs sm:text-sm rounded-xl border border-[#CCD7DC] bg-[#F8FAFC] focus:bg-white focus:outline-none focus:border-[#2CBC63]"
+              />
+            </div>
+          </div>
+
+          {/* RIGHT: Output & Repayment Summary (5 Cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Primary Result Card */}
+            <div className="bg-white rounded-3xl p-7 sm:p-8 border border-[#E2ECE6] shadow-sm relative overflow-hidden space-y-6">
+              <div className="space-y-2 border-b border-[#EDF2EF] pb-5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#14864B] bg-[#EAF7F0] px-3 py-1 rounded-full border border-[#D5EFE1] inline-block">
+                  {tenureType === 'quarterly'
+                    ? 'Quarterly Installment'
+                    : tenureType === 'half_yearly'
+                    ? 'Semi-Annual Installment'
+                    : 'Monthly EMI Installment'}
+                </span>
+                <div className="text-3xl sm:text-4xl font-extrabold text-[#023A51] tracking-tight pt-1">
+                  NPR {formatNpr(calculations.emi)}
+                </div>
+                <p className="text-xs text-[#56686A]">
+                  Fixed periodic installment across {calculations.totalPeriods} payments.
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedToolId(null)}
-                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-[#023A51] flex items-center justify-center transition-colors shrink-0 cursor-pointer"
-                title="Close modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Progress Split Bar */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] font-semibold text-[#56686A]">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#14864B]" />
+                    Principal ({calculations.principalPercent.toFixed(1)}%)
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
+                    Interest ({calculations.interestPercent.toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-[#F0F4F2] overflow-hidden flex">
+                  <div
+                    style={{ width: `${calculations.principalPercent}%` }}
+                    className="h-full bg-[#14864B] transition-all duration-300"
+                  />
+                  <div
+                    style={{ width: `${calculations.interestPercent}%` }}
+                    className="h-full bg-[#D97706] transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              {/* Breakdown Grid in 2 Clean Metric Cards */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="rounded-2xl bg-[#FAFCFB] border border-[#E5ECE8] p-4">
+                  <span className="text-[11px] font-medium text-[#56686A] block">Total Interest</span>
+                  <span className="text-base sm:text-lg font-bold text-[#023A51] mt-0.5 block">
+                    NPR {formatNpr(calculations.totalInterest)}
+                  </span>
+                </div>
+                <div className="rounded-2xl bg-[#FAFCFB] border border-[#E5ECE8] p-4">
+                  <span className="text-[11px] font-medium text-[#56686A] block">Total Repayment</span>
+                  <span className="text-base sm:text-lg font-bold text-[#023A51] mt-0.5 block">
+                    NPR {formatNpr(calculations.totalPayment)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Copy Summary Action */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleCopySummary}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#023A51] hover:bg-[#034B68] text-white text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                >
+                  {copied ? <Check className="w-4 h-4 text-[#2CBC63]" /> : <Copy className="w-4 h-4" />}
+                  <span>{copied ? 'Summary Copied to Clipboard' : 'Copy Loan Summary'}</span>
+                </button>
+              </div>
             </div>
 
-            {/* Modal Body: Active Calculator Forms */}
-            <div className="p-6 sm:p-8 space-y-6">
-              {/* VAT CALCULATOR */}
-              {selectedToolId === 'vat' && (
-                <div className="space-y-5">
-                  <div className="flex gap-2 p-1 bg-[#F1F5F9] rounded-xl border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setVatMode('exclusive')}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                        vatMode === 'exclusive' ? 'bg-white text-[#023A51] shadow-xs' : 'text-slate-600'
-                      }`}
-                    >
-                      Exclusive (Add 13% VAT)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVatMode('inclusive')}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                        vatMode === 'inclusive' ? 'bg-white text-[#023A51] shadow-xs' : 'text-slate-600'
-                      }`}
-                    >
-                      Inclusive (Extract 13% VAT)
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      {vatMode === 'exclusive' ? 'Net Amount (NPR)' : 'Gross Inclusive Amount (NPR)'}
-                    </label>
-                    <Input
-                      type="number"
-                      value={vatAmount}
-                      onChange={(e) => setVatAmount(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {/* Results Card */}
-                  {(() => {
-                    const res = calcVat();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Taxable Base:</span>
-                          <span className="font-mono font-bold text-[#023A51]">NPR {res.base.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-[#2CBC63] font-bold">
-                          <span>13% VAT Amount:</span>
-                          <span className="font-mono">NPR {res.vat.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Total Invoiced Amount:</span>
-                          <span className="font-mono">NPR {res.total.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* INDIVIDUAL TAX CALCULATOR */}
-              {selectedToolId === 'individual-tax' && (
-                <div className="space-y-5">
-                  <div className="flex gap-2 p-1 bg-[#F1F5F9] rounded-xl border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setTaxMaritalStatus('unmarried')}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                        taxMaritalStatus === 'unmarried' ? 'bg-white text-[#023A51] shadow-xs' : 'text-slate-600'
-                      }`}
-                    >
-                      Unmarried (First 5 Lakhs @ 1%)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTaxMaritalStatus('married')}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                        taxMaritalStatus === 'married' ? 'bg-white text-[#023A51] shadow-xs' : 'text-slate-600'
-                      }`}
-                    >
-                      Married (First 6 Lakhs @ 1%)
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Gross Annual Taxable Salary (NPR)
-                    </label>
-                    <Input
-                      type="number"
-                      value={annualSalary}
-                      onChange={(e) => setAnnualSalary(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {(() => {
-                    const res = calcIndividualTax();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Effective Tax Rate:</span>
-                          <span className="font-mono font-bold text-[#023A51]">{res.effectiveRate}%</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Monthly Payroll Withholding:</span>
-                          <span className="font-mono font-bold text-[#023A51]">NPR {res.monthlyTax.toLocaleString()} / mo</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Total Annual Tax Liability:</span>
-                          <span className="font-mono text-[#2CBC63]">NPR {res.tax.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* TDS CALCULATOR */}
-              {selectedToolId === 'tds' && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      { label: 'Rent (10%)', rate: 10 },
-                      { label: 'Contract (1.5%)', rate: 1.5 },
-                      { label: 'Consultancy (15%)', rate: 15 },
-                      { label: 'Dividend (5%)', rate: 5 },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => setTdsRate(item.rate)}
-                        className={`p-2 rounded-xl text-xs font-bold transition-all border ${
-                          tdsRate === item.rate
-                            ? 'bg-[#023A51] text-white border-[#023A51]'
-                            : 'bg-[#F8FAFC] text-slate-700 border-slate-200 hover:bg-white'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Base Transaction Amount (NPR)
-                    </label>
-                    <Input
-                      type="number"
-                      value={tdsBaseAmount}
-                      onChange={(e) => setTdsBaseAmount(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {(() => {
-                    const res = calcTds();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Withholding Rate Applied:</span>
-                          <span className="font-mono font-bold text-[#023A51]">{tdsRate}%</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-[#2CBC63] font-bold">
-                          <span>TDS Deductible (Deposit to IRD):</span>
-                          <span className="font-mono">NPR {res.tds.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Net Payable to Vendor:</span>
-                          <span className="font-mono">NPR {res.payable.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* ADVANCE CORPORATE TAX SCHEDULE */}
-              {selectedToolId === 'advance-tax' && (
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Estimated Annual Corporate Income Tax (NPR)
-                    </label>
-                    <Input
-                      type="number"
-                      value={estimatedAnnualTax}
-                      onChange={(e) => setEstimatedAnnualTax(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {(() => {
-                    const res = calcAdvanceTax();
-                    return (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="p-4 rounded-xl bg-white border border-[#CCD7DC] space-y-1">
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">1st Installment (40%)</span>
-                          <div className="text-lg font-extrabold text-[#023A51]">NPR {res.poush.toLocaleString()}</div>
-                          <div className="text-xs text-[#2CBC63] font-semibold">End of Poush</div>
-                        </div>
-                        <div className="p-4 rounded-xl bg-white border border-[#CCD7DC] space-y-1">
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">2nd Installment (30%)</span>
-                          <div className="text-lg font-extrabold text-[#023A51]">NPR {res.chaitra.toLocaleString()}</div>
-                          <div className="text-xs text-[#2CBC63] font-semibold">End of Chaitra</div>
-                        </div>
-                        <div className="p-4 rounded-xl bg-white border border-[#CCD7DC] space-y-1">
-                          <span className="text-[11px] font-bold text-slate-400 uppercase">3rd Installment (30%)</span>
-                          <div className="text-lg font-extrabold text-[#023A51]">NPR {res.ashadh.toLocaleString()}</div>
-                          <div className="text-xs text-[#2CBC63] font-semibold">End of Ashadh</div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* CORPORATE TAX ESTIMATOR */}
-              {selectedToolId === 'corp-tax' && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'General (25%)', rate: 25 },
-                      { label: 'Manufacturing (20%)', rate: 20 },
-                      { label: 'Banking/Telecom (30%)', rate: 30 },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => setCorpTaxRate(item.rate)}
-                        className={`p-2.5 rounded-xl text-xs font-bold transition-all border ${
-                          corpTaxRate === item.rate
-                            ? 'bg-[#023A51] text-white border-[#023A51]'
-                            : 'bg-[#F8FAFC] text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Estimated Taxable Profit (NPR)
-                    </label>
-                    <Input
-                      type="number"
-                      value={taxableProfit}
-                      onChange={(e) => setTaxableProfit(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {(() => {
-                    const res = calcCorpTax();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Corporate Rate Applied:</span>
-                          <span className="font-mono font-bold text-[#023A51]">{corpTaxRate}%</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-[#2CBC63] font-bold">
-                          <span>Estimated Corporate Tax:</span>
-                          <span className="font-mono">NPR {res.tax.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Net Profit After Tax:</span>
-                          <span className="font-mono">NPR {res.net.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* CAPITAL GAINS TAX */}
-              {selectedToolId === 'cgt' && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'equity_short', label: 'Shares (< 365 Days) @ 7.5%' },
-                      { id: 'equity_long', label: 'Shares (>= 365 Days) @ 5.0%' },
-                      { id: 'property_short', label: 'Property (< 5 Years) @ 7.5%' },
-                      { id: 'property_long', label: 'Property (>= 5 Years) @ 5.0%' },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setCgtType(item.id as typeof cgtType)}
-                        className={`p-2.5 rounded-xl text-xs font-bold transition-all border ${
-                          cgtType === item.id
-                            ? 'bg-[#023A51] text-white border-[#023A51]'
-                            : 'bg-[#F8FAFC] text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Net Capital Gain (NPR)
-                    </label>
-                    <Input
-                      type="number"
-                      value={cgtGain}
-                      onChange={(e) => setCgtGain(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {(() => {
-                    const res = calcCgt();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>CGT Rate Applied:</span>
-                          <span className="font-mono font-bold text-[#023A51]">{res.rate}%</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-[#2CBC63] font-bold">
-                          <span>Capital Gains Tax:</span>
-                          <span className="font-mono">NPR {res.tax.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Net Take-Home Proceeds:</span>
-                          <span className="font-mono">NPR {res.net.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* SSF CALCULATOR */}
-              {selectedToolId === 'ssf' && (
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-xs font-bold text-[#023A51] mb-1.5">
-                      Monthly Basic Salary (NPR)
-                    </label>
-                    <Input
-                      type="number"
-                      value={ssfBasic}
-                      onChange={(e) => setSsfBasic(Number(e.target.value) || 0)}
-                      className="h-12 text-lg font-mono font-bold rounded-xl"
-                    />
-                  </div>
-
-                  {(() => {
-                    const res = calcSsf();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Employee Deduction (11%):</span>
-                          <span className="font-mono font-bold text-[#023A51]">NPR {res.employee.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Employer Contribution (20%):</span>
-                          <span className="font-mono font-bold text-[#023A51]">NPR {res.employer.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Total Monthly SSF Deposit (31%):</span>
-                          <span className="font-mono text-[#2CBC63]">NPR {res.total.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* LOAN EMI CALCULATOR */}
-              {selectedToolId === 'emi' && (
-                <div className="space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-[#023A51] mb-1">
-                        Principal (NPR)
-                      </label>
-                      <Input
-                        type="number"
-                        value={loanPrincipal}
-                        onChange={(e) => setLoanPrincipal(Number(e.target.value) || 0)}
-                        className="h-10 text-xs font-mono font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-[#023A51] mb-1">
-                        Annual Rate (%)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        value={loanRate}
-                        onChange={(e) => setLoanRate(Number(e.target.value) || 0)}
-                        className="h-10 text-xs font-mono font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-[#023A51] mb-1">
-                        Tenure (Years)
-                      </label>
-                      <Input
-                        type="number"
-                        value={loanYears}
-                        onChange={(e) => setLoanYears(Number(e.target.value) || 0)}
-                        className="h-10 text-xs font-mono font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  {(() => {
-                    const res = calcEmi();
-                    return (
-                      <div className="p-6 rounded-2xl bg-[#E8F4F8] border border-[#CCD7DC] space-y-3">
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Total Interest Burden:</span>
-                          <span className="font-mono font-bold text-[#023A51]">NPR {res.totalInterest.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-[#59667D]">
-                          <span>Total Cumulative Repayment:</span>
-                          <span className="font-mono font-bold text-[#023A51]">NPR {res.totalPayment.toLocaleString()}</span>
-                        </div>
-                        <div className="pt-2 border-t border-[#CCD7DC] flex justify-between text-base font-extrabold text-[#023A51]">
-                          <span>Monthly EMI:</span>
-                          <span className="font-mono text-[#2CBC63]">NPR {res.emi.toLocaleString()} / mo</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Actions */}
-            <div className="p-6 sm:p-8 bg-[#F8FAFC] border-t border-[#E8EBEF] rounded-b-3xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Quick Consultation Callout */}
+            <div className="bg-white rounded-3xl border border-[#E8EBEF] p-6 shadow-sm space-y-3">
+              <h3 className="text-sm font-bold text-[#023A51]">
+                Need Corporate Debt or Working Capital Structuring?
+              </h3>
+              <p className="text-xs text-[#59667D] leading-relaxed">
+                Connect with Narahari Adhikari for corporate debt restructuring, bank loan proposals, and financial model validations.
+              </p>
               <Link
-                href="/book-appointment"
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white text-xs font-bold transition-all text-center"
+                href="/contact"
+                className="inline-flex items-center gap-2 text-xs font-bold text-[#023A51] hover:text-[#14864B] hover:underline pt-1 transition-colors"
               >
-                Discuss this calculation in a consultation &rarr;
+                <span>Request Financial Advisory</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#023A51]" />
               </Link>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setSelectedToolId(null)}
-                className="w-full sm:w-auto rounded-full text-xs font-semibold"
-              >
-                Close Calculator
-              </Button>
             </div>
           </div>
         </div>
-      )}
+
+        {/* ======================================================== */}
+        {/* SECTION 3: FULL AMORTIZATION SCHEDULE TABLE             */}
+        {/* ======================================================== */}
+        <section className="bg-white rounded-3xl border border-[#E8EBEF] p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E8EBEF] pb-5">
+            <div>
+              <h3 className="text-xl font-bold text-[#023A51]">
+                Amortization Repayment Schedule
+              </h3>
+              <p className="text-xs text-[#59667D] mt-1">
+                Period-by-period breakdown of principal repayments, interest expenses, and loan balance.
+              </p>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2 bg-[#F4F6F8] p-1 rounded-xl border border-[#E8EBEF]">
+              <button
+                type="button"
+                onClick={() => setViewMode('yearly')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  viewMode === 'yearly'
+                    ? 'bg-white text-[#023A51] shadow-xs'
+                    : 'text-[#59667D] hover:text-[#023A51]'
+                }`}
+              >
+                Annual Summary
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('installment')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  viewMode === 'installment'
+                    ? 'bg-white text-[#023A51] shadow-xs'
+                    : 'text-[#59667D] hover:text-[#023A51]'
+                }`}
+              >
+                All {calculations.totalPeriods} Payments
+              </button>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="overflow-x-auto">
+            {viewMode === 'yearly' ? (
+              <table className="w-full text-left text-xs sm:text-[13px]">
+                <thead>
+                  <tr className="border-b border-[#E8EBEF] text-[#59667D] font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3 px-4">Year</th>
+                    <th className="py-3 px-4 text-right">Principal Repaid (NPR)</th>
+                    <th className="py-3 px-4 text-right">Interest Paid (NPR)</th>
+                    <th className="py-3 px-4 text-right">Total Annual Payment (NPR)</th>
+                    <th className="py-3 px-4 text-right">Year-End Balance (NPR)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E8EBEF]/60">
+                  {calculations.yearlySummary.map((row) => (
+                    <tr key={row.year} className="hover:bg-[#F8FAFC] transition">
+                      <td className="py-3 px-4 font-bold text-[#023A51]">Year {row.year}</td>
+                      <td className="py-3 px-4 text-right font-medium text-[#168A4A]">
+                        {formatNpr(row.principal)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium text-[#B45309]">
+                        {formatNpr(row.interest)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-bold text-[#023A51]">
+                        {formatNpr(row.total)}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-[#59667D]">
+                        {formatNpr(row.closingBalance)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left text-xs sm:text-[13px]">
+                <thead>
+                  <tr className="border-b border-[#E8EBEF] text-[#59667D] font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3 px-4">Period</th>
+                    <th className="py-3 px-4 text-right">Opening Balance (NPR)</th>
+                    <th className="py-3 px-4 text-right">EMI Installment (NPR)</th>
+                    <th className="py-3 px-4 text-right">Principal (NPR)</th>
+                    <th className="py-3 px-4 text-right">Interest (NPR)</th>
+                    <th className="py-3 px-4 text-right">Closing Balance (NPR)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E8EBEF]/60">
+                  {calculations.schedule.map((row) => (
+                    <tr key={row.period} className="hover:bg-[#F8FAFC] transition">
+                      <td className="py-2.5 px-4 font-bold text-[#023A51]">{row.label}</td>
+                      <td className="py-2.5 px-4 text-right font-mono text-[#59667D]">
+                        {formatNpr(row.openingBalance)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-bold text-[#023A51]">
+                        {formatNpr(row.installment)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-medium text-[#168A4A]">
+                        {formatNpr(row.principal)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-medium text-[#B45309]">
+                        {formatNpr(row.interest)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-[#59667D]">
+                        {formatNpr(row.closingBalance)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
@@ -11,115 +11,130 @@ import {
   Phone,
   Mail,
   Scale,
-  Briefcase,
-  FileCheck,
+  Target,
+  Eye,
   CheckCircle2,
-  ChevronDown,
+  FileCheck2,
+  Search,
+  Sparkles,
+  Award,
 } from 'lucide-react';
 
 export default function AboutPage() {
   const { settings } = useApp();
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // Practice leadership and expandable associate network
   const primaryPractitioner = {
-    name: 'CA Narahari Adhikari',
-    title: 'Chartered Accountant & Principal',
-    credential: 'FCA | ICAN Member',
+    name: 'Narahari Adhikari',
+    title: 'Senior Financial Advisor & Principal',
+    credential: 'Registered Practitioner & Senior Advisor',
     image: '/profile-picture.png',
-    bio: 'Fellow Chartered Accountant with long experience in Nepal\'s tax system, statutory audits, and financial reporting. He works with businesses on IRD assessments, corporate reorganisations, and NFRS/IFRS implementation.',
+    bio: 'Distinguished financial advisor with extensive experience guiding corporations, trading houses, manufacturing entities, and financial institutions across Nepal. Narahari Adhikari leads the firm with a steadfast commitment to regulatory precision, sound corporate governance, and practical fiscal strategy. His expertise spans complex statutory audits, IRD tax assessments, cross-border corporate reorganizations, and NFRS conversions.',
     specialties: [
-      'Statutory & Forensic Audit',
-      'Direct & Indirect Tax Advisory',
-      'Mergers, Acquisitions & Valuation',
-      'NFRS/IFRS Implementation',
+      'Statutory & Forensic Audit Assurance',
+      'Corporate Tax Planning & IRD Assessment Defense',
+      'NFRS Accounting Conversion & Advisory',
+      'Mergers, Corporate Restructuring & Due Diligence',
+      'Internal Control & Risk Governance Systems',
+      'Financial Strategy & Entity Structuring',
     ],
   };
 
-  const practiceCommitments = [
+  const coreValues = [
     {
-      title: 'Independent and ethical work',
-      desc: 'We follow ICAN and auditing standards, and keep our advice independent of the outcome a client wants.',
+      title: 'Integrity & Independence',
+      desc: 'Uncompromising commitment to objective professional standards and strict ethical conduct across every engagement.',
       icon: Scale,
     },
     {
-      title: 'Client confidentiality',
-      desc: 'Your records, working papers, and business information are handled discreetly and shared only when there is a proper reason to do so.',
+      title: 'Precision & Technical Rigor',
+      desc: 'In-depth mastery of Nepalese fiscal regulations, tax statutes, and reporting standards to ensure flawless compliance.',
       icon: ShieldCheck,
     },
     {
-      title: 'Direct senior involvement',
-      desc: 'You speak with the people reviewing the work, so recommendations stay practical and connected to your situation.',
-      icon: Briefcase,
+      title: 'Client Confidentiality',
+      desc: 'Absolute discretion and institutional safeguarding of corporate financial books, working papers, and strategic decisions.',
+      icon: Award,
     },
     {
-      title: 'Careful records and clear answers',
-      desc: 'We trace the numbers, explain the assumptions, and flag the points that need attention before a filing or review.',
-      icon: FileCheck,
+      title: 'Senior-Led Direct Involvement',
+      desc: 'Clients work directly with principal leadership, ensuring practical recommendations rooted in senior experience.',
+      icon: Sparkles,
     },
   ];
 
-  const faqsList = [
+  const clientApproachSteps = [
     {
-      q: 'How do I get started?',
-      a: 'Send a short note about your organisation and the decision or filing you need help with. We can suggest a suitable first meeting and let you know what to bring.',
+      step: '01',
+      title: 'Discovery & Mandate Analysis',
+      desc: 'We conduct a comprehensive assessment of your business model, corporate structure, statutory obligations, and specific compliance or advisory objectives.',
+      icon: Search,
     },
     {
-      q: 'What should I bring to a first meeting?',
-      a: 'Bring the notice, accounts, or documents related to your question if you have them. We will tell you in advance if anything else is needed.',
+      step: '02',
+      title: 'Evidence-Based Technical Review',
+      desc: 'Our team examines transaction records, financial disclosures, and regulatory notices against current Nepalese statutory frameworks.',
+      icon: FileCheck2,
     },
     {
-      q: 'Can you help if I am unsure which service I need?',
-      a: 'Yes. Describe what is happening in plain terms and we can discuss the right next step together.',
+      step: '03',
+      title: 'Strategic Formulation & Execution',
+      desc: 'We deliver clear, actionable compliance roadmaps, authoritative audit opinions, or robust representations before tax authorities.',
+      icon: Target,
     },
     {
-      q: 'Do you meet with clients in person?',
-      a: 'You can request an in-person meeting at our Kathmandu office. Online appointments are available through the Calendly option on the consultation page.',
-    },
-    {
-      q: 'What can we discuss?',
-      a: 'Tax, audit, financial reporting, or business advisory questions are all a good place to start. If your needs fall elsewhere, we will say so plainly.',
+      step: '04',
+      title: 'Proactive Assurance & Monitoring',
+      desc: 'Continuous advisory support ensures your organization stays ahead of evolving tax circulars, fiscal deadlines, and regulatory shifts.',
+      icon: ShieldCheck,
     },
   ];
 
   return (
     <div className="pb-24 overflow-x-hidden">
-      {/* 1. Hero Section */}
+      {/* 1. Hero Header */}
       <section
         id="hero-section"
-        className="relative bg-hero-gradient pt-8 pb-14 sm:pt-12 sm:pb-16 overflow-hidden"
+        className="relative bg-hero-gradient pt-8 pb-14 sm:pt-14 sm:pb-18 overflow-hidden border-b border-[#E2E8F0]"
       >
         <div className="max-w-[1240px] mx-auto px-6 relative z-10">
           <div className="max-w-3xl space-y-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E2EBF0] text-[#023A51] text-xs font-bold tracking-wider uppercase">
+              About the Practice
+            </span>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-[#023A51] tracking-tight leading-tight">
-              About the Practice<span className="text-[#2CBC63]">.</span>
+              Professional Integrity. Strategic Clarity.
             </h1>
-            <p className="text-base sm:text-[17px] text-[#33475B] font-normal leading-relaxed">
-              Experienced advice for businesses that need clear answers on tax, audit, reporting, and compliance in Nepal.
+            <p className="text-base sm:text-[18px] text-[#33475B] font-normal leading-relaxed">
+              A premier financial advisory and audit practice led by Narahari Adhikari, dedicated to delivering uncompromising regulatory compliance and executive counsel across Nepal.
             </p>
           </div>
         </div>
       </section>
 
-      <div className="max-w-[1240px] mx-auto px-6 pt-10 sm:pt-12 space-y-16 sm:space-y-20">
+      <div className="max-w-[1240px] mx-auto px-6 pt-12 sm:pt-16 space-y-20 sm:space-y-24">
         {/* ======================================================== */}
-        {/* 2. LEAD PRACTITIONER & ADVISORY EXPERTISE (AT TOP AS REQUESTED) */}
+        {/* 2. MEET THE PRINCIPAL */}
         {/* ======================================================== */}
-        <section className="space-y-6">
-          <div className="border-b border-[#E8EBEF] pb-4">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
-              Meet the principal<span className="text-[#2CBC63]">.</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-              Every engagement is reviewed directly by an experienced Chartered Accountant.
+        <section id="principal" className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#E8EBEF] pb-4 gap-2">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]/70 block mb-1">
+                Executive Leadership
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-[#023A51] tracking-tight">
+                Meet the Principal<span className="text-[#2CBC63]">.</span>
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-[#59667D]">
+              Direct involvement on every corporate advisory engagement.
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl border border-[#E8EBEF] p-6 sm:p-10 shadow-xs">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center">
-              {/* Photo */}
-              <div className="md:col-span-5 lg:col-span-4 flex justify-center">
-                <div className="relative w-64 h-72 sm:w-72 sm:h-80 rounded-2xl overflow-hidden shadow-md border border-[#E8EBEF] bg-[#E8F4F8]">
+          <div className="bg-white rounded-[32px] border border-[#DCE4EC] p-8 sm:p-12 shadow-[0_12px_40px_rgba(2,58,81,0.06)] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+              {/* Photo & Portrait */}
+              <div className="lg:col-span-5 flex justify-center">
+                <div className="relative w-72 h-88 sm:w-80 sm:h-96 rounded-2xl overflow-hidden shadow-xl border border-[#DCE4EC] bg-gradient-to-b from-[#EAEFF4] to-[#F5F8FA]">
                   <Image
                     src={primaryPractitioner.image}
                     alt={primaryPractitioner.name}
@@ -127,54 +142,54 @@ export default function AboutPage() {
                     className="object-cover object-top"
                     priority
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#023A51]/30 via-transparent to-transparent pointer-events-none" />
                 </div>
               </div>
 
-              {/* Bio & Credentials */}
-              <div className="md:col-span-7 lg:col-span-8 space-y-4">
+              {/* Bio & Details */}
+              <div className="lg:col-span-7 space-y-6">
                 <div>
-                  <div className="inline-block px-3 py-1 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs mb-2">
-                    {primaryPractitioner.title}
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F4F8] text-[#023A51] font-bold text-xs mb-3">
+                    <Sparkles className="w-3.5 h-3.5 text-[#2CBC63]" />
+                    <span>{primaryPractitioner.title}</span>
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-[#023A51]">
+                  <h3 className="text-3xl sm:text-4xl font-extrabold text-[#023A51]">
                     {primaryPractitioner.name}
                   </h3>
-                  <div className="text-xs sm:text-sm font-semibold text-[#2CBC63] mt-0.5">
-                    {primaryPractitioner.credential}
-                  </div>
                 </div>
 
-                <p className="text-xs sm:text-[14px] text-[#4A5259] leading-relaxed">
+                <p className="text-sm sm:text-[15.5px] text-[#33475B] leading-relaxed">
                   {primaryPractitioner.bio}
                 </p>
 
                 {/* Core Competencies */}
                 <div className="pt-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2.5">
-                    Areas of focus
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {primaryPractitioner.specialties.map((s, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs font-medium text-[#023A51]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#2CBC63] shrink-0" />
-                        <span>{s}</span>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#023A51] block mb-3">
+                    Areas of Practice Focus
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {primaryPractitioner.specialties.map((item, idx) => (
+                      <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] font-medium text-[#023A51] bg-[#F8FAFC] p-2.5 rounded-xl border border-[#E8EBEF]">
+                        <CheckCircle2 className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
+                        <span>{item}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center gap-4">
+                <div className="pt-4 flex flex-wrap items-center gap-4">
                   <Link
-                    href="/book-appointment"
-                    className="px-6 py-2.5 rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white text-xs font-bold transition-colors shadow-xs"
+                    href="/contact"
+                    className="px-6 py-3 rounded-full bg-[#023A51] hover:bg-[#034B68] text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 inline-flex items-center gap-2"
                   >
-                    Schedule Direct Consultation
+                    <span>Get in Touch</span>
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                   <a
                     href={`tel:${settings.phone}`}
-                    className="text-xs font-semibold text-[#023A51] hover:text-[#2CBC63] flex items-center gap-1.5 transition-colors"
+                    className="text-xs sm:text-sm font-bold text-[#023A51] hover:text-[#2CBC63] flex items-center gap-2 transition-colors px-4 py-2.5 rounded-full border border-[#DCE4EC] hover:bg-slate-50"
                   >
-                    <Phone className="w-3.5 h-3.5 text-[#2CBC63]" />
+                    <Phone className="w-4 h-4 text-[#2CBC63]" />
                     <span>{settings.phone}</span>
                   </a>
                 </div>
@@ -184,74 +199,117 @@ export default function AboutPage() {
         </section>
 
         {/* ======================================================== */}
-        {/* 3. PRACTICE OVERVIEW & BACKGROUND */}
+        {/* 3. MISSION, VISION & VALUES */}
         {/* ======================================================== */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          <div className="lg:col-span-6 space-y-5">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight leading-tight">
-              Clear advice, grounded in experience<span className="text-[#2CBC63]">.</span>
+        <section id="mission-vision-values" className="space-y-10">
+          <div className="border-b border-[#E8EBEF] pb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]/70 block mb-1">
+              Foundational Principles
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#023A51] tracking-tight">
+              Mission, Vision & Values<span className="text-[#2CBC63]">.</span>
             </h2>
-            <div className="space-y-3.5 text-sm sm:text-[14.5px] text-[#4A5259] leading-relaxed">
-              <p>
-                Our work follows the Nepal Chartered Accountants Act and the standards issued by ICAN. That gives clients a clear process for making decisions and keeping their records in order.
-              </p>
-              <p>
-                We help growing businesses with monthly VAT and E-TDS work, and support larger organisations with restructuring, Nepal Rastra Bank approvals, and NFRS conversions.
+            <p className="text-xs sm:text-sm text-[#59667D] mt-1">
+              The ethical and strategic standards guiding every client relationship.
+            </p>
+          </div>
+
+          {/* Mission & Vision Twin Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Mission */}
+            <div className="bg-white rounded-[28px] border border-[#DCE4EC] p-8 sm:p-10 shadow-[0_8px_30px_rgba(2,58,81,0.05)] space-y-4 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-2xl bg-[#E8F4F8] text-[#023A51] flex items-center justify-center">
+                <Target className="w-6 h-6 text-[#2CBC63]" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#023A51]">
+                Our Mission
+              </h3>
+              <p className="text-sm sm:text-[15px] text-[#4A5259] leading-relaxed">
+                To deliver rigorous, independent financial counsel and audit assurance that empowers corporate leaders and entrepreneurs to operate with total regulatory confidence, safeguard assets, and optimize long-term economic performance in Nepal.
               </p>
             </div>
-            <div className="pt-2">
-              <Link
-                href="/services"
-                className="inline-flex items-center gap-2 text-sm font-bold text-[#023A51] hover:text-[#2CBC63] transition-colors"
-              >
-                <span>See all 7 services</span>
-                <ArrowRight className="w-4 h-4 text-[#2CBC63]" />
-              </Link>
+
+            {/* Vision */}
+            <div className="bg-white rounded-[28px] border border-[#DCE4EC] p-8 sm:p-10 shadow-[0_8px_30px_rgba(2,58,81,0.05)] space-y-4 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-2xl bg-[#E8F4F8] text-[#023A51] flex items-center justify-center">
+                <Eye className="w-6 h-6 text-[#023A51]" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#023A51]">
+                Our Vision
+              </h3>
+              <p className="text-sm sm:text-[15px] text-[#4A5259] leading-relaxed">
+                To be recognized as Nepal&apos;s benchmark independent financial and statutory consulting practice&mdash;distinguished by technical precision, unwavering ethical integrity, and profound clarity in complex fiscal environments.
+              </p>
             </div>
           </div>
 
-          <div className="lg:col-span-6">
-            <div className="relative rounded-3xl overflow-hidden shadow-lg border border-[#E8EBEF] aspect-[16/11]">
-              <Image
-                src="/profile-picture.png"
-                alt="Professional consultation session"
-                fill
-                className="object-cover"
-              />
+          {/* Core Values 4-Grid */}
+          <div className="space-y-4 pt-4">
+            <h3 className="text-xl font-bold text-[#023A51]">
+              Core Practice Values
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {coreValues.map((val, idx) => {
+                const Icon = val.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-2xl border border-[#DCE4EC] p-6 shadow-xs space-y-3 hover:shadow-md transition-shadow"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#E8F4F8] text-[#023A51] flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-[#2CBC63]" />
+                    </div>
+                    <h4 className="text-base font-bold text-[#023A51] leading-snug">
+                      {val.title}
+                    </h4>
+                    <p className="text-xs sm:text-[13px] text-[#59667D] leading-relaxed">
+                      {val.desc}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
 
         {/* ======================================================== */}
-        {/* 4. PRACTICE COMMITMENTS & GOVERNANCE PILLARS */}
+        {/* 4. OUR APPROACH TO CLIENT WORK */}
         {/* ======================================================== */}
-        <section className="space-y-6">
+        <section id="approach" className="space-y-8">
           <div className="border-b border-[#E8EBEF] pb-4">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
-              How we work<span className="text-[#2CBC63]">.</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]/70 block mb-1">
+              Methodology & Execution
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#023A51] tracking-tight">
+              Our Approach to Client Work<span className="text-[#2CBC63]">.</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-              Independent thinking, careful work, and plain communication on every engagement.
+              A structured, transparent engagement framework that guarantees precision and accountability.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {practiceCommitments.map((commit, idx) => {
-              const Icon = commit.icon;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {clientApproachSteps.map((step, idx) => {
+              const Icon = step.icon;
               return (
                 <div
                   key={idx}
-                  className="bg-white rounded-2xl border border-[#E8EBEF] p-6 shadow-xs space-y-3 flex flex-col justify-between hover:shadow-md transition-shadow"
+                  className="bg-white rounded-2xl border border-[#DCE4EC] p-6 shadow-xs flex flex-col justify-between hover:border-[#023A51] transition-colors relative group"
                 >
-                  <div className="space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#E8F4F8] text-[#023A51] flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-[#2CBC63]" />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-black text-[#023A51]/20 font-mono group-hover:text-[#2CBC63] transition-colors">
+                        {step.step}
+                      </span>
+                      <div className="w-9 h-9 rounded-xl bg-[#F0F5F8] flex items-center justify-center text-[#023A51]">
+                        <Icon className="w-4 h-4 text-[#023A51]" />
+                      </div>
                     </div>
-                    <h3 className="text-base font-bold text-[#023A51] leading-snug">
-                      {commit.title}
-                    </h3>
-                    <p className="text-xs text-[#59667D] leading-relaxed">
-                      {commit.desc}
+                    <h4 className="text-base font-bold text-[#023A51]">
+                      {step.title}
+                    </h4>
+                    <p className="text-xs sm:text-[13px] text-[#59667D] leading-relaxed">
+                      {step.desc}
                     </p>
                   </div>
                 </div>
@@ -261,76 +319,26 @@ export default function AboutPage() {
         </section>
 
         {/* ======================================================== */}
-        {/* 5. FREQUENTLY ASKED QUESTIONS (FAQS SECTION WITH ID="FAQS") */}
+        {/* 5. LOCATION & PRACTICE DETAILS */}
         {/* ======================================================== */}
-        <section id="faqs" className="scroll-mt-28 space-y-6">
-          <div className="border-b border-[#E8EBEF] pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
-                Frequently Asked Questions<span className="text-[#2CBC63]">.</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-[#59667D] mt-1">
-                A few practical details before you get in touch.
-              </p>
-            </div>
-            <Link
-              href="/contact"
-              className="text-xs font-bold text-[#2CBC63] hover:underline shrink-0"
-            >
-              Have a specific inquiry? Contact us &rarr;
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {faqsList.map((faq, fIdx) => {
-              const isOpen = openFaqIndex === fIdx;
-              return (
-                <div
-                  key={fIdx}
-                  className="bg-white rounded-2xl border border-[#E8EBEF] overflow-hidden transition-all shadow-xs"
-                >
-                  <button
-                    onClick={() => setOpenFaqIndex(isOpen ? null : fIdx)}
-                    type="button"
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer select-none"
-                  >
-                    <span className="text-sm sm:text-[15px] font-bold text-[#023A51] leading-snug">
-                      {faq.q}
-                    </span>
-                    <div
-                      className={`w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 transition-transform duration-200 ${
-                        isOpen ? 'rotate-180 text-[#2CBC63]' : 'text-slate-500'
-                      }`}
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </button>
-
-                  {isOpen && (
-                    <div className="px-5 sm:px-6 pb-6 pt-1 text-xs sm:text-[13.5px] text-[#4A5259] leading-relaxed border-t border-slate-100 bg-[#FBFDFE]">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ======================================================== */}
-        {/* 6. OFFICE LOCATION & CONSULTATION CONTACT */}
-        {/* ======================================================== */}
-        <section className="bg-white rounded-3xl border border-[#E8EBEF] p-8 sm:p-12 shadow-xs">
+        <section className="bg-white rounded-[28px] border border-[#DCE4EC] p-8 sm:p-12 shadow-[0_10px_35px_rgba(2,58,81,0.05)]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-7 space-y-4">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
-                Conveniently located in Kathmandu<span className="text-[#2CBC63]">.</span>
-              </h2>
-              <div className="space-y-3 text-xs sm:text-sm text-[#4A5259] leading-relaxed pt-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#023A51]/70 block">
+                Kathmandu Practice
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight">
+                Our Office Location & Hours
+              </h3>
+              <p className="text-xs sm:text-sm text-[#4A5259] leading-relaxed">
+                Clients are welcome to schedule in-person consultations at our Kathmandu chambers or initiate virtual advisory discussions.
+              </p>
+
+              <div className="space-y-3.5 text-xs sm:text-sm text-[#4A5259] pt-2">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-[#023A51] block">Office:</span>
+                    <span className="font-bold text-[#023A51] block">Address:</span>
                     <span>{settings.address}</span>
                   </div>
                 </div>
@@ -338,7 +346,7 @@ export default function AboutPage() {
                   <Mail className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-[#023A51] block">Email:</span>
-                    <a href={`mailto:${settings.email}`} className="text-[#023A51] hover:underline font-mono">
+                    <a href={`mailto:${settings.email}`} className="text-[#023A51] hover:underline">
                       {settings.email}
                     </a>
                   </div>
@@ -347,7 +355,7 @@ export default function AboutPage() {
                   <Phone className="w-4 h-4 text-[#2CBC63] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-[#023A51] block">Phone:</span>
-                    <a href={`tel:${settings.phone}`} className="text-[#023A51] hover:underline font-mono">
+                    <a href={`tel:${settings.phone}`} className="text-[#023A51] hover:underline">
                       {settings.phone}
                     </a>
                   </div>
@@ -355,18 +363,18 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="lg:col-span-5 bg-[#E8F4F8] rounded-2xl p-6 sm:p-8 space-y-4 border border-[#CCD7DC]/70">
-              <h3 className="text-base font-bold text-[#023A51]">
-                Arrange a Consultation
-              </h3>
+            <div className="lg:col-span-5 bg-[#F8FAFC] rounded-2xl p-6 sm:p-8 space-y-4 border border-[#DCE4EC]">
+              <h4 className="text-base font-bold text-[#023A51]">
+                Need Professional Assistance?
+              </h4>
               <p className="text-xs text-[#59667D] leading-relaxed">
-                Consult regarding statutory audit scheduling, IRD assessment notices, or NFRS financial conversion requirements.
+                Connect directly with our advisory desk regarding your specific audit, corporate assessment, or regulatory inquiry.
               </p>
               <Link
-                href="/book-appointment"
-                className="w-full py-3 rounded-full bg-[#023A51] hover:bg-[#2CBC63] text-white font-bold text-xs text-center block transition-colors shadow-xs"
+                href="/contact"
+                className="w-full py-3 rounded-full bg-[#023A51] hover:bg-[#034B68] text-white font-bold text-xs text-center block transition-all shadow-xs"
               >
-                Request Meeting &rarr;
+                Contact Us &rarr;
               </Link>
             </div>
           </div>

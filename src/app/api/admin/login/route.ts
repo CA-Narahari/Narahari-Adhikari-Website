@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase/server';
+import { consumeRateLimit, requestKey } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
+  const rate = await consumeRateLimit(requestKey(request, 'admin-login'), 10, 15 * 60 * 1000);
+  if (rate.unavailable) return NextResponse.json({ error: 'Sign-in is temporarily unavailable. Please try again shortly.' }, { status: 503 });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'Too many sign-in attempts. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rate.resetAt - Date.now()) / 1000)) } },
+    );
+  }
   let body: Record<string, unknown>;
   try {
     const parsed: unknown = await request.json();

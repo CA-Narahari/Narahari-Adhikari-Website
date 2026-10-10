@@ -201,11 +201,8 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white" />
             </div>
             <div className="min-w-0 text-left">
-              <p className="truncate text-[11px] font-bold text-[#0D3B3E] leading-tight">
-                CA Narahari Adhikari
-              </p>
-              <p className="truncate text-[10px] font-medium text-[#698083] leading-tight">
-                Founder &amp; Principal CA
+              <p className="truncate text-xs font-semibold text-[#0D3B3E] leading-tight">
+                Narahari Adhikari
               </p>
             </div>
           </div>

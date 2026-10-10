@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { consumeRateLimit, requestKey } from '@/lib/rate-limit';
 
 const MAX_CV_SIZE = 10 * 1024 * 1024;
+const MAX_REQUEST_SIZE = MAX_CV_SIZE + 1024 * 1024;
 const acceptedTypes = new Map([
   ['application/pdf', '.pdf'],
   ['application/msword', '.doc'],
@@ -11,9 +12,14 @@ const acceptedTypes = new Map([
 ]);
 
 export async function POST(request: Request) {
-  const rate = consumeRateLimit(requestKey(request, 'application'), 5, 60 * 60 * 1000);
+  const declaredLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_SIZE) return NextResponse.json({ error: 'The application upload must be under 11 MB.' }, { status: 413 });
+  const rate = await consumeRateLimit(requestKey(request, 'application'), 5, 60 * 60 * 1000);
+  if (rate.unavailable) return NextResponse.json({ error: 'Applications are temporarily unavailable. Please try again shortly.' }, { status: 503 });
   if (!rate.allowed) return Response.json({ error: 'Too many applications from this connection. Try again later.' }, { status: 429, headers: { 'Retry-After': String(Math.ceil((rate.resetAt - Date.now()) / 1000)) } });
-  const form = await request.formData();
+  let form: FormData;
+  try { form = await request.formData(); }
+  catch { return NextResponse.json({ error: 'The application form could not be read. Please try again.' }, { status: 400 }); }
   const name = String(form.get('name') ?? '').trim();
   const email = String(form.get('email') ?? '').trim();
   const phone = String(form.get('phone') ?? '').trim();
@@ -27,7 +33,7 @@ export async function POST(request: Request) {
   if (!name || !email || !phone || !vacancyId || !vacancyTitle || !privacyConsent || !(cv instanceof File)) {
     return NextResponse.json({ error: 'Complete the required fields, attach your CV, and confirm the Privacy Policy.' }, { status: 400 });
   }
-  if (name.length > 120 || email.length > 254 || phone.length > 40 || note.length > 3000) {
+  if (name.length > 120 || email.length > 254 || !/^\S+@\S+\.\S+$/.test(email) || phone.length > 40 || qualification.length > 120 || note.length > 3000) {
     return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 });
   }
   const extension = acceptedTypes.get(cv.type);

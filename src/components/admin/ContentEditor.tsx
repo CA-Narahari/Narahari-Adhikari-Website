@@ -45,6 +45,8 @@ export interface ContentEditorData {
   metaTitle: string;
   metaDescription: string;
   focusKeyword: string;
+  author?: string;
+  readTime?: string;
 }
 
 interface ContentEditorProps {
@@ -146,6 +148,8 @@ export default function ContentEditor({
   const [featuredImageName, setFeaturedImageName] = useState(initialData.featuredImageName || imageNameFromUrl(initialData.featuredImage));
   const [featuredImageAlt, setFeaturedImageAlt] = useState(initialData.featuredImageAlt || '');
   const [status, setStatus] = useState<'draft' | 'published'>(initialData.status);
+  const [author, setAuthor] = useState(initialData.author || 'Narahari Adhikari');
+  const [readTime, setReadTime] = useState(initialData.readTime || '5 min read');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
@@ -207,7 +211,9 @@ export default function ContentEditor({
     }
 
     if (newMode === 'visual' && visualEditorRef.current) {
-      visualEditorRef.current.innerHTML = contentHtml;
+      const safeContent = sanitizeHtml(contentHtml);
+      visualEditorRef.current.innerHTML = safeContent;
+      setContentHtml(safeContent);
     }
 
     setEditorMode(newMode);
@@ -383,6 +389,8 @@ export default function ContentEditor({
       metaTitle: metaTitle || title,
       metaDescription: metaDescription || excerpt,
       focusKeyword,
+      author: author.trim() || 'Narahari Adhikari',
+      readTime: readTime.trim() || '5 min read',
       });
       if (!saved) setSaveError(`Could not save this ${itemTypeLabel.toLowerCase()}. Check your connection and CMS access, then try again.`);
     } catch (cause) {
@@ -717,10 +725,10 @@ export default function ContentEditor({
                   </span>
                 </div>
                 <h3 className="text-base font-semibold text-[#1a0dab] hover:underline cursor-pointer truncate">
-                  {metaTitle || title || 'Narahari Adhikari Chartered Accountants'}
+                  {metaTitle || title || 'Narahari Adhikari'}
                 </h3>
                 <p className="text-xs text-[#4d5156] line-clamp-2 leading-relaxed">
-                  {metaDescription || excerpt || 'Official advisory, statutory audit, and tax consulting publication by CA Narahari Adhikari.'}
+                  {metaDescription || excerpt || 'Official advisory, statutory audit, and tax consulting publication by Narahari Adhikari.'}
                 </p>
               </div>
 
@@ -909,6 +917,40 @@ export default function ContentEditor({
           </div>
 
           {storageFolder === 'blog' && <>
+          {/* Author & Reading Time Box */}
+          <div className="bg-white border border-[#E6EFEA] rounded-2xl p-5 shadow-xs space-y-3 text-xs">
+            <span className="font-extrabold text-[#0D3B3E] block pb-2 border-b border-slate-100">
+              Author &amp; Reading Time
+            </span>
+
+            <div className="space-y-3">
+              <label className="block text-[11px] font-bold text-slate-700">
+                Author Name
+                <input
+                  type="text"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder="e.g. Narahari Adhikari"
+                  className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-normal focus:outline-none focus:border-[#1A8F4B]"
+                />
+              </label>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Reading Time
+                <input
+                  type="text"
+                  value={readTime}
+                  onChange={(e) => setReadTime(e.target.value)}
+                  placeholder="e.g. 5 min read"
+                  className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-normal focus:outline-none focus:border-[#1A8F4B]"
+                />
+                <span className="mt-1 block text-[10px] font-normal text-slate-500">
+                  Displayed on the blog card and article header.
+                </span>
+              </label>
+            </div>
+          </div>
+
           {/* Categories Box */}
           <div className="bg-white border border-[#E6EFEA] rounded-2xl p-5 shadow-xs space-y-3 text-xs">
             <span className="font-extrabold text-[#0D3B3E] block pb-2 border-b border-slate-100">

@@ -12,8 +12,6 @@ import {
   CheckCircle2,
   Search,
   Loader2,
-  ExternalLink,
-  Plus,
   FileText,
 } from 'lucide-react';
 
@@ -64,7 +62,7 @@ function imageUrlFromName(name: string, folder: string): string {
   return `/media/${folder}/${encodedName}`;
 }
 
-function useBrandedMediaPath(url: string): string {
+function brandedMediaPath(url: string): string {
   try {
     const pathname = new URL(url, window.location.origin).pathname;
     const marker = '/storage/v1/object/public/website-media/';
@@ -93,6 +91,7 @@ export default function MediaLibraryModal({
   const [activeTab, setActiveTab] = useState<'library' | 'upload'>('library');
   const [files, setFiles] = useState<MediaFileItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFile, setSelectedFile] = useState<MediaFileItem | null>(null);
   const [pendingUpload, setPendingUpload] = useState<File | null>(null);
@@ -115,22 +114,24 @@ export default function MediaLibraryModal({
 
   const loadFiles = async () => {
     setIsLoading(true);
+    setLibraryError(null);
     try {
       const res = await fetch(
         `/api/admin/storage/list?bucket=${storageBucket}&folder=${activeFolder}`
       );
-      const data = await res.json();
+      const data = await res.json() as { files?: MediaFileItem[]; error?: string };
+      if (!res.ok) throw new Error(data.error || 'Could not connect to Supabase Storage.');
       if (data.files && Array.isArray(data.files)) {
         setFiles(data.files);
         if (data.files.length > 0 && (!selectedFile || !data.files.some((file: MediaFileItem) => file.path === selectedFile.path))) {
           const firstFile = data.files[0] as MediaFileItem;
           setSelectedFile(firstFile);
           setImageName(firstFile.name);
-          setImageUrl(isImageLibrary ? useBrandedMediaPath(firstFile.publicUrl) : firstFile.publicUrl);
+          setImageUrl(isImageLibrary ? brandedMediaPath(firstFile.publicUrl) : firstFile.publicUrl);
         }
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      setLibraryError(error instanceof Error ? error.message : 'Could not connect to Supabase Storage.');
     } finally {
       setIsLoading(false);
     }
@@ -139,11 +140,14 @@ export default function MediaLibraryModal({
   // Fetch files when modal opens
   useEffect(() => {
     if (!isOpen) return;
-    setAltText(initialAltText);
-    setImageName(initialImageName);
-    setImageUrl('');
-    setSelectionError('');
-    const timer = window.setTimeout(() => { void loadFiles(); }, 0);
+    const timer = window.setTimeout(() => {
+      setAltText(initialAltText);
+      setImageName(initialImageName);
+      setImageUrl('');
+      setSelectionError('');
+      setLibraryError(null);
+      void loadFiles();
+    }, 0);
     return () => window.clearTimeout(timer);
   }, [isOpen, activeFolder, initialAltText, initialImageName]);
 
@@ -188,7 +192,7 @@ export default function MediaLibraryModal({
 
       setFiles((prev) => [newFileItem, ...prev]);
       setSelectedFile(newFileItem);
-      setImageUrl(isImageLibrary ? useBrandedMediaPath(newFileItem.publicUrl) : newFileItem.publicUrl);
+      setImageUrl(isImageLibrary ? brandedMediaPath(newFileItem.publicUrl) : newFileItem.publicUrl);
       setImageName(newFileItem.name);
       setAltText(uploadName.trim() || file.name.replace(/\.[^.]+$/, ''));
       setPendingUpload(null);
@@ -222,7 +226,7 @@ export default function MediaLibraryModal({
 
   const handleSelectFile = (file: MediaFileItem) => {
     setSelectedFile(file);
-    setImageUrl(isImageLibrary ? useBrandedMediaPath(file.publicUrl) : file.publicUrl);
+    setImageUrl(isImageLibrary ? brandedMediaPath(file.publicUrl) : file.publicUrl);
     setImageName(file.name);
     setAltText(file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '));
     setSelectionError('');
@@ -420,7 +424,13 @@ export default function MediaLibraryModal({
 
                 {/* Grid */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-                  {isLoading ? (
+                {libraryError ? (
+                  <div className="col-span-full m-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                    <p className="font-semibold">Media library could not load</p>
+                    <p className="mt-1 text-xs leading-5">{libraryError}</p>
+                    <button type="button" onClick={() => void loadFiles()} className="mt-3 rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-rose-50">Retry connection</button>
+                  </div>
+                ) : isLoading ? (
                     <div className="h-64 flex flex-col items-center justify-center gap-2 text-slate-400">
                       <Loader2 className="w-6 h-6 animate-spin text-[#1A8F4B]" />
                       <span className="text-xs">Loading media assets...</span>

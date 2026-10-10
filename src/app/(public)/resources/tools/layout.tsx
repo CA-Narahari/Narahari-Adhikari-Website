@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Tax and Finance Calculators',
-  description: 'Estimate common tax and finance figures with simple calculators. Confirm results against current official guidance.',
+  title: 'Loan & EMI Calculator',
+  description: 'Calculate exact loan installments, periodic interest breakdowns, and full amortization schedules for corporate and personal borrowings.',
 };
 
 export default function ToolsLayout({ children }: { children: React.ReactNode }) {

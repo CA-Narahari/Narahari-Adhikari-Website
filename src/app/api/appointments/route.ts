@@ -18,11 +18,16 @@ type AppointmentRequest = {
 const text = (value: unknown) => typeof value === 'string' ? value.trim() : '';
 
 export async function POST(request: Request) {
-  const rate = consumeRateLimit(requestKey(request, 'appointment'), 10, 15 * 60 * 1000);
+  const declaredLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > 16 * 1024) return NextResponse.json({ error: 'The appointment request is too large. Shorten it and try again.' }, { status: 413 });
+  const rate = await consumeRateLimit(requestKey(request, 'appointment'), 10, 15 * 60 * 1000);
+  if (rate.unavailable) return NextResponse.json({ error: 'Appointment requests are temporarily unavailable. Please try again shortly.' }, { status: 503 });
   if (!rate.allowed) return Response.json({ error: 'Too many appointment requests. Try again later.' }, { status: 429, headers: { 'Retry-After': String(Math.ceil((rate.resetAt - Date.now()) / 1000)) } });
   let body: AppointmentRequest;
   try {
-    body = await request.json() as AppointmentRequest;
+    const parsed: unknown = await request.json();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return NextResponse.json({ error: 'Please review the request details and try again.' }, { status: 400 });
+    body = parsed as AppointmentRequest;
   } catch {
     return NextResponse.json({ error: 'Please review the request details and try again.' }, { status: 400 });
   }
@@ -36,13 +41,15 @@ export async function POST(request: Request) {
   const timeSlot = text(body.time_slot);
   const notes = text(body.notes);
   const privacyConsent = body.privacy_consent === true;
+  const requestedDate = new Date(`${date}T00:00:00Z`);
 
   if (!clientName || !clientEmail || !clientPhone || !serviceTitle || !date || !timeSlot || !privacyConsent) {
     return NextResponse.json({ error: 'Complete the required fields and confirm the Privacy Policy.' }, { status: 400 });
   }
   if (clientName.length > 120 || clientEmail.length > 254 || !/^\S+@\S+\.\S+$/.test(clientEmail)
     || clientPhone.length > 40 || companyName.length > 160 || serviceTitle.length > 160
-    || timeSlot.length > 80 || notes.length > 3000 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    || timeSlot.length > 80 || notes.length > 3000 || !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    || Number.isNaN(requestedDate.getTime()) || requestedDate.toISOString().slice(0, 10) !== date) {
     return NextResponse.json({ error: 'One or more appointment fields are invalid or too long.' }, { status: 400 });
   }
 

@@ -1,68 +1,473 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, CalendarDays, Clock3, FileText, Landmark, Search } from 'lucide-react';
+import {
+  Calendar,
+  Search,
+  ArrowRight,
+  ExternalLink,
+  Landmark,
+  FileText,
+  Percent,
+  ShieldCheck,
+  Megaphone,
+  MoreHorizontal,
+  X,
+} from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import type { TaxUpdate } from '@/types';
 
-function formatDate(value: string) {
+const CATEGORIES = [
+  { id: 'All', label: 'All', icon: null },
+  { id: 'Income Tax', label: 'Income Tax', icon: Landmark },
+  { id: 'VAT', label: 'VAT', icon: Percent },
+  { id: 'Corporate Tax', label: 'Corporate Tax', icon: FileText },
+  { id: 'Customs', label: 'Customs', icon: ShieldCheck },
+  { id: 'Finance Acts', label: 'Finance Acts', icon: FileText },
+  { id: 'Circulars', label: 'Circulars', icon: Megaphone },
+  { id: 'Notices', label: 'Notices', icon: Megaphone },
+];
+
+const DATE_FILTERS = [
+  { id: 'all', label: 'All Time' },
+  { id: '7d', label: 'Last 7 Days' },
+  { id: '30d', label: 'Last 30 Days' },
+  { id: '3m', label: 'Last 3 Months' },
+  { id: '6m', label: 'Last 6 Months' },
+  { id: 'custom', label: 'Custom Range' },
+];
+
+function formatDate(value?: string) {
+  if (!value) return '';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}
+
+function getCategoryTag(item: TaxUpdate): { label: string; colorClass: string } {
+  const cat = (item.category || item.topic || '').toLowerCase();
+
+  if (cat.includes('income')) {
+    return { label: 'Income Tax', colorClass: 'bg-[#EFF6FF] text-[#1E40AF] border-[#BFDBFE]' };
+  }
+  if (cat.includes('vat')) {
+    return { label: 'VAT', colorClass: 'bg-[#EFF6FF] text-[#0369A1] border-[#BAE6FD]' };
+  }
+  if (cat.includes('corporate')) {
+    return { label: 'Corporate Tax', colorClass: 'bg-[#F0FDF4] text-[#15803D] border-[#DCFCE7]' };
+  }
+  if (cat.includes('custom')) {
+    return { label: 'Customs', colorClass: 'bg-[#FAF5FF] text-[#7E22CE] border-[#F3E8FF]' };
+  }
+  if (cat.includes('finance')) {
+    return { label: 'Finance Acts', colorClass: 'bg-[#EFF6FF] text-[#1D4ED8] border-[#DBEAFE]' };
+  }
+  if (cat.includes('notice')) {
+    return { label: 'Notices', colorClass: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]' };
+  }
+  if (cat.includes('circular')) {
+    return { label: 'Circulars', colorClass: 'bg-[#FAF5FF] text-[#7E22CE] border-[#F3E8FF]' };
+  }
+
+  return { label: item.category || 'General', colorClass: 'bg-[#F1F5F9] text-[#475569] border-[#E2E8F0]' };
+}
+
+function matchesCategoryFilter(item: TaxUpdate, selectedCat: string): boolean {
+  if (selectedCat === 'All') return true;
+  const itemCat = (item.category || '').toLowerCase();
+  const itemTopic = (item.topic || '').toLowerCase();
+  const target = selectedCat.toLowerCase();
+
+  return itemCat === target || itemTopic === target || itemCat.includes(target) || target.includes(itemCat);
 }
 
 export default function UpdatesPage() {
-  const { taxUpdates, taxUpdatesLoaded, governmentLinks } = useApp();
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('All topics');
-  const categories = useMemo(() => ['All topics', ...new Set(taxUpdates.map((item) => item.category).filter(Boolean))], [taxUpdates]);
-  const updates = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return taxUpdates.filter((item) => (category === 'All topics' || item.category === category)
-      && (!search || [item.title, item.summary, item.content, item.source_name, item.category].some((value) => value?.toLowerCase().includes(search))));
-  }, [taxUpdates, query, category]);
-  const featured = updates[0];
-  const remaining = featured ? updates.slice(1) : updates;
+  const { taxUpdates, taxUpdatesLoaded } = useApp();
 
-  return <div className="overflow-x-hidden pb-20">
-    <section id="hero-section" className="relative overflow-hidden bg-hero-gradient py-12 sm:py-16">
-      <div className="mx-auto max-w-6xl px-6">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#BFE6D0] bg-white/75 px-3 py-1 text-[10px] font-bold uppercase tracking-[.13em] text-[#13824B]"><FileText className="size-3.5" /> Tax and regulatory updates</span>
-        <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-[#073E43] sm:text-5xl">Stay informed.<br className="hidden sm:block" /> Make confident decisions.</h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-[#587174]">Browse published practice notes, statutory changes, and compliance updates saved by our team.</p>
-      </div>
-    </section>
+  const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>('all');
+  const [dateFilterNow, setDateFilterNow] = useState<number | null>(null);
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
+  const [activeModalUpdate, setActiveModalUpdate] = useState<TaxUpdate | null>(null);
 
-    <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
-      <main className="min-w-0">
-        {featured && <article className="overflow-hidden rounded-3xl border border-[#DFEAE4] bg-white shadow-[0_14px_40px_-28px_rgba(7,62,67,.38)]">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="p-6 sm:p-8"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#EAF8F1] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#177449]">{featured.category}</span>{featured.is_urgent && <span className="rounded-full bg-[#FFF4DC] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#8B5D0B]">Urgent</span>}</div>
-              <h2 className="mt-4 text-2xl font-bold leading-tight text-[#073E43] sm:text-3xl">{featured.title}</h2>
-              {featured.summary && <p className="mt-3 max-w-2xl text-sm leading-6 text-[#66797A]">{featured.summary}</p>}
-              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#708583]">{featured.published_at && <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#168A4A]" />{formatDate(featured.published_at)}</span>}{featured.source_name && <span className="inline-flex items-center gap-1.5"><Landmark className="size-3.5 text-[#168A4A]" />{featured.source_name}</span>}</div>
-              {featured.content && <details className="mt-5 rounded-2xl border border-[#E7EFEB] bg-[#F8FBF9] p-4"><summary className="cursor-pointer text-sm font-semibold text-[#0B6E42]">Read full update</summary><p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#425E60]">{featured.content}</p></details>}
-              {featured.source_url && <a href={featured.source_url} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#117740] hover:underline">Official source <ArrowUpRight className="size-4" /></a>}
-            </div>
-            <div className="flex flex-col justify-between bg-gradient-to-br from-[#EAF8F1] to-[#F3F8FA] p-6 sm:p-8 lg:border-l lg:border-[#E3ECE7]"><div><p className="text-[10px] font-bold uppercase tracking-[.13em] text-[#6C8581]">Latest published notice</p><p className="mt-3 text-5xl font-bold tracking-tight text-[#0B4B4C]">{taxUpdatesLoaded ? taxUpdates.length : '—'}</p><p className="mt-1 text-sm text-[#607976]">Updates in the library</p></div><div className="mt-6 rounded-2xl border border-white/80 bg-white/80 p-4"><p className="text-xs font-semibold text-[#315B56]">Need help applying an update?</p><Link href="/book-appointment" className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#128448] hover:underline">Book a consultation <ArrowRight className="size-3.5" /></Link></div></div>
+  // Purely dynamic CMS/Database data
+  const publishedUpdates = useMemo(() => {
+    return taxUpdates.filter((u) => u.status === 'published');
+  }, [taxUpdates]);
+
+  // Date filtering logic
+  const dateFilteredUpdates = useMemo(() => {
+    return publishedUpdates.filter((item) => {
+      if (selectedDateFilter === 'all') return true;
+      const pubTime = new Date(item.published_at || item.effective_date || '').getTime();
+      if (Number.isNaN(pubTime)) return true;
+
+      const diffMs = (dateFilterNow ?? 0) - pubTime;
+      const dayMs = 86400000;
+
+      if (selectedDateFilter === '7d') return diffMs <= 7 * dayMs;
+      if (selectedDateFilter === '30d') return diffMs <= 30 * dayMs;
+      if (selectedDateFilter === '3m') return diffMs <= 90 * dayMs;
+      if (selectedDateFilter === '6m') return diffMs <= 180 * dayMs;
+      if (selectedDateFilter === 'custom') {
+        const startMs = customStartDate ? new Date(customStartDate).getTime() : 0;
+        const endMs = customEndDate ? new Date(customEndDate).getTime() + dayMs : Infinity;
+        return pubTime >= startMs && pubTime <= endMs;
+      }
+      return true;
+    });
+  }, [publishedUpdates, selectedDateFilter, customStartDate, customEndDate, dateFilterNow]);
+
+  // Category & search filtering
+  const filteredUpdates = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return dateFilteredUpdates.filter((item) => {
+      const matchCat = matchesCategoryFilter(item, activeCategory);
+      if (!matchCat) return false;
+
+      if (!query) return true;
+      return (
+        item.title?.toLowerCase().includes(query) ||
+        item.summary?.toLowerCase().includes(query) ||
+        item.content?.toLowerCase().includes(query) ||
+        item.source_name?.toLowerCase().includes(query) ||
+        item.category?.toLowerCase().includes(query) ||
+        item.topic?.toLowerCase().includes(query)
+      );
+    });
+  }, [dateFilteredUpdates, activeCategory, searchQuery]);
+
+  return (
+    <div className="min-h-screen bg-[#FAFCFD] pb-24">
+      {/* 1. Header Section matching other pages */}
+      <section id="hero-section" className="relative overflow-hidden bg-hero-gradient py-10 sm:py-14">
+        <div className="mx-auto max-w-[1240px] px-6">
+          <div className="max-w-3xl space-y-3">
+            <h1 className="text-4xl font-extrabold tracking-tight text-[#023A51] sm:text-5xl leading-tight">
+              Latest Updates &amp; News<span className="text-[#2CBC63]">.</span>
+            </h1>
+            <p className="text-base sm:text-[17px] text-[#4A5259] leading-relaxed">
+              Stay informed with the latest government notices, tax changes, accounting guidelines, and important updates in the fiscal sector.
+            </p>
           </div>
-        </article>}
+        </div>
+      </section>
 
-        <section className="mt-9" aria-labelledby="updates-heading">
-          <div className="flex flex-col gap-4 border-b border-[#E5ECE8] pb-5 sm:flex-row sm:items-end sm:justify-between"><div><h2 id="updates-heading" className="text-2xl font-bold text-[#073E43]">All updates</h2><p className="mt-1 text-sm text-[#728482]">{updates.length} {updates.length === 1 ? 'record' : 'records'} from the content library</p></div><label className="relative block w-full sm:max-w-xs"><Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#82918D]" /><input aria-label="Search updates" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search updates…" className="h-10 w-full rounded-xl border border-[#D8E4DE] bg-white pl-9 pr-3 text-sm text-[#143F40] outline-none focus:border-[#168A4A]" /></label></div>
-          {categories.length > 1 && <div className="my-5 flex flex-wrap gap-2" aria-label="Filter updates by topic">{categories.map((item) => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`rounded-full px-3.5 py-2 text-xs font-semibold transition ${category === item ? 'bg-[#20B866] text-white shadow-sm' : 'border border-[#DFEAE4] bg-white text-[#55706C] hover:border-[#BFE6D0] hover:bg-[#F2FAF5]'}`}>{item}</button>)}</div>}
-          {!taxUpdatesLoaded ? <div role="status" className="mt-5 rounded-2xl border border-[#E2ECE6] bg-white px-6 py-12 text-center text-sm text-[#66797A]">Loading updates…</div> : remaining.length ? <div className="mt-5 grid gap-4 md:grid-cols-2">{remaining.map((item) => <article key={item.id} className="flex min-h-64 flex-col rounded-2xl border border-[#E2ECE6] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#BFDCCB] hover:shadow-[0_16px_34px_-28px_rgba(7,62,67,.55)] sm:p-6">
-            <div className="flex items-center justify-between gap-3"><span className="rounded-full bg-[#EAF8F1] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#177449]">{item.category}</span>{item.is_urgent && <span className="text-[10px] font-bold uppercase tracking-wide text-[#A06A0B]">Urgent</span>}</div>
-            <h3 className="mt-4 text-lg font-bold leading-snug text-[#103F42]">{item.title}</h3>{item.summary && <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#687D7B]">{item.summary}</p>}
-            {item.content && <details className="mt-3 rounded-xl bg-[#F8FBF9] px-3.5 py-3"><summary className="cursor-pointer text-xs font-semibold text-[#137647]">Read full update</summary><p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#425E60]">{item.content}</p></details>}
-            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-[#EDF2EF] pt-4"><span className="inline-flex items-center gap-1.5 text-xs text-[#82918D]">{item.published_at && <><Clock3 className="size-3.5 text-[#168A4A]" />{formatDate(item.published_at)}</>}</span>{item.source_url && <a href={item.source_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-[#13824B] hover:underline">Source <ArrowUpRight className="size-3.5" /></a>}</div>
-          </article>)}</div> : <div className="mt-5 rounded-2xl border border-dashed border-[#D7E5DD] bg-white px-6 py-12 text-center"><FileText className="mx-auto size-8 text-[#98B8A6]" /><h3 className="mt-3 font-semibold text-[#143F40]">{taxUpdates.length ? 'No updates match these filters' : 'No updates have been published yet'}</h3><p className="mt-1 text-sm text-[#718181]">{taxUpdates.length ? 'Change the search or topic to see more updates.' : 'Published updates will appear here when they are added in the CMS.'}</p>{(query || category !== 'All topics') && <button type="button" onClick={() => { setQuery(''); setCategory('All topics'); }} className="mt-4 text-sm font-semibold text-[#168A4A] hover:underline">Clear filters</button>}</div>}
-        </section>
+      {/* 2. Category Filter Pills Bar */}
+      <section className="max-w-[1240px] mx-auto px-6 pt-8 pb-4">
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none no-scrollbar">
+          {CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = activeCategory === cat.id;
+
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory(cat.id)}
+                className={`inline-flex items-center gap-2 rounded-full px-4.5 py-2 text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#023A51] text-white shadow-xs'
+                    : 'bg-white border border-[#E2E8F0] text-[#475569] hover:border-[#023A51] hover:text-[#023A51]'
+                }`}
+              >
+                {Icon && <Icon className={`size-3.5 sm:size-4 ${isActive ? 'text-white' : 'text-[#64748B]'}`} />}
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 3. Main Content (List Layout + Clean Date Filter Sidebar) */}
+      <main className="max-w-[1240px] mx-auto px-6 pt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: List-style update cards */}
+          <div className="lg:col-span-8 space-y-4">
+            {searchQuery && (
+              <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-[#E2E8F0] text-xs text-[#475569]">
+                <span>
+                  Showing results for: <strong className="text-[#023A51]">&ldquo;{searchQuery}&rdquo;</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs font-bold text-[#023A51] hover:underline cursor-pointer"
+                >
+                  Clear search
+                </button>
+              </div>
+            )}
+
+            {!taxUpdatesLoaded ? (
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-12 text-center text-sm text-[#64748B]">
+                Loading updates…
+              </div>
+            ) : publishedUpdates.length === 0 ? (
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-12 text-center shadow-xs">
+                <FileText className="mx-auto size-10 text-slate-300 mb-3" />
+                <h3 className="text-base font-bold text-[#023A51]">No updates published yet</h3>
+                <p className="mt-1 text-xs text-[#64748B]">
+                  Official notices, statutory circulars, and tax policy changes will appear here when published in the CMS.
+                </p>
+              </div>
+            ) : filteredUpdates.length === 0 ? (
+              <div className="rounded-2xl border border-[#E2E8F0] bg-white p-12 text-center shadow-xs">
+                <FileText className="mx-auto size-10 text-slate-300 mb-3" />
+                <h3 className="text-base font-bold text-[#023A51]">No updates match these filters</h3>
+                <p className="mt-1 text-xs text-[#64748B]">
+                  Try adjusting your search query, topic category, or selected date range.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveCategory('All');
+                    setSelectedDateFilter('all');
+                    setSearchQuery('');
+                  }}
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#023A51] hover:underline cursor-pointer"
+                >
+                  Reset all filters
+                </button>
+              </div>
+            ) : (
+              filteredUpdates.map((item, idx) => {
+                const tag = getCategoryTag(item);
+                const isLatest = idx < 2 || item.is_urgent;
+
+                return (
+                  <article
+                    key={item.id}
+                    onClick={() => setActiveModalUpdate(item)}
+                    className="group rounded-2xl border border-[#E2E8F0] bg-white p-6 sm:p-7 shadow-[0_1px_4px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-300 transition-all duration-200 cursor-pointer relative"
+                  >
+                    {/* Top Badges */}
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${tag.colorClass}`}
+                      >
+                        {tag.label}
+                      </span>
+
+                      {isLatest && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#DC2626] border border-[#FEE2E2]">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                          </span>
+                          Latest
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title & Arrow */}
+                    <div className="mt-3.5 flex items-start justify-between gap-4">
+                      <h2 className="text-base sm:text-lg font-bold text-[#023A51] group-hover:text-[#14864B] transition-colors leading-snug">
+                        {item.title}
+                      </h2>
+                      <div className="shrink-0 mt-0.5">
+                        <ArrowRight className="size-5 text-slate-400 group-hover:text-[#023A51] group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    {item.summary && (
+                      <p className="mt-2 text-xs sm:text-sm text-[#475569] leading-relaxed line-clamp-2">
+                        {item.summary}
+                      </p>
+                    )}
+
+                    {/* Footer Metadata */}
+                    <div className="mt-4 pt-3.5 border-t border-[#F1F5F9] flex items-center gap-2 text-xs text-[#64748B]">
+                      <Calendar className="size-3.5 text-[#94A3B8]" />
+                      <span>{formatDate(item.published_at || item.effective_date)}</span>
+                      {item.source_name && (
+                        <>
+                          <span className="text-slate-300">|</span>
+                          <span className="font-medium text-[#475569]">{item.source_name}</span>
+                        </>
+                      )}
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+
+          {/* Right Column: Clean Sidebar */}
+          <aside className="lg:col-span-4 space-y-6">
+            {/* Search Input */}
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-xs">
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#023A51] mb-2">
+                Search Updates
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Keyword, Act, IRD notice…"
+                  className="h-10 w-full rounded-xl border border-[#E2E8F0] bg-[#FAFCFD] pl-9.5 pr-4 text-xs sm:text-sm text-[#023A51] outline-none transition-all focus:border-[#023A51] focus:bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Filter by Date */}
+            <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 font-bold text-sm sm:text-base text-[#023A51]">
+                <Calendar className="size-4.5 text-[#023A51]" />
+                <span>Filter by Date</span>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {DATE_FILTERS.map((df) => {
+                  const isChecked = selectedDateFilter === df.id;
+                  return (
+                    <label
+                      key={df.id}
+                      className="flex items-center gap-3 text-xs sm:text-sm text-[#475569] hover:text-[#023A51] cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="date_filter"
+                        value={df.id}
+                        checked={isChecked}
+                        onChange={() => {
+                          setDateFilterNow(Date.now());
+                          setSelectedDateFilter(df.id);
+                        }}
+                        className="size-4 text-[#023A51] focus:ring-[#023A51] accent-[#023A51] cursor-pointer"
+                      />
+                      <span className={isChecked ? 'font-bold text-[#023A51]' : 'font-normal'}>
+                        {df.label}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              {selectedDateFilter === 'custom' && (
+                <div className="pt-3 border-t border-[#F1F5F9] space-y-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#64748B] mb-1">From Date</label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-[#E2E8F0] bg-[#FAFCFD] px-2.5 text-xs text-[#023A51] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#64748B] mb-1">To Date</label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-[#E2E8F0] bg-[#FAFCFD] px-2.5 text-xs text-[#023A51] outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
       </main>
 
-      <aside className="space-y-5">
-        <section className="rounded-2xl border border-[#E2ECE6] bg-white p-5 sm:p-6"><h2 className="flex items-center gap-2 font-bold text-[#123F40]"><Landmark className="size-4 text-[#168A4A]" />Reference links</h2><p className="mt-1 text-xs leading-5 text-[#718181]">Official resources maintained in the CMS.</p>{governmentLinks.length ? <ul className="mt-3 divide-y divide-[#EDF2EF]">{governmentLinks.map((item) => <li key={item.id}><a href={item.url} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-3 py-3 text-sm font-medium text-[#405B59] transition hover:text-[#168A4A]"><span className="min-w-0"><span className="block truncate">{item.short_name || item.name}</span>{item.description && <span className="mt-0.5 block line-clamp-2 text-[11px] font-normal leading-4 text-[#82918D]">{item.description}</span>}</span><ArrowUpRight className="size-4 shrink-0" /></a></li>)}</ul> : <p className="mt-4 rounded-xl bg-[#F7FAF8] p-3 text-xs text-[#718181]">No reference links are available.</p>}</section>
-        <section className="rounded-2xl bg-[#073F43] p-5 text-white sm:p-6"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#76DDA3]">Consultation</p><h2 className="mt-2 text-lg font-bold">Questions about an update?</h2><p className="mt-2 text-sm leading-6 text-white/75">Discuss how a published notice applies to your organisation.</p><Link href="/book-appointment" className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full bg-[#20B866] px-4 text-sm font-bold text-white transition hover:bg-[#159A53]">Book consultation <ArrowRight className="size-4" /></Link></section>
-      </aside>
+      {/* 4. Modal Dialog for Full Update Details */}
+      {activeModalUpdate && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setActiveModalUpdate(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-9 shadow-2xl border border-[#E2E8F0]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveModalUpdate(null)}
+              className="absolute right-5 top-5 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X className="size-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${
+                  getCategoryTag(activeModalUpdate).colorClass
+                }`}
+              >
+                {getCategoryTag(activeModalUpdate).label}
+              </span>
+              {activeModalUpdate.is_urgent && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FEF2F2] text-[#DC2626] border border-[#FEE2E2]">
+                  Urgent
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold text-[#023A51] leading-snug">
+              {activeModalUpdate.title}
+            </h2>
+
+            <div className="mt-3 pb-4 border-b border-[#F1F5F9] flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#64748B]">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="size-3.5 text-[#94A3B8]" />
+                {formatDate(activeModalUpdate.published_at || activeModalUpdate.effective_date)}
+              </span>
+              {activeModalUpdate.source_name && (
+                <span className="font-medium text-[#475569]">
+                  Source: {activeModalUpdate.source_name}
+                </span>
+              )}
+            </div>
+
+            {activeModalUpdate.summary && (
+              <div className="mt-4 rounded-xl bg-[#F8FAFC] p-4 text-xs sm:text-sm font-medium text-[#334155] leading-relaxed border border-[#E2E8F0]">
+                {activeModalUpdate.summary}
+              </div>
+            )}
+
+            <div className="mt-5 space-y-4 text-xs sm:text-sm text-[#475569] leading-relaxed whitespace-pre-line">
+              {activeModalUpdate.content || activeModalUpdate.summary}
+            </div>
+
+            <div className="mt-8 pt-5 border-t border-[#F1F5F9] flex items-center justify-between gap-4">
+              {activeModalUpdate.source_url ? (
+                <a
+                  href={activeModalUpdate.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#023A51] hover:text-[#2CBC63] hover:underline"
+                >
+                  <span>View Official Source</span>
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : (
+                <div />
+              )}
+
+              <button
+                type="button"
+                onClick={() => setActiveModalUpdate(null)}
+                className="px-5 py-2 rounded-full bg-[#023A51] hover:bg-[#14864B] text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>;
+  );
 }

@@ -78,7 +78,8 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => {
-    void loadUsers();
+    const timer = window.setTimeout(() => void loadUsers(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadUsers]);
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {

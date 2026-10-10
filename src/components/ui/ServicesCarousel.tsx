@@ -117,7 +117,7 @@ export default function ServicesCarousel() {
                     {/* Service Bottom Details */}
                     <div className="p-6 sm:p-7 flex flex-col justify-between flex-1 bg-[#E5F1F6]">
                       <div>
-                        <h3 className="text-[18px] sm:text-[19px] font-bold text-[#023A51] leading-snug group-hover:text-[#2CBC63] transition-colors">
+                        <h3 className="text-[18px] sm:text-[19px] font-bold text-[#023A51] leading-snug group-hover:text-[#0C4A60] transition-colors">
                           {service.title}
                         </h3>
                         <p className="mt-3 text-[13px] sm:text-[13.5px] text-[#1D5367] leading-relaxed line-clamp-3">
@@ -127,7 +127,7 @@ export default function ServicesCarousel() {
 
                     {/* Explore Link + Yellow Arrow Circle */}
                     <div className="mt-6 flex items-center gap-2">
-                      <span className="text-[13.5px] font-bold text-[#023A51] group-hover:text-[#2CBC63] transition-colors">
+                      <span className="text-[13.5px] font-bold text-[#023A51] group-hover:text-[#0C4A60] transition-colors">
                         Explore
                       </span>
                       <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#FFD000] flex items-center justify-center text-[#023A51] shadow-xs group-hover:scale-110 group-hover:rotate-12 transition-transform duration-200">

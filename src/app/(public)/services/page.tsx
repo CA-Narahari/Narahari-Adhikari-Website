@@ -84,9 +84,6 @@ export default function ServicesPage() {
 
                   {/* Card Content */}
                   <div className="p-6 sm:p-7 space-y-3">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#2CBC63]">
-                      Practice Area 0{index + 1}
-                    </span>
                     <h2 className="text-xl font-bold text-[#023A51] leading-snug group-hover:text-[#2CBC63] transition-colors">
                       <Link href={`/services/${service.slug}`}>
                         {service.title}
@@ -108,13 +105,6 @@ export default function ServicesPage() {
                       <span>Read service article</span>
                       <ArrowRight className="w-3.5 h-3.5 text-[#2CBC63] group-hover:translate-x-1 transition-transform" />
                     </Link>
-
-                    <Link
-                      href="/book-appointment"
-                      className="text-[11.5px] font-medium text-[#59667D] hover:text-[#023A51]"
-                    >
-                      Consult &rarr;
-                    </Link>
                   </div>
                 </div>
               </div>
@@ -123,30 +113,51 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Consultation Banner */}
+      {/* 3. Advisory Delivery & Quality Standards */}
       <section className="max-w-[1240px] mx-auto px-6 mt-16 sm:mt-20">
-        <div className="rounded-3xl bg-[#023A51] p-8 sm:p-12 text-white relative overflow-hidden shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-8">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-[#2CBC63]/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="space-y-2 relative z-10 max-w-xl">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#2CBC63]">
-              Chartered Advisory
+        <div className="rounded-3xl bg-white border border-[#E8EBEF] p-8 sm:p-12 shadow-sm">
+          <div className="max-w-2xl mb-8 sm:mb-10">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-[#2CBC63]">
+              Engagement Standards
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold !text-white text-white tracking-tight">
-              Need tailored statutory audit or tax advisory?
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#023A51] tracking-tight mt-1">
+              How We Deliver Professional Advisory
             </h2>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Schedule an in-person meeting or virtual consultation with CA Narahari Adhikari.
+            <p className="text-sm sm:text-[15px] text-[#4A5259] leading-relaxed mt-2">
+              Our service model emphasizes thorough regulatory alignment, partner-led engagement oversight, and structured working documentation.
             </p>
           </div>
 
-          <div className="relative z-10 shrink-0">
-            <Link
-              href="/book-appointment"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2CBC63] hover:bg-[#25a556] text-white font-bold text-sm transition-all shadow-md active:scale-95"
-            >
-              <span>Book Consultation</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E8EBEF] space-y-3">
+              <div className="w-9 h-9 rounded-xl bg-[#E6F7ED] text-[#2CBC63] flex items-center justify-center font-bold text-xs">
+                01
+              </div>
+              <h3 className="text-base font-bold text-[#023A51]">Regulatory Precision</h3>
+              <p className="text-xs sm:text-[13px] text-[#4A5259] leading-relaxed">
+                Direct alignment with prevailing Nepal Income Tax Acts, VAT directives, ASB Nepal guidelines, and statutory audit mandates.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E8EBEF] space-y-3">
+              <div className="w-9 h-9 rounded-xl bg-[#E6F7ED] text-[#2CBC63] flex items-center justify-center font-bold text-xs">
+                02
+              </div>
+              <h3 className="text-base font-bold text-[#023A51]">Direct Principal Oversight</h3>
+              <p className="text-xs sm:text-[13px] text-[#4A5259] leading-relaxed">
+                Key advisory findings, audit plans, and tax opinions are directly led and reviewed by Narahari Adhikari.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E8EBEF] space-y-3">
+              <div className="w-9 h-9 rounded-xl bg-[#E6F7ED] text-[#2CBC63] flex items-center justify-center font-bold text-xs">
+                03
+              </div>
+              <h3 className="text-base font-bold text-[#023A51]">Confidential Documentation</h3>
+              <p className="text-xs sm:text-[13px] text-[#4A5259] leading-relaxed">
+                Institutional documentation standards ensuring audit trails, data protection, and permanent compliance readiness for stakeholders.
+              </p>
+            </div>
           </div>
         </div>
       </section>

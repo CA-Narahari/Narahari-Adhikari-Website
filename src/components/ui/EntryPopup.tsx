@@ -70,7 +70,7 @@ export default function EntryPopup() {
             <div className="relative bg-gradient-to-b from-[#d4e8de] to-[#e8f0eb] min-h-[200px] md:min-h-[360px] flex items-end justify-center overflow-hidden">
               <Image
                 src="/profile-picture.png"
-                alt="CA Narahari Adhikari"
+                alt="Narahari Adhikari"
                 width={340}
                 height={420}
                 className="relative z-10 w-full h-full max-h-[340px] object-cover object-top"

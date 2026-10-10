@@ -103,9 +103,14 @@ export function sanitizeHtml(input: string): string {
         const safeStyle = safeCssDeclarations(value);
         return safeStyle ? ` style="${safeStyle.replace(/"/g, '&quot;')}"` : '';
       }
-      const decoded = decodeAttributeEntities(value).trim();
-      if ((name === 'href' || name === 'src') && !/^(https?:|mailto:|tel:|\/|#)/i.test(decoded)) return '';
-      if ((name === 'href' || name === 'src') && /^(\/\/|javascript:|data:|vbscript:)/i.test(decoded)) return '';
+      const decoded = decodeAttributeEntities(value).replace(/[\u0000-\u0020\u007f]/g, '').trim();
+      if (name === 'href' || name === 'src') {
+        if (decoded.includes('\\')) return '';
+        const allowedProtocol = name === 'href' ? /^(https?:|mailto:|tel:)/i : /^https?:/i;
+        const relative = decoded.startsWith('/') && !decoded.startsWith('//') || decoded.startsWith('#');
+        if (!allowedProtocol.test(decoded) && !relative) return '';
+        if (/^(?:javascript|data|vbscript):/i.test(decoded)) return '';
+      }
       return ` ${name}="${value.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"`;
     });
     return `<${tag}${attrs}>`;
