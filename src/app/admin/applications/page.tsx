@@ -6,6 +6,7 @@ import { ArrowUpRight, Download, FileText, RefreshCw, Search, UserRound } from '
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { JobApplication } from '@/types';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useApp } from '@/context/AppContext';
 
 type Status = JobApplication['status'];
 type Filter = 'all' | Status;
@@ -16,6 +17,7 @@ const statusLabel: Record<Status, string> = { new: 'New', review: 'In review', s
 const dateLabel = (value: string) => { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date); };
 
 export default function AdminApplicationsPage() {
+  const { updateApplicationStatus } = useApp();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -51,8 +53,8 @@ export default function AdminApplicationsPage() {
     if (candidate.status === status) return;
     setSavingId(candidate.id); setSaveError(null);
     try {
-      const response = await fetch('/api/admin/records/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recordType: 'applications', id: candidate.id, status }) });
-      if (!response.ok) throw new Error('save failed');
+      const saved = await updateApplicationStatus(candidate.id, status);
+      if (!saved) throw new Error('save failed');
       setApplications((current) => current.map((item) => item.id === candidate.id ? { ...item, status } : item));
     } catch { setSaveError({ id: candidate.id, message: 'The hiring stage was not saved. Refresh the list and try again.' }); }
     finally { setSavingId(null); }

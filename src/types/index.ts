@@ -125,6 +125,18 @@ export interface Appointment {
   created_at: string;
 }
 
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  organization: string;
+  message: string;
+  privacy_consent?: boolean;
+  status: 'new' | 'in_progress' | 'closed';
+  created_at: string;
+}
+
 export interface GovernmentLink {
   id: string;
   name: string;

@@ -46,11 +46,12 @@ interface NavSection {
 
 export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { applications, appointments, settings } = useApp();
+  const { applications, appointments, contactMessages, settings } = useApp();
   const [resourcesExpanded, setResourcesExpanded] = React.useState(() => pathname.startsWith('/admin/resources'));
 
   const newApplications = applications.filter((application) => application.status === 'new').length;
-  const pendingAppointments = appointments.filter((appointment) => appointment.status === 'pending').length;
+  const pendingAppointments = appointments.filter((appointment) => appointment.status === 'pending' || appointment.status === 'rescheduled').length;
+  const newEnquiries = contactMessages.filter((message) => message.status === 'new').length;
 
   const navSections: NavSection[] = [
     {
@@ -80,7 +81,7 @@ export default function AdminSidebar({ mobileOpen, onNavigate, role }: AdminSide
       title: 'PRACTICE',
       items: [
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar, count: pendingAppointments },
-        { name: 'Website enquiries', href: '/admin/messages', icon: Mail },
+        { name: 'Website enquiries', href: '/admin/messages', icon: Mail, count: newEnquiries },
         { name: 'Job applications', href: '/admin/applications', icon: UserSearch, count: newApplications },
       ],
     },

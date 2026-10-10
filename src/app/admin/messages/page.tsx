@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Building2, Inbox, Mail, Phone, RefreshCw, Search, Send } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useApp } from '@/context/AppContext';
 
 type Status = 'new' | 'in_progress' | 'closed';
 type Message = { id: string; name: string; email: string; phone: string; organization: string; message: string; status: Status; created_at: string };
@@ -12,6 +13,7 @@ const formatDate = (value: string) => { const date = new Date(value); return Num
 const statusLabel: Record<Status, string> = { new: 'New', in_progress: 'Follow-up', closed: 'Closed' };
 
 export default function ContactMessagesPage() {
+  const { updateContactMessageStatus } = useApp();
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,8 +51,8 @@ export default function ContactMessagesPage() {
     if (message.status === status) return;
     setSaving(true); setSaveError('');
     try {
-      const response = await fetch('/api/admin/records/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recordType: 'contact_messages', id: message.id, status }) });
-      if (!response.ok) throw new Error('save failed');
+      const saved = await updateContactMessageStatus(message.id, status);
+      if (!saved) throw new Error('save failed');
       setMessages((current) => current.map((item) => item.id === message.id ? { ...item, status } : item));
     } catch { setSaveError('The enquiry status was not saved. Refresh the inbox and try again.'); }
     finally { setSaving(false); }

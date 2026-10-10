@@ -31,16 +31,17 @@ const pageNames: Record<string, string> = {
 export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { appointments, applications, blogPosts, services, taxUpdates, vacancies, downloads } = useApp();
+  const { appointments, applications, contactMessages, blogPosts, services, taxUpdates, vacancies, downloads } = useApp();
 
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const pendingAppointments = appointments.filter((a) => a.status === 'pending');
+  const pendingAppointments = appointments.filter((a) => a.status === 'pending' || a.status === 'rescheduled');
   const newApplications = applications.filter((a) => a.status === 'new');
-  const totalNotifications = pendingAppointments.length + newApplications.length;
+  const newEnquiries = contactMessages.filter((message) => message.status === 'new');
+  const totalNotifications = pendingAppointments.length + newApplications.length + newEnquiries.length;
 
   const title = pageNames[pathname] ?? 'CMS Portal';
   const searchItems = [
@@ -167,7 +168,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                           className="block py-2 hover:bg-slate-50 px-2 rounded-lg transition-colors"
                         >
                           <p className="font-bold text-slate-800 truncate">
-                            New Consultation: {apt.client_name}
+                            {apt.status === 'rescheduled' ? 'New time needed' : 'Appointment request'}: {apt.client_name}
                           </p>
                           <p className="text-[10px] text-slate-500">
                             {apt.date} · {apt.time_slot}
@@ -185,6 +186,17 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                             CV: {app.applicant_name}
                           </p>
                           <p className="text-[10px] text-slate-500">{app.vacancy_title}</p>
+                        </Link>
+                      ))}
+                      {newEnquiries.map((message) => (
+                        <Link
+                          key={message.id}
+                          href="/admin/messages"
+                          onClick={() => setShowNotifications(false)}
+                          className="block py-2 hover:bg-slate-50 px-2 rounded-lg transition-colors"
+                        >
+                          <p className="font-bold text-slate-800 truncate">Website enquiry: {message.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{message.organization || message.email}</p>
                         </Link>
                       ))}
                     </>

@@ -9,6 +9,7 @@ import {
   Vacancy,
   JobApplication,
   Appointment,
+  ContactMessage,
   GovernmentLink,
   DownloadResource,
   Announcement,
@@ -67,6 +68,9 @@ interface AppContextType {
   addAppointment: (apt: Omit<Appointment, 'id' | 'created_at'>) => Promise<boolean>;
   updateAppointmentStatus: (id: string, status: Appointment['status']) => Promise<boolean>;
 
+  contactMessages: ContactMessage[];
+  updateContactMessageStatus: (id: string, status: ContactMessage['status']) => Promise<boolean>;
+
   governmentLinks: GovernmentLink[];
   addGovernmentLink: (link: Omit<GovernmentLink, 'id'>) => Promise<boolean>;
   updateGovernmentLink: (id: string, link: Partial<GovernmentLink>) => Promise<boolean>;
@@ -92,6 +96,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [vacanciesLoaded, setVacanciesLoaded] = useState(() => !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
   const [applications, setApplications] = useState<JobApplication[]>(initialJobApplications);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [governmentLinks, setGovernmentLinks] = useState<GovernmentLink[]>(initialGovernmentLinks);
   const [downloads, setDownloads] = useState<DownloadResource[]>(initialDownloads);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -113,7 +118,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     async function loadPublishedContent() {
-      const [settingsResult, taxResult, postsResult, vacanciesResult, applicationsResult, appointmentsResult, linksResult, downloadsResult, servicesResult, announcementsResult] = await Promise.all([
+      const [settingsResult, taxResult, postsResult, vacanciesResult, applicationsResult, appointmentsResult, contactMessagesResult, linksResult, downloadsResult, servicesResult, announcementsResult] = await Promise.all([
         supabase.from('site_settings').select('key,value'),
         supabase.from('tax_updates').select('*').order('published_at', { ascending: false }),
         supabase.from('posts').select('*').order('created_at', { ascending: false }),
@@ -121,6 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         supabase.from('vacancies').select('*').order('deadline', { ascending: true }),
         supabase.from('applications').select('*').order('submitted_at', { ascending: false }),
         supabase.from('appointments').select('*').order('created_at', { ascending: false }),
+        supabase.from('contact_messages').select('*').order('created_at', { ascending: false }),
         supabase.from('government_links').select('*').order('display_order', { ascending: true }),
         supabase.from('download_resources').select('*').order('created_at', { ascending: false }),
         supabase.from('services').select('*').order('display_order', { ascending: true }),
@@ -156,6 +162,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           time_slot: item.requested_time,
         })) as Appointment[]);
       }
+      if (!contactMessagesResult.error && contactMessagesResult.data) setContactMessages(contactMessagesResult.data as ContactMessage[]);
       if (!linksResult.error && linksResult.data) setGovernmentLinks(linksResult.data as GovernmentLink[]);
       if (!downloadsResult.error && downloadsResult.data) setDownloads(downloadsResult.data as DownloadResource[]);
       if (!servicesResult.error && servicesResult.data) setServices(servicesResult.data as ServiceItem[]);
@@ -399,6 +406,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
+  const updateContactMessageStatus = async (id: string, status: ContactMessage['status']) => {
+    const response = await fetch('/api/admin/records/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recordType: 'contact_messages', id, status }),
+    });
+    if (!response.ok) return false;
+    setContactMessages((current) => current.map((message) => message.id === id ? { ...message, status } : message));
+    return true;
+  };
+
   const addGovernmentLink = async (link: Omit<GovernmentLink, 'id'>) => {
     const response = await fetch('/api/admin/government-links', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(link),
@@ -499,6 +517,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         appointments,
         addAppointment,
         updateAppointmentStatus,
+        contactMessages,
+        updateContactMessageStatus,
         governmentLinks,
         addGovernmentLink,
         updateGovernmentLink,
