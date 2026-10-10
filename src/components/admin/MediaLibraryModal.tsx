@@ -14,6 +14,7 @@ import {
   Loader2,
   FileText,
 } from 'lucide-react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export interface MediaFileItem {
   name: string;
@@ -110,6 +111,8 @@ export default function MediaLibraryModal({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<MediaFileItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadFiles = async () => {
@@ -149,6 +152,7 @@ export default function MediaLibraryModal({
       void loadFiles();
     }, 0);
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadFiles only runs when this dialog opens or its folder changes.
   }, [isOpen, activeFolder, initialAltText, initialImageName]);
 
   const prepareFileUpload = (fileList: FileList | null) => {
@@ -205,22 +209,30 @@ export default function MediaLibraryModal({
     }
   };
 
-  const handleDeleteFile = async (item: MediaFileItem) => {
-    if (!confirm(`Delete image "${item.name}" from storage bucket?`)) return;
+  const handleDeleteFile = (item: MediaFileItem) => setPendingDelete(item);
 
+  const confirmDeleteFile = async () => {
+    if (!pendingDelete) return;
+    const item = pendingDelete;
+    setIsDeleting(true);
     try {
-      await fetch('/api/admin/storage/delete', {
+      const response = await fetch('/api/admin/storage/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bucket: storageBucket, url: item.publicUrl }),
       });
+      const result = await response.json().catch(() => null) as { error?: string } | null;
+      if (!response.ok) throw new Error(result?.error || 'The file could not be deleted.');
 
       setFiles((prev) => prev.filter((f) => f.path !== item.path));
       if (selectedFile?.path === item.path) {
         setSelectedFile(null);
       }
-    } catch {
-      // ignore
+      setPendingDelete(null);
+    } catch (error) {
+      setSelectionError(error instanceof Error ? error.message : 'The file could not be deleted.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -612,6 +624,15 @@ export default function MediaLibraryModal({
           )}
         </div>
       </div>
+      <ConfirmModal
+        isOpen={!!pendingDelete}
+        title="Delete this file from storage?"
+        message={pendingDelete ? `“${pendingDelete.name}” will be permanently removed from ${storageBucket}. Any pages using this file may show a broken link.` : ''}
+        confirmLabel="Delete file"
+        isBusy={isDeleting}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => { void confirmDeleteFile(); }}
+      />
     </div>
   );
 }

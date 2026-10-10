@@ -4,13 +4,8 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  AlertCircle,
-  Bell,
-  CheckCircle2,
-  ExternalLink,
   Eye,
   FileImage,
-  Globe,
   LoaderCircle,
   MapPin,
   Megaphone,
@@ -19,12 +14,11 @@ import {
   Save,
   Trash2,
   X,
-  Home,
-  FileText,
   Calendar,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import MediaLibraryModal from '@/components/admin/MediaLibraryModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import type { Announcement } from '@/types';
 
 type FormState = Omit<Announcement, 'id' | 'created_at'>;
@@ -60,6 +54,8 @@ export default function AdminAnnouncementsPage() {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Announcement | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -146,9 +142,15 @@ export default function AdminAnnouncementsPage() {
     setPosterName('');
   };
 
-  const remove = async (item: Announcement) => {
-    if (!window.confirm(`Delete announcement "${item.title}"?`)) return;
+  const remove = (item: Announcement) => setPendingDelete(item);
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const item = pendingDelete;
+    setIsDeleting(true);
     const ok = await deleteAnnouncement(item.id);
+    setIsDeleting(false);
+    setPendingDelete(null);
     setFeedback(
       ok
         ? { kind: 'success', message: 'Announcement removed.' }
@@ -181,6 +183,15 @@ export default function AdminAnnouncementsPage() {
           setPosterName(file.imageName || file.url.split('/').pop() || 'Selected image');
           setLibraryOpen(false);
         }}
+      />
+      <ConfirmModal
+        isOpen={!!pendingDelete}
+        title="Delete this announcement?"
+        message={pendingDelete ? `“${pendingDelete.title}” will be removed from the website. This action cannot be undone.` : ''}
+        confirmLabel="Delete announcement"
+        isBusy={isDeleting}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => { void confirmDelete(); }}
       />
 
       {/* Header */}

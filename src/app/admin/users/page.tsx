@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { Input } from '@/components/ui/input';
 import {
   Card,
@@ -58,6 +59,7 @@ export default function AdminUsersPage() {
 
   // Password Changing modal / section state
   const [changingPasswordUser, setChangingPasswordUser] = useState<PracticeUser | null>(null);
+  const [pendingRoleChange, setPendingRoleChange] = useState<{ user: PracticeUser; role: PracticeRole } | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -174,7 +176,6 @@ export default function AdminUsersPage() {
 
   const changeRole = async (user: PracticeUser, nextRole: PracticeRole) => {
     if (user.role === nextRole) return;
-    if (!window.confirm(`Change ${user.displayName}'s access to ${nextRole === 'admin' ? 'Administrator' : 'Staff'}?`)) return;
     setFormError(''); setSuccess('');
     try {
       const response = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, role: nextRole }) });
@@ -183,6 +184,10 @@ export default function AdminUsersPage() {
       setUsers((current) => current.map((item) => item.id === user.id ? { ...item, role: nextRole } : item));
       setSuccess(`${user.displayName}'s access is now ${nextRole === 'admin' ? 'Administrator' : 'Staff'}.`);
     } catch (error) { setFormError(error instanceof Error ? error.message : 'The access role could not be changed.'); }
+  };
+
+  const requestRoleChange = (user: PracticeUser, nextRole: PracticeRole) => {
+    if (user.role !== nextRole) setPendingRoleChange({ user, role: nextRole });
   };
 
   return (
@@ -278,7 +283,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-4 py-4">
                         <label className="sr-only" htmlFor={`role-${user.id}`}>Access role for {user.displayName}</label>
-                        <select id={`role-${user.id}`} value={user.role} onChange={(event) => { void changeRole(user, event.target.value as PracticeRole); }} className={`h-9 rounded-lg border px-2.5 text-xs font-semibold outline-none focus:border-[#168A4A] ${user.role === 'admin' ? 'border-[#CCD7DC] bg-[#E8F4F8] text-[#023A51]' : 'border-[#BFE5CB] bg-[#E7F6EC] text-[#16723B]'}`}>
+                        <select id={`role-${user.id}`} value={user.role} onChange={(event) => requestRoleChange(user, event.target.value as PracticeRole)} className={`h-9 rounded-lg border px-2.5 text-xs font-semibold outline-none focus:border-[#168A4A] ${user.role === 'admin' ? 'border-[#CCD7DC] bg-[#E8F4F8] text-[#023A51]' : 'border-[#BFE5CB] bg-[#E7F6EC] text-[#16723B]'}`}>
                           <option value="staff">Staff</option><option value="admin">Administrator</option>
                         </select>
                       </td>
@@ -584,6 +589,19 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={!!pendingRoleChange}
+        title="Change staff access?"
+        message={pendingRoleChange ? `${pendingRoleChange.user.displayName} will have ${pendingRoleChange.role === 'admin' ? 'Administrator' : 'Staff'} access. This changes their CMS permissions immediately.` : ''}
+        confirmLabel="Change access"
+        isDestructive={false}
+        onCancel={() => setPendingRoleChange(null)}
+        onConfirm={() => {
+          const change = pendingRoleChange;
+          setPendingRoleChange(null);
+          if (change) void changeRole(change.user, change.role);
+        }}
+      />
     </div>
   );
 }

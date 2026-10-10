@@ -1,295 +1,90 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useApp } from '@/context/AppContext';
-import {
-  UserSearch,
-  Search,
-  Mail,
-  Phone,
-  Briefcase,
-  FileText,
-  Download,
-  ExternalLink,
-  GraduationCap,
-  UserRound,
-} from 'lucide-react';
+import { ArrowUpRight, Download, FileText, RefreshCw, Search, UserRound } from 'lucide-react';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { JobApplication } from '@/types';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
-type StatusFilter = 'all' | JobApplication['status'];
-
-const dateLabel = (value: string) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
-};
+type Status = JobApplication['status'];
+type Filter = 'all' | Status;
+const stages: { key: Filter; label: string }[] = [
+  { key: 'all', label: 'All candidates' }, { key: 'new', label: 'New' }, { key: 'review', label: 'In review' }, { key: 'shortlisted', label: 'Shortlisted' }, { key: 'rejected', label: 'Rejected' },
+];
+const statusLabel: Record<Status, string> = { new: 'New', review: 'In review', shortlisted: 'Shortlisted', rejected: 'Rejected' };
+const dateLabel = (value: string) => { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date); };
 
 export default function AdminApplicationsPage() {
-  const { applications, updateApplicationStatus } = useApp();
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [decisionError, setDecisionError] = useState<{ id: string; message: string } | null>(null);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<{ id: string; message: string } | null>(null);
+  const [confirmRejecting, setConfirmRejecting] = useState<JobApplication | null>(null);
 
-  const counts = useMemo(
-    () => ({
-      all: applications.length,
-      new: applications.filter((item) => item.status === 'new').length,
-      review: applications.filter((item) => item.status === 'review').length,
-      shortlisted: applications.filter((item) => item.status === 'shortlisted').length,
-      rejected: applications.filter((item) => item.status === 'rejected').length,
-    }),
-    [applications]
-  );
+  const loadApplications = useCallback(async () => {
+    const client = createSupabaseBrowserClient();
+    if (!client) { setLoadError('Supabase is not configured for this site.'); setLoading(false); return; }
+    setLoading(true); setLoadError('');
+    const { data, error } = await client.from('applications').select('*').order('submitted_at', { ascending: false });
+    if (error) setLoadError('Applications could not be loaded. Check your staff session and database access, then try again.');
+    else setApplications((data ?? []).map((item) => ({
+      ...item,
+      qualification: item.qualification || item.cover_note?.match(/^Qualification:\s*(.+?)(?:\r?\n\r?\n|$)/)?.[1] || '',
+      cover_note: item.cover_note?.replace(/^Qualification:\s*.+?(?:\r?\n\r?\n|$)/, '') || '',
+    })) as JobApplication[]);
+    setLoading(false);
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadApplications(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadApplications]);
 
-  const filters: { key: StatusFilter; label: string; count: number }[] = [
-    { key: 'all', label: 'All candidates', count: counts.all },
-    { key: 'new', label: 'New applications', count: counts.new },
-    { key: 'review', label: 'Under review', count: counts.review },
-    { key: 'shortlisted', label: 'Shortlisted', count: counts.shortlisted },
-    { key: 'rejected', label: 'Rejected', count: counts.rejected },
-  ];
+  const counts = useMemo(() => ({ all: applications.length, new: applications.filter((item) => item.status === 'new').length, review: applications.filter((item) => item.status === 'review').length, shortlisted: applications.filter((item) => item.status === 'shortlisted').length, rejected: applications.filter((item) => item.status === 'rejected').length }), [applications]);
+  const query = search.trim().toLowerCase();
+  const visible = applications.filter((item) => (filter === 'all' || item.status === filter) && [item.applicant_name, item.applicant_email, item.applicant_phone, item.vacancy_title, item.qualification, item.cover_note].some((value) => value?.toLowerCase().includes(query)));
 
-  const normalizedSearch = search.trim().toLowerCase();
-  const filtered = useMemo(() => {
-    return applications.filter((item) => {
-      const matchesSearch = [
-        item.applicant_name,
-        item.applicant_email,
-        item.applicant_phone,
-        item.vacancy_title,
-        item.qualification,
-        item.cover_note,
-      ].some((v) => v?.toLowerCase().includes(normalizedSearch));
-      const matchesFilter = statusFilter === 'all' || item.status === statusFilter;
-      return matchesSearch && matchesFilter;
-    });
-  }, [applications, statusFilter, normalizedSearch]);
-
-  const handleStatusChange = async (id: string, status: JobApplication['status']) => {
-    const candidate = applications.find((item) => item.id === id);
-    if (!candidate || candidate.status === status) return;
-    if (status === 'rejected' && !window.confirm(`Record a rejection decision for ${candidate.applicant_name}? This only updates the CMS; it does not contact the candidate.`)) return;
-    setUpdatingId(id);
-    setDecisionError(null);
+  const setStatus = async (candidate: JobApplication, status: Status) => {
+    if (candidate.status === status) return;
+    setSavingId(candidate.id); setSaveError(null);
     try {
-      const saved = await updateApplicationStatus(id, status);
-      if (!saved) setDecisionError({ id, message: 'The decision was not saved. Refresh the hiring list and try again.' });
-    } catch {
-      setDecisionError({ id, message: 'The decision was not saved. Check the CMS connection and try again.' });
-    } finally {
-      setUpdatingId(null);
-    }
+      const response = await fetch('/api/admin/records/status', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recordType: 'applications', id: candidate.id, status }) });
+      if (!response.ok) throw new Error('save failed');
+      setApplications((current) => current.map((item) => item.id === candidate.id ? { ...item, status } : item));
+    } catch { setSaveError({ id: candidate.id, message: 'The hiring stage was not saved. Refresh the list and try again.' }); }
+    finally { setSavingId(null); }
+  };
+
+  const requestStatusChange = (candidate: JobApplication, status: Status) => {
+    if (candidate.status === status) return;
+    if (status === 'rejected') setConfirmRejecting(candidate);
+    else void setStatus(candidate, status);
   };
 
   return (
-    <div className="mx-auto max-w-[1280px] space-y-6 pb-10">
-      {/* 1. Header (Matching /admin/messages) */}
-      <header className="flex flex-col gap-5 rounded-3xl border border-[#E2ECE6] bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8 shadow-xs">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#168A4A]">
-            Hiring workspace
-          </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[#073E43] sm:text-3xl">
-            Job applications
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#66797A]">
-            Candidates who submitted CVs and applications through the public Careers portal. Review qualifications and track applicant statuses.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/careers"
-            target="_blank"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-[#D8E4DE] px-4 text-xs font-semibold text-[#143F40] hover:bg-[#F5FAF7] transition-colors"
-          >
-            <span>Public Careers Portal</span>
-            <ExternalLink className="size-3.5 text-[#168A4A]" />
-          </Link>
-        </div>
+    <main className="mx-auto max-w-[1320px] space-y-5 pb-10">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
+        <div><p className="text-xs font-semibold uppercase tracking-[0.13em] text-slate-500">Hiring</p><h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Job applications</h1><p className="mt-1 text-sm text-slate-600">Review each candidate’s role, experience, and CV before recording a hiring stage.</p></div>
+        <Link href="/careers" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Open careers page <ArrowUpRight className="size-4" /></Link>
       </header>
 
-      {/* 2. Filter Stats Strip (Matching /admin/messages) */}
-      <section aria-label="Application totals" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-        {filters.map((filter) => (
-          <button
-            key={filter.key}
-            type="button"
-            onClick={() => setStatusFilter(filter.key)}
-            aria-pressed={statusFilter === filter.key}
-            className={`rounded-2xl border p-4 text-left transition cursor-pointer ${
-              statusFilter === filter.key
-                ? 'border-[#A9D7B9] bg-[#F1FAF4]'
-                : 'border-[#E2ECE6] bg-white hover:border-[#C6D9CE]'
-            }`}
-          >
-            <span className="block text-[10px] font-bold uppercase tracking-[.11em] text-[#718181]">
-              {filter.label}
-            </span>
-            <span className="mt-1 block text-2xl font-bold tabular-nums text-[#073E43]">
-              {filter.count}
-            </span>
-          </button>
-        ))}
+      <section aria-label="Hiring stage filters" className="flex flex-wrap gap-2">{stages.map((stage) => <button key={stage.key} type="button" aria-pressed={filter === stage.key} onClick={() => setFilter(stage.key)} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${filter === stage.key ? 'border-slate-800 bg-slate-800 font-medium text-white' : 'border-slate-300 bg-white text-slate-600 hover:border-slate-500'}`}>{stage.label}<span className={`text-xs tabular-nums ${filter === stage.key ? 'text-slate-300' : 'text-slate-400'}`}>{counts[stage.key]}</span></button>)}</section>
+
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3"><div><h2 className="text-sm font-semibold text-slate-900">Candidate register</h2><p className="mt-0.5 text-xs text-slate-500">{visible.length} shown · hiring stage is internal and does not notify applicants</p></div><div className="flex w-full items-center gap-2 sm:w-auto"><label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-300 px-2.5 sm:w-72"><Search className="size-4 shrink-0 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search candidate or role" aria-label="Search job applications" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400" /></label><button onClick={() => void loadApplications()} aria-label="Refresh applications" className="grid size-9 shrink-0 place-items-center rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50"><RefreshCw className="size-4" /></button></div></div>
+        <div className="hidden grid-cols-[minmax(220px,1.2fr)_minmax(180px,1fr)_minmax(160px,.8fr)_130px_210px] gap-4 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 lg:grid"><span>Candidate</span><span>Position</span><span>Contact</span><span>CV</span><span>Hiring stage</span></div>
+        {loading ? <div role="status" className="p-12 text-center text-sm text-slate-500">Loading applications…</div> : loadError ? <div className="p-8 text-center"><p role="alert" className="text-sm text-rose-700">{loadError}</p><button onClick={() => void loadApplications()} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-slate-800 underline"><RefreshCw className="size-3.5" />Retry</button></div> : visible.length === 0 ? <div className="p-12 text-center"><UserRound className="mx-auto size-7 text-slate-300" /><p className="mt-2 text-sm font-medium text-slate-800">{applications.length ? 'No candidates match this view' : 'No applications received yet'}</p><p className="mt-1 text-sm text-slate-500">{applications.length ? 'Adjust the search or choose a different hiring stage.' : 'Applications submitted for open roles will appear here.'}</p></div> : <ul className="divide-y divide-slate-200">{visible.map((candidate) => <li key={candidate.id} className="grid gap-4 px-4 py-4 lg:grid-cols-[minmax(220px,1.2fr)_minmax(180px,1fr)_minmax(160px,.8fr)_130px_210px] lg:items-center">
+          <div className="min-w-0"><div className="flex items-center gap-2"><span className={`size-2 shrink-0 rounded-full ${candidate.status === 'new' ? 'bg-amber-500' : candidate.status === 'review' ? 'bg-blue-500' : candidate.status === 'shortlisted' ? 'bg-emerald-600' : 'bg-slate-400'}`} /><p className="truncate text-sm font-semibold text-slate-900">{candidate.applicant_name}</p></div><p className="mt-1 text-xs text-slate-500">Applied {dateLabel(candidate.submitted_at)}</p>{candidate.qualification && <p className="mt-1 truncate text-xs text-slate-600">{candidate.qualification}</p>}</div>
+          <div className="min-w-0"><p className="truncate text-sm font-medium text-slate-800">{candidate.vacancy_title}</p>{candidate.cover_note && <details className="mt-1 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Read applicant note</summary><p className="mt-1 whitespace-pre-wrap leading-5">{candidate.cover_note}</p></details>}</div>
+          <div className="min-w-0"><a href={`mailto:${candidate.applicant_email}`} className="block truncate text-xs text-slate-700 hover:underline">{candidate.applicant_email}</a>{candidate.applicant_phone && <a href={`tel:${candidate.applicant_phone}`} className="mt-1 block text-xs text-slate-600 hover:underline">{candidate.applicant_phone}</a>}</div>
+          <div>{candidate.cv_file_url ? <a href={`/api/admin/applications/${encodeURIComponent(candidate.id)}/cv`} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50"><FileText className="size-3.5" />{candidate.cv_filename ? 'Open CV' : 'Open file'}<Download className="size-3.5" /></a> : <span className="text-xs text-slate-400">No CV attached</span>}</div>
+          <div><label className="sr-only" htmlFor={`application-status-${candidate.id}`}>Hiring stage for {candidate.applicant_name}</label><select id={`application-status-${candidate.id}`} value={candidate.status} disabled={savingId === candidate.id} onChange={(event) => requestStatusChange(candidate, event.target.value as Status)} className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-800 outline-none focus:border-slate-500 disabled:opacity-60">{(Object.keys(statusLabel) as Status[]).map((status) => <option key={status} value={status}>{statusLabel[status]}</option>)}</select>{savingId === candidate.id && <p role="status" className="mt-1 text-xs text-slate-500">Saving…</p>}{saveError?.id === candidate.id && <p role="alert" className="mt-1 text-xs text-rose-700">{saveError.message}</p>}</div>
+        </li>)}</ul>}
       </section>
-
-      {/* 3. Main Card Container (Matching /admin/messages) */}
-      <section className="overflow-hidden rounded-2xl border border-[#E2ECE6] bg-white shadow-xs">
-        <div className="flex flex-col gap-3 border-b border-[#EDF2EF] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-[#EAF8F1] text-[#14864B]">
-              <UserSearch className="size-5" />
-            </span>
-            <div>
-              <h2 className="font-bold text-[#123F40]">Candidate Applications</h2>
-              <p className="text-xs text-[#718181]">
-                {filtered.length} shown · {applications.length} total
-              </p>
-            </div>
-          </div>
-
-          <label className="flex h-10 w-full items-center gap-2 rounded-xl border border-[#D5E0DC] px-3 text-sm focus-within:border-[#168A4A] sm:max-w-sm">
-            <Search className="size-4 shrink-0 text-[#82918D]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search candidate name, email, role, or qualification"
-              aria-label="Search applications"
-              className="min-w-0 flex-1 bg-transparent text-xs text-[#143F40] outline-none placeholder:text-[#91A19C]"
-            />
-          </label>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="p-12 text-center space-y-2">
-            <UserSearch className="mx-auto size-8 text-[#98B8A6]" />
-            <h3 className="text-sm font-bold text-[#123F40]">
-              {applications.length ? 'No matching candidate applications' : 'No applications received yet'}
-            </h3>
-            <p className="mx-auto max-w-md text-xs leading-5 text-[#718181]">
-              {applications.length
-                ? 'Try another search keyword or switch the candidate status filter.'
-                : 'When candidates submit CVs for career openings, they will appear here.'}
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-[#EDF2EF]">
-            {filtered.map((item) => (
-              <li
-                key={item.id}
-                className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_270px] sm:p-6 hover:bg-[#FAFCFB] transition-colors"
-              >
-                <div className="min-w-0">
-                  {/* Top Candidate Row */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="grid size-9 place-items-center rounded-full bg-[#EAF8F1] text-[#168A4A]">
-                      <UserRound className="size-4" />
-                    </span>
-                    <h3 className="font-bold text-[#123F40] text-sm">{item.applicant_name}</h3>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                        item.status === 'new'
-                          ? 'bg-[#FFF5DE] text-[#98610D]'
-                          : item.status === 'review'
-                          ? 'bg-[#EAF3FF] text-[#2869A8]'
-                          : item.status === 'shortlisted'
-                          ? 'bg-[#EAF8F1] text-[#14864B]'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {item.status === 'new'
-                        ? 'New candidate'
-                        : item.status === 'review'
-                        ? 'Under review'
-                        : item.status === 'shortlisted'
-                        ? 'Shortlisted'
-                        : 'Archived / Rejected'}
-                    </span>
-                    <time className="text-xs text-[#82918D]">
-                      Applied: {dateLabel(item.submitted_at)}
-                    </time>
-                  </div>
-
-                  {/* Position and Contact Row */}
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[#52706C]">
-                    <span className="inline-flex items-center gap-1.5 font-bold text-[#023A51]">
-                      <Briefcase className="size-3.5 text-emerald-600" />
-                      {item.vacancy_title}
-                    </span>
-                    <a
-                      className="inline-flex items-center gap-1.5 hover:text-[#168A4A]"
-                      href={`mailto:${item.applicant_email}`}
-                    >
-                      <Mail className="size-3.5" />
-                      {item.applicant_email}
-                    </a>
-                    {item.applicant_phone && (
-                      <a
-                        className="inline-flex items-center gap-1.5 hover:text-[#168A4A]"
-                        href={`tel:${item.applicant_phone}`}
-                      >
-                        <Phone className="size-3.5" />
-                        {item.applicant_phone}
-                      </a>
-                    )}
-                    {item.qualification && (
-                      <span className="inline-flex items-center gap-1.5">
-                        <GraduationCap className="size-3.5 text-slate-500" />
-                        {item.qualification}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* CV Download / Preview Pill */}
-                  {item.cv_file_url && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <a
-                        href={`/api/admin/applications/${encodeURIComponent(item.id)}/cv`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#D5EFE1] bg-[#F0FAF4] hover:bg-[#E2F7EB] text-[#147448] text-xs font-semibold transition-colors"
-                      >
-                        <FileText className="size-3.5" />
-                        <span>Download Applicant CV</span>
-                        <Download className="size-3 ml-0.5" />
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Candidate cover note */}
-                  {item.cover_note && (
-                    <p className="mt-3 whitespace-pre-wrap rounded-xl bg-[#F7FAF8] p-3.5 text-xs leading-relaxed text-[#405A5B]">
-                      {item.cover_note}
-                    </p>
-                  )}
-                </div>
-
-                <aside className="rounded-2xl border border-[#DFE9E3] bg-[#F8FBF9] p-4 sm:self-start">
-                  <p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#718181]">Hiring decision</p>
-                  <p className="mt-1 text-sm font-bold text-[#123F40]">
-                    {item.status === 'new' ? 'Review this application' : item.status === 'review' ? 'Candidate under review' : item.status === 'shortlisted' ? 'Candidate shortlisted' : 'Application rejected'}
-                  </p>
-                  <p className="mt-1 text-[11px] leading-5 text-[#718181]">Check the CV, qualification, and role fit before choosing a next step.</p>
-                  <div className="mt-3 grid gap-2">
-                    {item.status === 'rejected' ? (
-                      <button type="button" disabled={updatingId === item.id} onClick={() => void handleStatusChange(item.id, 'review')} className="min-h-9 rounded-xl border border-[#C9DED0] bg-white px-3 text-xs font-semibold text-[#176C43] hover:bg-[#EFF8F2] disabled:opacity-50">Reopen for review</button>
-                    ) : <>
-                      {item.status === 'new' ? <button type="button" disabled={updatingId === item.id} onClick={() => void handleStatusChange(item.id, 'review')} className="min-h-9 rounded-xl bg-[#0B4B4C] px-3 text-xs font-semibold text-white hover:bg-[#083D3F] disabled:opacity-50">Start review</button> : item.status === 'review' ? <span className="rounded-xl border border-[#C7DDF0] bg-[#EDF5FC] px-3 py-2 text-center text-[11px] font-semibold text-[#2869A8]">Under review · current stage</span> : <button type="button" disabled={updatingId === item.id} onClick={() => void handleStatusChange(item.id, 'review')} className="min-h-9 rounded-xl border border-[#D5E0DC] bg-white px-3 text-xs font-semibold text-[#365555] hover:bg-white disabled:opacity-50">Return to review</button>}
-                      {item.status === 'shortlisted' ? <span className="rounded-xl border border-[#BFE5CB] bg-[#EFF9F2] px-3 py-2 text-center text-[11px] font-semibold text-[#176C43]">Shortlisted · current decision</span> : <button type="button" disabled={updatingId === item.id} onClick={() => void handleStatusChange(item.id, 'shortlisted')} className="min-h-9 rounded-xl border border-[#BFE5CB] bg-white px-3 text-xs font-semibold text-[#176C43] hover:bg-[#EFF9F2] disabled:opacity-50">Shortlist candidate</button>}
-                      <button type="button" disabled={updatingId === item.id} onClick={() => void handleStatusChange(item.id, 'rejected')} className="min-h-9 rounded-xl border border-[#E7C7C7] bg-white px-3 text-xs font-semibold text-[#9D3D3D] hover:bg-rose-50 disabled:opacity-50">Reject application…</button>
-                    </>}
-                  </div>
-                  {updatingId === item.id && <span role="status" className="mt-2 block text-[11px] text-[#82918D]">Saving decision…</span>}
-                  {decisionError?.id === item.id && <span role="alert" className="mt-2 block text-[11px] leading-4 text-rose-700">{decisionError.message}</span>}
-                </aside>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+      <ConfirmModal isOpen={!!confirmRejecting} title="Record a rejection?" message={confirmRejecting ? `This will mark ${confirmRejecting.applicant_name} as rejected in the hiring tracker. It will not email or otherwise notify the candidate.` : ''} confirmLabel="Record rejection" onCancel={() => setConfirmRejecting(null)} onConfirm={() => { const candidate = confirmRejecting; setConfirmRejecting(null); if (candidate) void setStatus(candidate, 'rejected'); }} />
+    </main>
   );
 }

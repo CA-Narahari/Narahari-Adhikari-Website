@@ -19,7 +19,6 @@ import {
   Mail,
   Phone,
   FileText,
-  Building,
   GraduationCap,
   AlertCircle,
   FileCheck,
@@ -28,6 +27,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { Vacancy } from '@/types';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function CareersPage() {
   const { settings, vacancies, vacanciesLoaded } = useApp();
@@ -177,29 +177,84 @@ export default function CareersPage() {
     if (!selectedVacancy) return;
 
     setIsSubmitting(true);
+    let applicationToken: string | null = null;
     try {
-      const form = new FormData();
-      form.set('name', applicantName.trim());
-      form.set('email', applicantEmail.trim());
-      form.set('phone', applicantPhone.trim());
-      form.set('qualification', qualification);
-      form.set('note', coverNote.trim());
-      form.set('vacancyId', selectedVacancy.id);
-      form.set('vacancyTitle', selectedVacancy.title);
-      form.set('cv', cvFile);
-      form.set('privacy_consent', 'on');
+      const extension = cvFile.name.toLowerCase().match(/\.(pdf|docx?)$/)?.[1];
+      const fallbackType = extension === 'pdf'
+        ? 'application/pdf'
+        : extension === 'doc'
+          ? 'application/msword'
+          : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const contentType = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(cvFile.type)
+        ? cvFile.type
+        : fallbackType;
+      const response = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: applicantName.trim(),
+          email: applicantEmail.trim(),
+          phone: applicantPhone.trim(),
+          qualification,
+          note: coverNote.trim(),
+          vacancyId: selectedVacancy.id,
+          fileName: cvFile.name,
+          contentType,
+          fileSize: cvFile.size,
+          privacyConsent,
+        }),
+      });
+      const upload = await response.json().catch(() => null) as {
+        error?: string;
+        path?: string;
+        uploadToken?: string;
+        applicationToken?: string;
+      } | null;
+      if (!response.ok || !upload?.path || !upload.uploadToken || !upload.applicationToken) {
+        setSubmissionError(upload?.error || 'We could not prepare secure CV storage. Please try again.');
+        return;
+      }
+      applicationToken = upload.applicationToken;
 
-      const response = await fetch('/api/applications', { method: 'POST', body: form });
-      const result = (await response.json()) as { error?: string };
+      const client = createSupabaseBrowserClient();
+      if (!client) {
+        setSubmissionError('Secure CV storage is not configured on this site. Please contact the practice directly.');
+        return;
+      }
+      const { error: uploadError } = await client.storage.from('application-cvs').uploadToSignedUrl(
+        upload.path,
+        upload.uploadToken,
+        cvFile,
+        { contentType, upsert: false },
+      );
+      if (uploadError) {
+        setSubmissionError('Your CV could not be uploaded to secure storage. Check your connection and try again.');
+        return;
+      }
 
-      if (!response.ok) {
-        setSubmissionError(result.error || 'We could not save your application. Please try again.');
+      const saveResponse = await fetch('/api/applications/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applicationToken }),
+      });
+      const result = await saveResponse.json().catch(() => null) as { error?: string } | null;
+      if (!saveResponse.ok) {
+        setSubmissionError(result?.error || 'Your CV uploaded, but we could not finish saving the application. Please try again.');
         return;
       }
       setSubmitted(true);
     } catch {
-      setSubmissionError('We could not send your application. Check your connection and try again.');
+      setSubmissionError(applicationToken
+        ? 'The upload connection was interrupted. Please try again; we will check for an already saved application.'
+        : 'We could not connect to prepare your application. Check your connection and try again.');
     } finally {
+      if (applicationToken) {
+        void fetch('/api/applications/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ applicationToken }),
+        }).catch(() => undefined);
+      }
       setIsSubmitting(false);
     }
   };
